@@ -1,22 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { restaurant, categories, dishes, wines, dailyMenu, ALLERGENS } from "@/data/mockData";
+import { useApp } from "@/context/AppContext";
+import { ALLERGENS } from "@/data/mockData";
 import { heroRestaurant, dishImages } from "@/data/dishImages";
+import { toast } from "sonner";
 import {
   Clock, MapPin, Phone, Instagram, Share2, Search, ChevronRight,
   Globe, Check, UtensilsCrossed, CalendarCheck, ArrowLeft, Users, X,
 } from "lucide-react";
 
-const isOpen = () => {
-  const now = new Date();
-  const day = now.getDay();
-  const dayMap = [6, 0, 1, 2, 3, 4, 5]; // Sun=6, Mon=0, ...
-  const h = restaurant.hours[dayMap[day]];
-  return !h?.closed;
-};
-
 const PublicRestaurant = () => {
+  const { restaurant, categories, dishes, wines, dailyMenu, addReservation } = useApp();
   const [activeCategory, setActiveCategory] = useState("menu-del-dia");
   const [searchQuery, setSearchQuery] = useState("");
   const [dietaryFilter, setDietaryFilter] = useState<string[]>([]);
@@ -24,6 +19,14 @@ const PublicRestaurant = () => {
   const [lang, setLang] = useState("ES");
   const [reservationStep, setReservationStep] = useState(0);
   const [resData, setResData] = useState({ guests: 2, date: "", period: "", time: "", name: "", phone: "", email: "", notes: "", zone: "Sin preferencia" });
+
+  const isOpen = () => {
+    const now = new Date();
+    const day = now.getDay();
+    const dayMap = [6, 0, 1, 2, 3, 4, 5];
+    const h = restaurant.hours[dayMap[day]];
+    return !h?.closed;
+  };
 
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -373,7 +376,22 @@ const PublicRestaurant = () => {
                 </div>
                 <div className="flex gap-3 pt-2">
                   <Button variant="outline-primary" onClick={() => setReservationStep(1)}><ArrowLeft className="h-4 w-4" /></Button>
-                  <Button variant="gradient" size="lg" className="flex-1" disabled={!resData.name || !resData.phone} onClick={() => setReservationStep(3)}>
+                    <Button variant="gradient" size="lg" className="flex-1" disabled={!resData.name || !resData.phone} onClick={() => {
+                      addReservation({
+                        name: resData.name,
+                        phone: resData.phone,
+                        email: resData.email || undefined,
+                        date: resData.date,
+                        time: resData.time,
+                        guests: resData.guests,
+                        zonePreference: resData.zone,
+                        notes: resData.notes || undefined,
+                        status: "pending",
+                        source: "digital",
+                      });
+                      toast.success("¡Reserva enviada!");
+                      setReservationStep(3);
+                    }}>
                     Confirmar reserva
                   </Button>
                 </div>

@@ -1,20 +1,20 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { restaurant, categories, dishes, wines, dailyMenu, tables, reservations, metricsData, ALLERGENS, type Dish, type Reservation } from "@/data/mockData";
+import { useApp } from "@/context/AppContext";
+import { metricsData, ALLERGENS, type Dish, type Reservation, type Table as TableType } from "@/data/mockData";
 import { dishImages } from "@/data/dishImages";
 import { QRCodeSVG } from "qrcode.react";
+import { toast } from "sonner";
 import {
   UtensilsCrossed, Store, Book, CalendarCheck, LayoutGrid, BarChart3,
-  QrCode, Settings, Bell, ChevronDown, Plus, Search, Filter, Eye,
-  Edit, Trash2, Copy, GripVertical, Check, X, Clock, Users, Phone,
-  Mail, MapPin, Instagram, Globe, Wifi, ParkingCircle, Accessibility,
-  Dog, CreditCard, Baby, Truck, ChefHat, Star, ArrowLeft, ArrowRight,
-  Download, Share2, ExternalLink, TrendingUp, AlertCircle, XCircle, CheckCircle2,
+  QrCode, Settings, Bell, ChevronDown, Plus, Edit, Trash2, Copy,
+  GripVertical, X, Clock, Users, XCircle, CheckCircle2,
+  Download, ExternalLink, TrendingUp, LogOut, Eye, EyeOff,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line, PieChart, Pie, Cell, Legend,
+  LineChart, Line, PieChart, Pie, Cell,
 } from "recharts";
 
 type Section = "restaurant" | "menu" | "reservations" | "tables" | "metrics" | "qr" | "settings";
@@ -29,95 +29,264 @@ const sidebarItems: { id: Section; label: string; icon: React.ElementType }[] = 
   { id: "settings", label: "Configuración", icon: Settings },
 ];
 
+// ── Login Screen ──
+const LoginScreen = () => {
+  const { login } = useApp();
+  const [email, setEmail] = useState("demo@carta.app");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (login(email, password)) {
+      toast.success("¡Bienvenido al panel de Carta!");
+    } else {
+      setError(true);
+      toast.error("Credenciales incorrectas");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-sm space-y-8">
+        <div className="text-center">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <UtensilsCrossed className="h-8 w-8 text-primary" />
+            <span className="font-serif text-2xl font-bold">CARTA</span>
+          </div>
+          <p className="text-muted-foreground text-sm">Accede al panel de tu restaurante</p>
+        </div>
+        <form onSubmit={handleSubmit} className="bg-card rounded-2xl border border-border p-6 space-y-4">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Email</label>
+            <input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" type="email" value={email} onChange={e => { setEmail(e.target.value); setError(false); }} />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Contraseña</label>
+            <input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" type="password" value={password} onChange={e => { setPassword(e.target.value); setError(false); }} />
+          </div>
+          {error && <p className="text-xs text-destructive">Email o contraseña incorrectos</p>}
+          <Button variant="gradient" className="w-full" type="submit">Iniciar sesión</Button>
+          <p className="text-xs text-muted-foreground text-center">Demo: demo@carta.app / demo1234</p>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // ── Restaurant Section ──
-const RestaurantSection = () => (
-  <div className="space-y-8">
-    <div>
-      <h2 className="text-2xl font-bold mb-1">Mi restaurante</h2>
-      <p className="text-muted-foreground text-sm">Configura los datos de tu restaurante</p>
-    </div>
-    <div className="bg-card rounded-2xl border border-border p-6 space-y-6">
-      <h3 className="text-lg font-bold font-sans">Datos del restaurante</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {[
-          { label: "Nombre", value: restaurant.name },
-          { label: "Eslogan", value: restaurant.subtitle },
-          { label: "Categoría", value: restaurant.category },
-          { label: "Cocina", value: restaurant.cuisine.join(", ") },
-          { label: "Teléfono", value: restaurant.phone },
-          { label: "Email", value: restaurant.email },
-          { label: "Web", value: restaurant.web },
-          { label: "Instagram", value: restaurant.instagram },
-          { label: "Dirección", value: restaurant.address },
-        ].map((f, i) => (
-          <div key={i}>
-            <label className="text-xs font-medium text-muted-foreground">{f.label}</label>
-            <div className="mt-1 px-3 py-2 bg-secondary rounded-lg text-sm">{f.value}</div>
-          </div>
-        ))}
-      </div>
-      <div>
-        <label className="text-xs font-medium text-muted-foreground">Descripción</label>
-        <div className="mt-1 px-3 py-2 bg-secondary rounded-lg text-sm">{restaurant.description}</div>
-      </div>
-    </div>
+const RestaurantSection = () => {
+  const { restaurant, updateRestaurant } = useApp();
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ ...restaurant });
 
-    <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
-      <h3 className="text-lg font-bold font-sans">Horario</h3>
-      <div className="space-y-2">
-        {restaurant.hours.map((h, i) => (
-          <div key={i} className="flex items-center gap-4 py-2 border-b border-border last:border-0">
-            <span className="w-24 font-medium text-sm">{h.day}</span>
-            {h.closed ? (
-              <span className="text-sm text-muted-foreground">Cerrado</span>
-            ) : (
-              <span className="text-sm">
-                {h.morning && `${h.morning.open} - ${h.morning.close}`}
-                {h.evening && !h.continuous && ` / ${h.evening.open} - ${h.evening.close}`}
-                {h.continuous && " (continuo)"}
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
+  const handleSave = () => {
+    updateRestaurant(form);
+    setEditing(false);
+    toast.success("Restaurante actualizado");
+  };
 
-    <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
-      <h3 className="text-lg font-bold font-sans">Servicios</h3>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        {Object.entries(restaurant.services).map(([key, val]) => {
-          const labels: Record<string, string> = {
-            terraza: "Terraza", parking: "Parking", accessible: "Accesible", pets: "Mascotas",
-            reservations: "Reservas", groups: "Grupos (+8)", wifi: "WiFi", card: "Tarjeta",
-            menuDelDia: "Menú del día", menuInfantil: "Menú infantil", takeaway: "Take away", delivery: "Delivery",
-          };
-          return (
-            <div key={key} className="flex items-center gap-2 text-sm">
-              {val ? <CheckCircle2 className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground/40" />}
-              <span className={val ? "" : "text-muted-foreground"}>{labels[key] || key}</span>
+  const handleServiceToggle = (key: string) => {
+    const newServices = { ...form.services, [key]: !form.services[key] };
+    setForm(prev => ({ ...prev, services: newServices }));
+    if (!editing) {
+      updateRestaurant({ services: newServices });
+      toast.success("Servicio actualizado");
+    }
+  };
+
+  const serviceLabels: Record<string, string> = {
+    terraza: "Terraza", parking: "Parking", accessible: "Accesible", pets: "Mascotas",
+    reservations: "Reservas", groups: "Grupos (+8)", wifi: "WiFi", card: "Tarjeta",
+    menuDelDia: "Menú del día", menuInfantil: "Menú infantil", takeaway: "Take away", delivery: "Delivery",
+  };
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold mb-1">Mi restaurante</h2>
+          <p className="text-muted-foreground text-sm">Configura los datos de tu restaurante</p>
+        </div>
+        {!editing && <Button variant="outline-primary" size="sm" onClick={() => { setForm({ ...restaurant }); setEditing(true); }}><Edit className="h-4 w-4 mr-1" /> Editar</Button>}
+      </div>
+      <div className="bg-card rounded-2xl border border-border p-6 space-y-6">
+        <h3 className="text-lg font-bold font-sans">Datos del restaurante</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[
+            { label: "Nombre", key: "name" },
+            { label: "Eslogan", key: "subtitle" },
+            { label: "Categoría", key: "category" },
+            { label: "Teléfono", key: "phone" },
+            { label: "Email", key: "email" },
+            { label: "Web", key: "web" },
+            { label: "Instagram", key: "instagram" },
+            { label: "Dirección", key: "address" },
+          ].map((f) => (
+            <div key={f.key}>
+              <label className="text-xs font-medium text-muted-foreground">{f.label}</label>
+              {editing ? (
+                <input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={(form as any)[f.key] || ""} onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))} />
+              ) : (
+                <div className="mt-1 px-3 py-2 bg-secondary rounded-lg text-sm">{(restaurant as any)[f.key]}</div>
+              )}
             </div>
-          );
-        })}
+          ))}
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">Descripción</label>
+          {editing ? (
+            <textarea className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" rows={3} value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))} />
+          ) : (
+            <div className="mt-1 px-3 py-2 bg-secondary rounded-lg text-sm">{restaurant.description}</div>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
+        <h3 className="text-lg font-bold font-sans">Horario</h3>
+        <div className="space-y-2">
+          {(editing ? form : restaurant).hours.map((h, i) => (
+            <div key={i} className="flex items-center gap-4 py-2 border-b border-border last:border-0">
+              <span className="w-24 font-medium text-sm">{h.day}</span>
+              {editing ? (
+                <div className="flex items-center gap-2 flex-1">
+                  <button onClick={() => {
+                    const hours = [...form.hours];
+                    hours[i] = { ...hours[i], closed: !hours[i].closed };
+                    setForm(prev => ({ ...prev, hours }));
+                  }} className={`text-xs px-2 py-1 rounded-full ${h.closed ? 'bg-destructive/10 text-destructive' : 'bg-success/10 text-success'}`}>
+                    {h.closed ? "Cerrado" : "Abierto"}
+                  </button>
+                  {!h.closed && h.morning && (
+                    <div className="flex items-center gap-1 text-sm">
+                      <input type="time" value={h.morning.open} className="px-1 py-0.5 bg-secondary border border-border rounded text-xs" onChange={e => {
+                        const hours = [...form.hours];
+                        hours[i] = { ...hours[i], morning: { ...hours[i].morning!, open: e.target.value } };
+                        setForm(prev => ({ ...prev, hours }));
+                      }} />
+                      <span>-</span>
+                      <input type="time" value={h.morning.close} className="px-1 py-0.5 bg-secondary border border-border rounded text-xs" onChange={e => {
+                        const hours = [...form.hours];
+                        hours[i] = { ...hours[i], morning: { ...hours[i].morning!, close: e.target.value } };
+                        setForm(prev => ({ ...prev, hours }));
+                      }} />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                h.closed ? (
+                  <span className="text-sm text-muted-foreground">Cerrado</span>
+                ) : (
+                  <span className="text-sm">
+                    {h.morning && `${h.morning.open} - ${h.morning.close}`}
+                    {h.evening && !h.continuous && ` / ${h.evening.open} - ${h.evening.close}`}
+                    {h.continuous && " (continuo)"}
+                  </span>
+                )
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
+        <h3 className="text-lg font-bold font-sans">Servicios</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {Object.entries((editing ? form : restaurant).services).map(([key, val]) => (
+            <button key={key} onClick={() => handleServiceToggle(key)} className="flex items-center gap-2 text-sm text-left">
+              {val ? <CheckCircle2 className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-muted-foreground/40" />}
+              <span className={val ? "" : "text-muted-foreground"}>{serviceLabels[key] || key}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex gap-3">
+        {editing ? (
+          <>
+            <Button variant="gradient" onClick={handleSave}>Guardar cambios</Button>
+            <Button variant="outline-primary" onClick={() => setEditing(false)}>Cancelar</Button>
+          </>
+        ) : (
+          <Button variant="outline-primary" asChild>
+            <Link to="/r/casa-martin" target="_blank">Vista previa <ExternalLink className="ml-1 h-4 w-4" /></Link>
+          </Button>
+        )}
       </div>
     </div>
-
-    <div className="flex gap-3">
-      <Button variant="gradient">Guardar cambios</Button>
-      <Button variant="outline-primary" asChild>
-        <Link to="/r/casa-martin" target="_blank">Vista previa <ExternalLink className="ml-1 h-4 w-4" /></Link>
-      </Button>
-    </div>
-  </div>
-);
+  );
+};
 
 // ── Menu Section ──
 const MenuSection = () => {
+  const { categories, dishes, wines, dailyMenu, addDish, updateDish, deleteDish, duplicateDish, toggleDishAvailability, addCategory, updateDailyMenu } = useApp();
   const [activeCategory, setActiveCategory] = useState("c1");
   const [showDishModal, setShowDishModal] = useState(false);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatIcon, setNewCatIcon] = useState("🍽️");
+  const [showDailyModal, setShowDailyModal] = useState(false);
+  const [dailyForm, setDailyForm] = useState({ ...dailyMenu });
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  const [dishForm, setDishForm] = useState<Partial<Dish>>({});
 
   const categoryDishes = dishes.filter(d => d.categoryId === activeCategory);
   const activeCat = categories.find(c => c.id === activeCategory);
+
+  const openNewDish = () => {
+    setEditingDish(null);
+    setDishForm({ categoryId: activeCategory, name: "", description: "", price: 0, allergens: [], dietary: [], available: true, isNew: false, position: categoryDishes.length + 1 });
+    setShowDishModal(true);
+  };
+
+  const openEditDish = (dish: Dish) => {
+    setEditingDish(dish);
+    setDishForm({ ...dish });
+    setShowDishModal(true);
+  };
+
+  const saveDish = () => {
+    if (!dishForm.name || !dishForm.price) {
+      toast.error("Nombre y precio son obligatorios");
+      return;
+    }
+    if (editingDish) {
+      updateDish(editingDish.id, dishForm);
+      toast.success("Plato actualizado");
+    } else {
+      addDish(dishForm as Omit<Dish, "id">);
+      toast.success("Plato añadido");
+    }
+    setShowDishModal(false);
+  };
+
+  const handleDelete = (id: string) => {
+    deleteDish(id);
+    setDeleteConfirm(null);
+    toast.success("Plato eliminado");
+  };
+
+  const handleDuplicate = (id: string) => {
+    duplicateDish(id);
+    toast.success("Plato duplicado");
+  };
+
+  const saveDailyMenu = () => {
+    updateDailyMenu(dailyForm);
+    setShowDailyModal(false);
+    toast.success("Menú del día actualizado");
+  };
+
+  const saveCategory = () => {
+    if (!newCatName) return;
+    addCategory(newCatName, newCatIcon);
+    setShowCategoryModal(false);
+    setNewCatName("");
+    toast.success("Categoría añadida");
+  };
 
   return (
     <div className="space-y-6">
@@ -140,24 +309,21 @@ const MenuSection = () => {
           <div><label className="text-xs text-muted-foreground">Postre</label><div className="mt-1 text-sm font-medium">{dailyMenu.dessert}</div></div>
         </div>
         <p className="text-xs text-muted-foreground">{dailyMenu.includes} · {dailyMenu.schedule}</p>
-        <Button size="sm" variant="outline-primary">Actualizar menú del día</Button>
+        <Button size="sm" variant="outline-primary" onClick={() => { setDailyForm({ ...dailyMenu }); setShowDailyModal(true); }}>Actualizar menú del día</Button>
       </div>
 
       <div className="flex gap-6">
         {/* Categories sidebar */}
         <div className="w-56 shrink-0 space-y-2">
           {categories.filter(c => c.id !== "c0").map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-left transition-colors ${activeCategory === cat.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-secondary text-muted-foreground'}`}
-            >
+            <button key={cat.id} onClick={() => setActiveCategory(cat.id)}
+              className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-left transition-colors ${activeCategory === cat.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-secondary text-muted-foreground'}`}>
               <span>{cat.icon}</span>
               <span className="flex-1">{cat.name}</span>
               <span className="text-xs text-muted-foreground">{dishes.filter(d => d.categoryId === cat.id).length}</span>
             </button>
           ))}
-          <Button variant="ghost" size="sm" className="w-full justify-start text-primary">
+          <Button variant="ghost" size="sm" className="w-full justify-start text-primary" onClick={() => setShowCategoryModal(true)}>
             <Plus className="h-4 w-4 mr-1" /> Añadir categoría
           </Button>
         </div>
@@ -166,7 +332,7 @@ const MenuSection = () => {
         <div className="flex-1 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-bold font-sans">{activeCat?.icon} {activeCat?.name}</h3>
-            <Button size="sm" variant="gradient" onClick={() => { setEditingDish(null); setShowDishModal(true); }}>
+            <Button size="sm" variant="gradient" onClick={openNewDish}>
               <Plus className="h-4 w-4 mr-1" /> Añadir plato
             </Button>
           </div>
@@ -200,11 +366,12 @@ const MenuSection = () => {
                 {dish.chefNote && <div className="text-[10px] text-muted-foreground italic">{dish.chefNote}</div>}
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                <button className="p-1.5 hover:bg-secondary rounded-lg" onClick={() => { setEditingDish(dish); setShowDishModal(true); }}>
-                  <Edit className="h-3.5 w-3.5 text-muted-foreground" />
+                <button className="p-1.5 hover:bg-secondary rounded-lg" onClick={() => toggleDishAvailability(dish.id)} title={dish.available ? "Marcar agotado" : "Marcar disponible"}>
+                  {dish.available ? <Eye className="h-3.5 w-3.5 text-success" /> : <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}
                 </button>
-                <button className="p-1.5 hover:bg-secondary rounded-lg"><Copy className="h-3.5 w-3.5 text-muted-foreground" /></button>
-                <button className="p-1.5 hover:bg-secondary rounded-lg"><Trash2 className="h-3.5 w-3.5 text-destructive/60" /></button>
+                <button className="p-1.5 hover:bg-secondary rounded-lg" onClick={() => openEditDish(dish)}><Edit className="h-3.5 w-3.5 text-muted-foreground" /></button>
+                <button className="p-1.5 hover:bg-secondary rounded-lg" onClick={() => handleDuplicate(dish.id)}><Copy className="h-3.5 w-3.5 text-muted-foreground" /></button>
+                <button className="p-1.5 hover:bg-secondary rounded-lg" onClick={() => setDeleteConfirm(dish.id)}><Trash2 className="h-3.5 w-3.5 text-destructive/60" /></button>
               </div>
             </div>
           ))}
@@ -231,23 +398,93 @@ const MenuSection = () => {
         </div>
       </div>
 
-      {/* Simple dish modal */}
+      {/* Dish modal */}
       {showDishModal && (
         <div className="fixed inset-0 z-50 bg-foreground/40 flex items-center justify-center p-4" onClick={() => setShowDishModal(false)}>
           <div className="bg-card rounded-2xl border border-border p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto space-y-4" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-bold font-sans">{editingDish ? "Editar plato" : "Nuevo plato"}</h3>
             <div className="space-y-3">
-              <div><label className="text-xs font-medium text-muted-foreground">Nombre</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" defaultValue={editingDish?.name || ""} /></div>
-              <div><label className="text-xs font-medium text-muted-foreground">Descripción</label><textarea className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" rows={2} defaultValue={editingDish?.description || ""} /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Nombre *</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={dishForm.name || ""} onChange={e => setDishForm(prev => ({ ...prev, name: e.target.value }))} /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Descripción</label><textarea className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" rows={2} value={dishForm.description || ""} onChange={e => setDishForm(prev => ({ ...prev, description: e.target.value }))} /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-xs font-medium text-muted-foreground">Precio (€)</label><input type="number" className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" defaultValue={editingDish?.price || ""} /></div>
-                <div><label className="text-xs font-medium text-muted-foreground">Precio anterior (€)</label><input type="number" className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" defaultValue={editingDish?.oldPrice || ""} /></div>
+                <div><label className="text-xs font-medium text-muted-foreground">Precio (€) *</label><input type="number" step="0.01" className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={dishForm.price || ""} onChange={e => setDishForm(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))} /></div>
+                <div><label className="text-xs font-medium text-muted-foreground">Precio anterior (€)</label><input type="number" step="0.01" className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={dishForm.oldPrice || ""} onChange={e => setDishForm(prev => ({ ...prev, oldPrice: parseFloat(e.target.value) || undefined }))} /></div>
               </div>
-              <div><label className="text-xs font-medium text-muted-foreground">Nota del chef</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" defaultValue={editingDish?.chefNote || ""} /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Nota del chef</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={dishForm.chefNote || ""} onChange={e => setDishForm(prev => ({ ...prev, chefNote: e.target.value }))} /></div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Alérgenos</label>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {ALLERGENS.map(a => (
+                    <button key={a.id} onClick={() => setDishForm(prev => ({ ...prev, allergens: prev.allergens?.includes(a.id) ? prev.allergens.filter(x => x !== a.id) : [...(prev.allergens || []), a.id] }))}
+                      className={`text-xs px-2 py-1 rounded-full transition-colors ${dishForm.allergens?.includes(a.id) ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted-foreground'}`}>
+                      {a.emoji} {a.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={dishForm.available ?? true} onChange={e => setDishForm(prev => ({ ...prev, available: e.target.checked }))} />
+                  Disponible
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={dishForm.isNew ?? false} onChange={e => setDishForm(prev => ({ ...prev, isNew: e.target.checked }))} />
+                  Nuevo
+                </label>
+              </div>
             </div>
             <div className="flex gap-3 pt-2">
-              <Button variant="gradient" className="flex-1">Guardar</Button>
+              <Button variant="gradient" className="flex-1" onClick={saveDish}>Guardar</Button>
               <Button variant="outline-primary" onClick={() => setShowDishModal(false)}>Cancelar</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
+          <div className="bg-card rounded-2xl border border-border p-6 max-w-sm w-full space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold">¿Eliminar plato?</h3>
+            <p className="text-sm text-muted-foreground">Esta acción no se puede deshacer.</p>
+            <div className="flex gap-3">
+              <Button variant="destructive" className="flex-1" onClick={() => handleDelete(deleteConfirm)}>Eliminar</Button>
+              <Button variant="outline-primary" onClick={() => setDeleteConfirm(null)}>Cancelar</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category modal */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-center justify-center p-4" onClick={() => setShowCategoryModal(false)}>
+          <div className="bg-card rounded-2xl border border-border p-6 max-w-sm w-full space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold">Nueva categoría</h3>
+            <div><label className="text-xs font-medium text-muted-foreground">Nombre</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={newCatName} onChange={e => setNewCatName(e.target.value)} /></div>
+            <div><label className="text-xs font-medium text-muted-foreground">Icono (emoji)</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={newCatIcon} onChange={e => setNewCatIcon(e.target.value)} /></div>
+            <div className="flex gap-3">
+              <Button variant="gradient" className="flex-1" onClick={saveCategory}>Añadir</Button>
+              <Button variant="outline-primary" onClick={() => setShowCategoryModal(false)}>Cancelar</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Daily menu modal */}
+      {showDailyModal && (
+        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-center justify-center p-4" onClick={() => setShowDailyModal(false)}>
+          <div className="bg-card rounded-2xl border border-border p-6 max-w-lg w-full space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold">Actualizar menú del día</h3>
+            <div><label className="text-xs font-medium text-muted-foreground">Primer plato</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={dailyForm.starter} onChange={e => setDailyForm(prev => ({ ...prev, starter: e.target.value }))} /></div>
+            <div><label className="text-xs font-medium text-muted-foreground">Segundo plato</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={dailyForm.main} onChange={e => setDailyForm(prev => ({ ...prev, main: e.target.value }))} /></div>
+            <div><label className="text-xs font-medium text-muted-foreground">Postre</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={dailyForm.dessert} onChange={e => setDailyForm(prev => ({ ...prev, dessert: e.target.value }))} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className="text-xs font-medium text-muted-foreground">Precio (€)</label><input type="number" step="0.01" className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={dailyForm.price} onChange={e => setDailyForm(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))} /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Incluye</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={dailyForm.includes} onChange={e => setDailyForm(prev => ({ ...prev, includes: e.target.value }))} /></div>
+            </div>
+            <div className="flex gap-3">
+              <Button variant="gradient" className="flex-1" onClick={saveDailyMenu}>Guardar</Button>
+              <Button variant="outline-primary" onClick={() => setShowDailyModal(false)}>Cancelar</Button>
             </div>
           </div>
         </div>
@@ -270,7 +507,36 @@ const statusLabels: Record<string, string> = {
 };
 
 const ReservationsSection = () => {
+  const { reservations, updateReservationStatus, addReservation, tables } = useApp();
   const [selectedRes, setSelectedRes] = useState<Reservation | null>(null);
+  const [showNewModal, setShowNewModal] = useState(false);
+  const [newRes, setNewRes] = useState({ name: "", phone: "", email: "", date: "", time: "", guests: 2, notes: "", zonePreference: "Sin preferencia" });
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  const filtered = statusFilter === "all" ? reservations : reservations.filter(r => r.status === statusFilter);
+
+  const todayStr = new Date().toISOString().split("T")[0];
+  const todayRes = reservations.filter(r => r.date === todayStr);
+  const todayCovers = todayRes.reduce((sum, r) => sum + r.guests, 0);
+  const pendingToday = todayRes.filter(r => r.status === "pending").length;
+  const cancelledToday = todayRes.filter(r => r.status === "cancelled").length;
+
+  const handleStatusChange = (id: string, status: Reservation["status"]) => {
+    updateReservationStatus(id, status);
+    setSelectedRes(prev => prev?.id === id ? { ...prev, status } : prev);
+    toast.success(`Reserva ${statusLabels[status].toLowerCase()}`);
+  };
+
+  const saveNewRes = () => {
+    if (!newRes.name || !newRes.phone || !newRes.date || !newRes.time) {
+      toast.error("Completa los campos obligatorios");
+      return;
+    }
+    addReservation({ ...newRes, status: "confirmed", source: "manual" });
+    setShowNewModal(false);
+    setNewRes({ name: "", phone: "", email: "", date: "", time: "", guests: 2, notes: "", zonePreference: "Sin preferencia" });
+    toast.success("Reserva creada");
+  };
 
   return (
     <div className="space-y-6">
@@ -279,16 +545,16 @@ const ReservationsSection = () => {
           <h2 className="text-2xl font-bold mb-1">Reservas</h2>
           <p className="text-muted-foreground text-sm">Gestiona las reservas de tu restaurante</p>
         </div>
-        <Button variant="gradient" size="sm"><Plus className="h-4 w-4 mr-1" /> Nueva reserva</Button>
+        <Button variant="gradient" size="sm" onClick={() => setShowNewModal(true)}><Plus className="h-4 w-4 mr-1" /> Nueva reserva</Button>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Reservas hoy", value: metricsData.reservationsToday, icon: CalendarCheck },
-          { label: "Cubiertos hoy", value: `${metricsData.coversToday}/${metricsData.totalCovers}`, icon: Users },
-          { label: "Pendientes", value: metricsData.pendingToday, icon: Clock },
-          { label: "Cancelaciones hoy", value: metricsData.cancelledToday, icon: XCircle },
+          { label: "Reservas hoy", value: todayRes.length, icon: CalendarCheck },
+          { label: "Cubiertos hoy", value: `${todayCovers}/42`, icon: Users },
+          { label: "Pendientes", value: pendingToday, icon: Clock },
+          { label: "Cancelaciones hoy", value: cancelledToday, icon: XCircle },
         ].map((kpi, i) => (
           <div key={i} className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -300,8 +566,17 @@ const ReservationsSection = () => {
         ))}
       </div>
 
+      {/* Filters */}
+      <div className="flex gap-2">
+        {[{ id: "all", label: "Todas" }, { id: "pending", label: "Pendientes" }, { id: "confirmed", label: "Confirmadas" }, { id: "completed", label: "Completadas" }, { id: "cancelled", label: "Canceladas" }].map(f => (
+          <button key={f.id} onClick={() => setStatusFilter(f.id)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${statusFilter === f.id ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
+            {f.label}
+          </button>
+        ))}
+      </div>
+
       <div className="flex gap-6">
-        {/* Reservations table */}
         <div className="flex-1 bg-card rounded-2xl border border-border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -316,7 +591,7 @@ const ReservationsSection = () => {
                 </tr>
               </thead>
               <tbody>
-                {reservations.map(res => (
+                {filtered.map(res => (
                   <tr key={res.id} className="border-b border-border last:border-0 hover:bg-secondary/30 cursor-pointer transition-colors" onClick={() => setSelectedRes(res)}>
                     <td className="px-4 py-3">{new Date(res.date).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}</td>
                     <td className="px-4 py-3">{res.time}</td>
@@ -335,7 +610,6 @@ const ReservationsSection = () => {
           </div>
         </div>
 
-        {/* Detail panel */}
         {selectedRes && (
           <div className="w-80 bg-card rounded-2xl border border-border p-6 space-y-4 shrink-0">
             <div className="flex items-center justify-between">
@@ -361,13 +635,46 @@ const ReservationsSection = () => {
                 </div>
               </div>
             </div>
-            <div className="flex gap-2 pt-2">
-              <Button size="sm" variant="gradient" className="flex-1">Confirmar</Button>
-              <Button size="sm" variant="outline-primary">Cancelar</Button>
+            <div className="flex flex-wrap gap-2 pt-2">
+              {selectedRes.status === "pending" && (
+                <>
+                  <Button size="sm" variant="gradient" className="flex-1" onClick={() => handleStatusChange(selectedRes.id, "confirmed")}>Confirmar</Button>
+                  <Button size="sm" variant="outline-primary" onClick={() => handleStatusChange(selectedRes.id, "cancelled")}>Cancelar</Button>
+                </>
+              )}
+              {selectedRes.status === "confirmed" && (
+                <>
+                  <Button size="sm" variant="gradient" className="flex-1" onClick={() => handleStatusChange(selectedRes.id, "completed")}>Completar</Button>
+                  <Button size="sm" variant="outline-primary" onClick={() => handleStatusChange(selectedRes.id, "noshow")}>No-show</Button>
+                  <Button size="sm" variant="outline-primary" onClick={() => handleStatusChange(selectedRes.id, "cancelled")}>Cancelar</Button>
+                </>
+              )}
             </div>
           </div>
         )}
       </div>
+
+      {/* New reservation modal */}
+      {showNewModal && (
+        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-center justify-center p-4" onClick={() => setShowNewModal(false)}>
+          <div className="bg-card rounded-2xl border border-border p-6 max-w-lg w-full space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold">Nueva reserva</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2"><label className="text-xs font-medium text-muted-foreground">Nombre *</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={newRes.name} onChange={e => setNewRes(prev => ({ ...prev, name: e.target.value }))} /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Teléfono *</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={newRes.phone} onChange={e => setNewRes(prev => ({ ...prev, phone: e.target.value }))} /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Email</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={newRes.email} onChange={e => setNewRes(prev => ({ ...prev, email: e.target.value }))} /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Fecha *</label><input type="date" className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={newRes.date} onChange={e => setNewRes(prev => ({ ...prev, date: e.target.value }))} /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Hora *</label><input type="time" className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={newRes.time} onChange={e => setNewRes(prev => ({ ...prev, time: e.target.value }))} /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Personas</label><input type="number" min={1} className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={newRes.guests} onChange={e => setNewRes(prev => ({ ...prev, guests: parseInt(e.target.value) || 1 }))} /></div>
+              <div className="col-span-2"><label className="text-xs font-medium text-muted-foreground">Notas</label><textarea className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" rows={2} value={newRes.notes} onChange={e => setNewRes(prev => ({ ...prev, notes: e.target.value }))} /></div>
+            </div>
+            <div className="flex gap-3">
+              <Button variant="gradient" className="flex-1" onClick={saveNewRes}>Crear reserva</Button>
+              <Button variant="outline-primary" onClick={() => setShowNewModal(false)}>Cancelar</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -377,36 +684,126 @@ const zoneColors: Record<string, string> = { Interior: "bg-primary/10", Terraza:
 const statusBg: Record<string, string> = { free: "border-success bg-success/5", reserved: "border-primary bg-primary/5", occupied: "border-destructive bg-destructive/5", "out-of-service": "border-muted bg-muted/50" };
 const statusLabel: Record<string, string> = { free: "Libre", reserved: "Reservada", occupied: "Ocupada", "out-of-service": "Fuera de servicio" };
 
-const TablesSection = () => (
-  <div className="space-y-6">
-    <div className="flex items-center justify-between">
-      <div>
-        <h2 className="text-2xl font-bold mb-1">Mesas</h2>
-        <p className="text-muted-foreground text-sm">Plano visual de tu restaurante · Capacidad total: 42 cubiertos</p>
-      </div>
-      <Button variant="gradient" size="sm"><Plus className="h-4 w-4 mr-1" /> Añadir mesa</Button>
-    </div>
-    <div className="flex gap-3 mb-4">
-      {["Interior", "Terraza", "Barra", "Privado"].map(zone => (
-        <span key={zone} className={`px-3 py-1 rounded-full text-xs font-medium ${zoneColors[zone]}`}>{zone}</span>
-      ))}
-    </div>
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-      {tables.map(table => (
-        <div key={table.id} className={`rounded-2xl border-2 p-4 space-y-2 transition-colors ${statusBg[table.status]}`}>
-          <div className="flex items-center justify-between">
-            <span className="font-bold text-sm">{table.number}</span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${zoneColors[table.zone]}`}>{table.zone}</span>
-          </div>
-          <div className="text-xs text-muted-foreground">{table.capacity} pers.</div>
-          <div className="text-xs font-medium">{statusLabel[table.status]}</div>
-          {table.reservedBy && <div className="text-xs text-primary">{table.reservedBy} · {table.reservedTime}</div>}
-          {table.combinable && <div className="text-[10px] text-muted-foreground">Combinable</div>}
+const TablesSection = () => {
+  const { tables, addTable, updateTable, deleteTable } = useApp();
+  const [showModal, setShowModal] = useState(false);
+  const [editingTable, setEditingTable] = useState<TableType | null>(null);
+  const [form, setForm] = useState({ number: "", capacity: 2, zone: "Interior" as TableType["zone"], combinable: false, status: "free" as TableType["status"] });
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  const totalCapacity = tables.reduce((sum, t) => sum + t.capacity, 0);
+
+  const openNew = () => {
+    setEditingTable(null);
+    setForm({ number: `Mesa ${tables.length + 1}`, capacity: 2, zone: "Interior", combinable: false, status: "free" });
+    setShowModal(true);
+  };
+
+  const openEdit = (table: TableType) => {
+    setEditingTable(table);
+    setForm({ number: table.number, capacity: table.capacity, zone: table.zone, combinable: table.combinable, status: table.status });
+    setShowModal(true);
+  };
+
+  const saveTable = () => {
+    if (!form.number) return;
+    if (editingTable) {
+      updateTable(editingTable.id, form);
+      toast.success("Mesa actualizada");
+    } else {
+      addTable(form);
+      toast.success("Mesa añadida");
+    }
+    setShowModal(false);
+  };
+
+  const handleDelete = (id: string) => {
+    deleteTable(id);
+    setDeleteConfirm(null);
+    toast.success("Mesa eliminada");
+  };
+
+  const cycleStatus = (table: TableType) => {
+    const order: TableType["status"][] = ["free", "reserved", "occupied", "out-of-service"];
+    const next = order[(order.indexOf(table.status) + 1) % order.length];
+    updateTable(table.id, { status: next });
+    toast.success(`${table.number}: ${statusLabel[next]}`);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold mb-1">Mesas</h2>
+          <p className="text-muted-foreground text-sm">Plano visual de tu restaurante · Capacidad total: {totalCapacity} cubiertos</p>
         </div>
-      ))}
+        <Button variant="gradient" size="sm" onClick={openNew}><Plus className="h-4 w-4 mr-1" /> Añadir mesa</Button>
+      </div>
+      <div className="flex gap-3 mb-4">
+        {["Interior", "Terraza", "Barra", "Privado"].map(zone => (
+          <span key={zone} className={`px-3 py-1 rounded-full text-xs font-medium ${zoneColors[zone]}`}>{zone}</span>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        {tables.map(table => (
+          <div key={table.id} className={`rounded-2xl border-2 p-4 space-y-2 transition-colors cursor-pointer ${statusBg[table.status]}`} onClick={() => openEdit(table)}>
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-sm">{table.number}</span>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${zoneColors[table.zone]}`}>{table.zone}</span>
+            </div>
+            <div className="text-xs text-muted-foreground">{table.capacity} pers.</div>
+            <button onClick={e => { e.stopPropagation(); cycleStatus(table); }} className="text-xs font-medium hover:underline">
+              {statusLabel[table.status]}
+            </button>
+            {table.reservedBy && <div className="text-xs text-primary">{table.reservedBy} · {table.reservedTime}</div>}
+            {table.combinable && <div className="text-[10px] text-muted-foreground">Combinable</div>}
+          </div>
+        ))}
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
+          <div className="bg-card rounded-2xl border border-border p-6 max-w-sm w-full space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold">{editingTable ? "Editar mesa" : "Nueva mesa"}</h3>
+            <div><label className="text-xs font-medium text-muted-foreground">Nombre</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={form.number} onChange={e => setForm(prev => ({ ...prev, number: e.target.value }))} /></div>
+            <div><label className="text-xs font-medium text-muted-foreground">Capacidad</label><input type="number" min={1} className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={form.capacity} onChange={e => setForm(prev => ({ ...prev, capacity: parseInt(e.target.value) || 1 }))} /></div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Zona</label>
+              <div className="flex gap-2 mt-1">
+                {(["Interior", "Terraza", "Barra", "Privado"] as const).map(z => (
+                  <button key={z} onClick={() => setForm(prev => ({ ...prev, zone: z }))}
+                    className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors ${form.zone === z ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>{z}</button>
+                ))}
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={form.combinable} onChange={e => setForm(prev => ({ ...prev, combinable: e.target.checked }))} />
+              Combinable
+            </label>
+            <div className="flex gap-3">
+              <Button variant="gradient" className="flex-1" onClick={saveTable}>Guardar</Button>
+              {editingTable && <Button variant="destructive" size="sm" onClick={() => { setShowModal(false); setDeleteConfirm(editingTable.id); }}>Eliminar</Button>}
+              <Button variant="outline-primary" onClick={() => setShowModal(false)}>Cancelar</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
+          <div className="bg-card rounded-2xl border border-border p-6 max-w-sm w-full space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold">¿Eliminar mesa?</h3>
+            <p className="text-sm text-muted-foreground">Esta acción no se puede deshacer.</p>
+            <div className="flex gap-3">
+              <Button variant="destructive" className="flex-1" onClick={() => handleDelete(deleteConfirm)}>Eliminar</Button>
+              <Button variant="outline-primary" onClick={() => setDeleteConfirm(null)}>Cancelar</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 // ── Metrics Section ──
 const MetricsSection = () => (
@@ -491,6 +888,7 @@ const MetricsSection = () => (
 
 // ── QR Section ──
 const QRSection = () => {
+  const { restaurant } = useApp();
   const url = `${window.location.origin}/r/${restaurant.slug}`;
   return (
     <div className="space-y-6">
@@ -512,7 +910,7 @@ const QRSection = () => {
             <h3 className="text-sm font-bold font-sans">Link directo</h3>
             <div className="flex items-center gap-2">
               <code className="flex-1 bg-secondary px-3 py-2 rounded-lg text-sm truncate">{url}</code>
-              <Button size="sm" variant="outline-primary" onClick={() => navigator.clipboard.writeText(url)}>Copiar</Button>
+              <Button size="sm" variant="outline-primary" onClick={() => { navigator.clipboard.writeText(url); toast.success("Link copiado"); }}>Copiar</Button>
             </div>
           </div>
           <div className="bg-card rounded-2xl border border-border p-6 space-y-3">
@@ -534,73 +932,80 @@ const QRSection = () => {
 };
 
 // ── Settings Section ──
-const SettingsSection = () => (
-  <div className="space-y-6">
-    <div>
-      <h2 className="text-2xl font-bold mb-1">Configuración</h2>
-      <p className="text-muted-foreground text-sm">Ajustes generales y facturación</p>
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
-        <h3 className="text-lg font-bold font-sans">General</h3>
-        {[
-          { label: "Idioma del panel", value: "Español" },
-          { label: "Zona horaria", value: "Europe/Madrid" },
-          { label: "Moneda", value: "EUR (€)" },
-        ].map((s, i) => (
-          <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-            <span className="text-sm">{s.label}</span>
-            <span className="text-sm text-muted-foreground">{s.value}</span>
-          </div>
-        ))}
+const SettingsSection = () => {
+  const { notifications, toggleNotification } = useApp();
+
+  const notifItems: { key: keyof typeof notifications; label: string }[] = [
+    { key: "emailOnReservation", label: "Email al recibir reserva" },
+    { key: "emailOnCancellation", label: "Email en cancelación" },
+    { key: "dailySummary", label: "Resumen diario" },
+    { key: "noshowAlert", label: "Alerta de no-show" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold mb-1">Configuración</h2>
+        <p className="text-muted-foreground text-sm">Ajustes generales y facturación</p>
       </div>
-      <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
-        <h3 className="text-lg font-bold font-sans">Facturación</h3>
-        <div className="flex items-center justify-between">
-          <span className="text-sm">Plan actual</span>
-          <span className="bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full">PRO — €29/mes</span>
-        </div>
-        <div className="flex items-center justify-between py-2 border-b border-border">
-          <span className="text-sm">Próxima factura</span>
-          <span className="text-sm text-muted-foreground">15 abril 2026</span>
-        </div>
-        <Button variant="outline-primary" size="sm">Gestionar suscripción</Button>
-      </div>
-      <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
-        <h3 className="text-lg font-bold font-sans">Notificaciones</h3>
-        {[
-          { label: "Email al recibir reserva", on: true },
-          { label: "Email en cancelación", on: true },
-          { label: "Resumen diario", on: false },
-          { label: "Alerta de no-show", on: true },
-        ].map((n, i) => (
-          <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-            <span className="text-sm">{n.label}</span>
-            <div className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${n.on ? 'bg-success' : 'bg-muted'}`}>
-              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-card shadow transition-transform ${n.on ? 'left-5' : 'left-0.5'}`} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
+          <h3 className="text-lg font-bold font-sans">General</h3>
+          {[
+            { label: "Idioma del panel", value: "Español" },
+            { label: "Zona horaria", value: "Europe/Madrid" },
+            { label: "Moneda", value: "EUR (€)" },
+          ].map((s, i) => (
+            <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+              <span className="text-sm">{s.label}</span>
+              <span className="text-sm text-muted-foreground">{s.value}</span>
             </div>
+          ))}
+        </div>
+        <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
+          <h3 className="text-lg font-bold font-sans">Facturación</h3>
+          <div className="flex items-center justify-between">
+            <span className="text-sm">Plan actual</span>
+            <span className="bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full">PRO — €29/mes</span>
           </div>
-        ))}
-      </div>
-      <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
-        <h3 className="text-lg font-bold font-sans">Multi-idioma</h3>
-        {[
-          { lang: "Español", flag: "🇪🇸", on: true },
-          { lang: "English", flag: "🇬🇧", on: true },
-          { lang: "Français", flag: "🇫🇷", on: true },
-          { lang: "Català", flag: "🏳️", on: true },
-        ].map((l, i) => (
-          <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-            <span className="text-sm">{l.flag} {l.lang}</span>
-            <div className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${l.on ? 'bg-success' : 'bg-muted'}`}>
-              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-card shadow transition-transform ${l.on ? 'left-5' : 'left-0.5'}`} />
+          <div className="flex items-center justify-between py-2 border-b border-border">
+            <span className="text-sm">Próxima factura</span>
+            <span className="text-sm text-muted-foreground">15 abril 2026</span>
+          </div>
+          <Button variant="outline-primary" size="sm">Gestionar suscripción</Button>
+        </div>
+        <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
+          <h3 className="text-lg font-bold font-sans">Notificaciones</h3>
+          {notifItems.map((n) => (
+            <div key={n.key} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+              <span className="text-sm">{n.label}</span>
+              <button onClick={() => { toggleNotification(n.key); toast.success("Notificación actualizada"); }}
+                className={`w-10 h-5 rounded-full relative transition-colors ${notifications[n.key] ? 'bg-success' : 'bg-muted'}`}>
+                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-card shadow transition-transform ${notifications[n.key] ? 'left-5' : 'left-0.5'}`} />
+              </button>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+        <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
+          <h3 className="text-lg font-bold font-sans">Multi-idioma</h3>
+          {[
+            { lang: "Español", flag: "🇪🇸", on: true },
+            { lang: "English", flag: "🇬🇧", on: true },
+            { lang: "Français", flag: "🇫🇷", on: true },
+            { lang: "Català", flag: "🏳️", on: true },
+          ].map((l, i) => (
+            <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+              <span className="text-sm">{l.flag} {l.lang}</span>
+              <div className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${l.on ? 'bg-success' : 'bg-muted'}`}>
+                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-card shadow transition-transform ${l.on ? 'left-5' : 'left-0.5'}`} />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ── Dashboard Layout ──
 const sections: Record<Section, React.FC> = {
@@ -614,13 +1019,15 @@ const sections: Record<Section, React.FC> = {
 };
 
 const Dashboard = () => {
+  const { isLoggedIn, logout, restaurant } = useApp();
   const [active, setActive] = useState<Section>("restaurant");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const ActiveSection = sections[active];
 
+  if (!isLoggedIn) return <LoginScreen />;
+
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
       <aside className={`${sidebarOpen ? 'w-60' : 'w-0 overflow-hidden'} shrink-0 border-r border-border bg-card transition-all duration-200`}>
         <div className="p-4 border-b border-border">
           <Link to="/" className="flex items-center gap-2">
@@ -630,11 +1037,8 @@ const Dashboard = () => {
         </div>
         <nav className="p-3 space-y-1">
           {sidebarItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => setActive(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${active === item.id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'}`}
-            >
+            <button key={item.id} onClick={() => setActive(item.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${active === item.id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'}`}>
               <item.icon className="h-4 w-4" />
               <span>{item.label}</span>
             </button>
@@ -645,7 +1049,6 @@ const Dashboard = () => {
         </div>
       </aside>
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-14 border-b border-border bg-card flex items-center justify-between px-6">
           <div className="flex items-center gap-3">
@@ -659,6 +1062,9 @@ const Dashboard = () => {
             <button className="relative p-2 hover:bg-secondary rounded-lg">
               <Bell className="h-4 w-4 text-muted-foreground" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
+            </button>
+            <button onClick={() => { logout(); toast.success("Sesión cerrada"); }} className="p-2 hover:bg-secondary rounded-lg" title="Cerrar sesión">
+              <LogOut className="h-4 w-4 text-muted-foreground" />
             </button>
             <div className="w-8 h-8 rounded-full bg-gradient-primary" />
           </div>
