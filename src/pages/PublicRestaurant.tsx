@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
 import { ALLERGENS } from "@/data/mockData";
 import { heroRestaurant, dishImages } from "@/data/dishImages";
+import { getWineImage } from "@/data/wineImages";
 import { toast } from "sonner";
 import {
   Clock, MapPin, Phone, Instagram, Share2, Search, ChevronRight,
@@ -237,7 +238,7 @@ const PublicRestaurant = () => {
           <div className="space-y-3">
             {wines.map(wine => (
               <div key={wine.id} className="flex gap-3 bg-card rounded-xl border border-border p-3">
-                <div className="w-8 h-12 rounded bg-gradient-to-b from-primary/20 to-primary/5 shrink-0" />
+                <img src={getWineImage(wine.id, wine.type)} alt={wine.name} loading="lazy" className="w-10 h-14 rounded object-cover shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm">{wine.name} {wine.year && <span className="text-muted-foreground">{wine.year}</span>}</div>
                   <div className="text-xs text-muted-foreground">{wine.region} · {wine.grape}</div>
