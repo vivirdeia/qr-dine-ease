@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { restaurant, categories, dishes, wines, dailyMenu, ALLERGENS } from "@/data/mockData";
+import { heroRestaurant, dishImages } from "@/data/dishImages";
 import {
   Clock, MapPin, Phone, Instagram, Share2, Search, ChevronRight,
   Globe, Check, UtensilsCrossed, CalendarCheck, ArrowLeft, Users, X,
@@ -49,7 +50,7 @@ const PublicRestaurant = () => {
     <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto relative">
       {/* Header */}
       <div className="relative">
-        <div className="h-48 bg-gradient-to-br from-primary/20 to-gold/10" />
+        <img src={heroRestaurant} alt={restaurant.name} className="h-48 w-full object-cover" />
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background to-transparent h-20" />
         <div className="relative px-4 -mt-12">
           <div className="flex items-center justify-between mb-1">
@@ -182,7 +183,11 @@ const PublicRestaurant = () => {
               <div className="space-y-3">
                 {(searchQuery ? catDishes : dishes.filter(d => d.categoryId === cat.id)).map(dish => (
                   <div key={dish.id} className={`flex gap-3 ${!dish.available ? 'opacity-50' : ''}`}>
-                    <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-primary/10 to-gold/10 shrink-0" />
+                    {dishImages[dish.id] ? (
+                      <img src={dishImages[dish.id]} alt={dish.name} className="w-20 h-20 rounded-xl object-cover shrink-0" loading="lazy" />
+                    ) : (
+                      <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-primary/10 to-gold/10 shrink-0" />
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div>

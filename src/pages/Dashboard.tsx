@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { restaurant, categories, dishes, wines, dailyMenu, tables, reservations, metricsData, ALLERGENS, type Dish, type Reservation } from "@/data/mockData";
+import { dishImages } from "@/data/dishImages";
 import { QRCodeSVG } from "qrcode.react";
 import {
   UtensilsCrossed, Store, Book, CalendarCheck, LayoutGrid, BarChart3,
@@ -172,7 +173,11 @@ const MenuSection = () => {
           {categoryDishes.map(dish => (
             <div key={dish.id} className={`flex items-center gap-4 bg-card rounded-xl border border-border p-4 ${!dish.available ? 'opacity-60' : ''}`}>
               <GripVertical className="h-4 w-4 text-muted-foreground/40 cursor-grab" />
-              <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-primary/10 to-gold/10 shrink-0" />
+              {dishImages[dish.id] ? (
+                <img src={dishImages[dish.id]} alt={dish.name} className="w-16 h-16 rounded-lg object-cover shrink-0" loading="lazy" />
+              ) : (
+                <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-primary/10 to-gold/10 shrink-0" />
+              )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm truncate">{dish.name}</span>
