@@ -376,7 +376,22 @@ const PublicRestaurant = () => {
                 </div>
                 <div className="flex gap-3 pt-2">
                   <Button variant="outline-primary" onClick={() => setReservationStep(1)}><ArrowLeft className="h-4 w-4" /></Button>
-                  <Button variant="gradient" size="lg" className="flex-1" disabled={!resData.name || !resData.phone} onClick={() => setReservationStep(3)}>
+                    <Button variant="gradient" size="lg" className="flex-1" disabled={!resData.name || !resData.phone} onClick={() => {
+                      addReservation({
+                        name: resData.name,
+                        phone: resData.phone,
+                        email: resData.email || undefined,
+                        date: resData.date,
+                        time: resData.time,
+                        guests: resData.guests,
+                        zonePreference: resData.zone,
+                        notes: resData.notes || undefined,
+                        status: "pending",
+                        source: "digital",
+                      });
+                      toast.success("¡Reserva enviada!");
+                      setReservationStep(3);
+                    }}>
                     Confirmar reserva
                   </Button>
                 </div>
