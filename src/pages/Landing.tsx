@@ -249,10 +249,14 @@ const Comparison = () => (
   </section>
 );
 
+import restauranteBarrio from "@/assets/cases/restaurante-barrio.jpg";
+import cafeteriaBrunch from "@/assets/cases/cafeteria-brunch.jpg";
+import fineDining from "@/assets/cases/fine-dining.jpg";
+
 const useCases = [
-  { title: "Restaurante de barrio", desc: "Casa Martín tiene 40 cubiertos. Antes recibía reservas por teléfono y WhatsApp. Ahora sus clientes reservan desde la carta digital. No-shows bajaron un 35%.", gradient: "from-primary/20 to-gold/20" },
-  { title: "Cafetería con brunch", desc: "Kokosnöt tiene carta rotatoria cada semana. Con Carta, actualiza los platos en 2 minutos desde el móvil. Sin llamar a nadie, sin depender de un diseñador.", gradient: "from-gold/20 to-success/20" },
-  { title: "Restaurante fine dining", desc: "El Racó tiene carta de vinos con 120 referencias. La carta digital permite buscar por tipo, región y maridaje. El sommelier respira tranquilo.", gradient: "from-primary/10 to-primary/20" },
+  { title: "Restaurante de barrio", desc: "Casa Martín tiene 40 cubiertos. Antes recibía reservas por teléfono y WhatsApp. Ahora sus clientes reservan desde la carta digital. No-shows bajaron un 35%.", image: restauranteBarrio },
+  { title: "Cafetería con brunch", desc: "Kokosnöt tiene carta rotatoria cada semana. Con Carta, actualiza los platos en 2 minutos desde el móvil. Sin llamar a nadie, sin depender de un diseñador.", image: cafeteriaBrunch },
+  { title: "Restaurante fine dining", desc: "El Racó tiene carta de vinos con 120 referencias. La carta digital permite buscar por tipo, región y maridaje. El sommelier respira tranquilo.", image: fineDining },
 ];
 
 const UseCases = () => (
@@ -262,7 +266,7 @@ const UseCases = () => (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {useCases.map((c, i) => (
           <div key={i} className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-warm transition-shadow">
-            <div className={`h-40 bg-gradient-to-br ${c.gradient}`} />
+            <img src={c.image} alt={c.title} className="h-40 w-full object-cover" loading="lazy" width={800} height={544} />
             <div className="p-6 space-y-3">
               <h3 className="text-lg font-bold font-sans">{c.title}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{c.desc}</p>
