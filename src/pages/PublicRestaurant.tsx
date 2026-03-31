@@ -10,15 +10,8 @@ import {
   Globe, Check, UtensilsCrossed, CalendarCheck, ArrowLeft, Users, X,
 } from "lucide-react";
 
-const isOpen = () => {
-  const now = new Date();
-  const day = now.getDay();
-  const dayMap = [6, 0, 1, 2, 3, 4, 5]; // Sun=6, Mon=0, ...
-  const h = restaurant.hours[dayMap[day]];
-  return !h?.closed;
-};
-
 const PublicRestaurant = () => {
+  const { restaurant, categories, dishes, wines, dailyMenu, addReservation } = useApp();
   const [activeCategory, setActiveCategory] = useState("menu-del-dia");
   const [searchQuery, setSearchQuery] = useState("");
   const [dietaryFilter, setDietaryFilter] = useState<string[]>([]);
@@ -26,6 +19,14 @@ const PublicRestaurant = () => {
   const [lang, setLang] = useState("ES");
   const [reservationStep, setReservationStep] = useState(0);
   const [resData, setResData] = useState({ guests: 2, date: "", period: "", time: "", name: "", phone: "", email: "", notes: "", zone: "Sin preferencia" });
+
+  const isOpen = () => {
+    const now = new Date();
+    const day = now.getDay();
+    const dayMap = [6, 0, 1, 2, 3, 4, 5];
+    const h = restaurant.hours[dayMap[day]];
+    return !h?.closed;
+  };
 
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
