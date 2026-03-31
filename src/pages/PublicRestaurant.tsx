@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
 import { ALLERGENS } from "@/data/mockData";
 import { heroRestaurant, dishImages } from "@/data/dishImages";
+import { getWineImage } from "@/data/wineImages";
 import { toast } from "sonner";
 import {
   Clock, MapPin, Phone, Instagram, Share2, Search, ChevronRight,
