@@ -92,28 +92,31 @@ const Hero = () => (
         </div>
       </div>
       <div className="mt-16 flex justify-center gap-6 px-4">
-        <div className="relative w-48 md:w-56 h-80 md:h-96 rounded-2xl bg-gradient-to-br from-secondary to-border shadow-warm-lg overflow-hidden border border-border">
-          <div className="absolute inset-0 p-3 space-y-2">
-            <div className="h-3 w-20 bg-primary/20 rounded" />
-            <div className="h-2 w-32 bg-muted-foreground/10 rounded" />
-            <div className="mt-4 space-y-3">
-              {[1,2,3,4].map(i => (
+        <div className="relative w-48 md:w-56 h-80 md:h-96 rounded-2xl shadow-warm-lg overflow-hidden border border-border">
+          <img src={heroRestaurant} alt="Carta digital en móvil" className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-3 space-y-2">
+            <div className="h-3 w-20 bg-primary-foreground/30 rounded" />
+            <div className="space-y-1.5">
+              {[1,2,3].map(i => (
                 <div key={i} className="flex gap-2 items-center">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-primary opacity-20" />
+                  <div className="w-8 h-8 rounded-lg bg-primary-foreground/20" />
                   <div className="flex-1 space-y-1">
-                    <div className="h-2 w-full bg-muted-foreground/10 rounded" />
-                    <div className="h-1.5 w-2/3 bg-muted-foreground/5 rounded" />
+                    <div className="h-2 w-full bg-primary-foreground/15 rounded" />
+                    <div className="h-1.5 w-2/3 bg-primary-foreground/10 rounded" />
                   </div>
-                  <div className="h-2 w-8 bg-primary/15 rounded" />
                 </div>
               ))}
             </div>
-            <div className="absolute bottom-3 left-3 right-3 h-10 bg-gradient-primary rounded-xl opacity-80" />
+            <div className="h-10 bg-gradient-primary rounded-xl opacity-90 flex items-center justify-center">
+              <span className="text-primary-foreground text-xs font-medium">Reservar mesa</span>
+            </div>
           </div>
           <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-12 h-1 rounded-full bg-foreground/20" />
         </div>
-        <div className="hidden md:block relative w-72 h-96 rounded-2xl bg-card shadow-warm-lg overflow-hidden border border-border">
-          <div className="p-3 space-y-2">
+        <div className="hidden md:block relative w-72 h-96 rounded-2xl shadow-warm-lg overflow-hidden border border-border">
+          <img src={heroRestaurant} alt="Panel de administración" className="absolute inset-0 w-full h-full object-cover opacity-20" />
+          <div className="absolute inset-0 bg-card/90 p-3 space-y-2">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-2 w-2 rounded-full bg-destructive/50" />
               <div className="h-2 w-2 rounded-full bg-warning/50" />
