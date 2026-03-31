@@ -50,7 +50,7 @@ const PublicRestaurant = () => {
     <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto relative">
       {/* Header */}
       <div className="relative">
-        <div className="h-48 bg-gradient-to-br from-primary/20 to-gold/10" />
+        <img src={heroRestaurant} alt={restaurant.name} className="h-48 w-full object-cover" />
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background to-transparent h-20" />
         <div className="relative px-4 -mt-12">
           <div className="flex items-center justify-between mb-1">
