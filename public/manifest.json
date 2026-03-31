@@ -1,0 +1,8 @@
+{
+  "name": "Carta",
+  "short_name": "Carta",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#C2451E",
+  "background_color": "#FFFBF7"
+}
