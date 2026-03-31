@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { restaurant, categories, dishes, wines, dailyMenu, tables, reservations, metricsData, ALLERGENS, type Dish, type Reservation } from "@/data/mockData";
+import { dishImages } from "@/data/dishImages";
 import { QRCodeSVG } from "qrcode.react";
 import {
   UtensilsCrossed, Store, Book, CalendarCheck, LayoutGrid, BarChart3,
