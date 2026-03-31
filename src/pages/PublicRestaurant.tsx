@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { restaurant, categories, dishes, wines, dailyMenu, ALLERGENS } from "@/data/mockData";
+import { heroRestaurant, dishImages } from "@/data/dishImages";
 import {
   Clock, MapPin, Phone, Instagram, Share2, Search, ChevronRight,
   Globe, Check, UtensilsCrossed, CalendarCheck, ArrowLeft, Users, X,
