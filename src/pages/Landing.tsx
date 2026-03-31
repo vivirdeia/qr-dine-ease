@@ -266,7 +266,7 @@ const UseCases = () => (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {useCases.map((c, i) => (
           <div key={i} className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-warm transition-shadow">
-            <div className={`h-40 bg-gradient-to-br ${c.gradient}`} />
+            <img src={c.image} alt={c.title} className="h-40 w-full object-cover" loading="lazy" width={800} height={544} />
             <div className="p-6 space-y-3">
               <h3 className="text-lg font-bold font-sans">{c.title}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{c.desc}</p>
