@@ -1138,7 +1138,7 @@ const hslToHex = (hsl: string): string => {
 };
 
 const SettingsSection = () => {
-  const { notifications, toggleNotification, restaurant, updateRestaurant } = useApp();
+  const { notifications, toggleNotification, restaurant, updateRestaurant, userPlan, setUserPlan } = useApp();
   const [brandColors, setBrandColors] = useState({
     primary: restaurant.brandColors?.primary || "#c4704e",
     accent: restaurant.brandColors?.accent || "#d4a574",
