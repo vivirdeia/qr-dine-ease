@@ -1,36 +1,29 @@
 
 
-# Plan: Añadir fotos a la carta de vinos
+# Plan: Mejorar el header de la carta pública
 
 ## Problema
-Los vinos muestran un pequeño bloque de gradiente (`w-8 h-12`) en vez de una imagen real. La interfaz `Wine` no tiene campo `photoUrl`.
+El header actual tiene problemas de legibilidad: el nombre "Casa Martín" y el subtítulo se superponen sobre la imagen hero sin suficiente contraste. El gradiente es demasiado sutil y los controles (idioma, compartir) se pierden visualmente.
 
 ## Solución
 
-### 1. Generar imágenes de botellas de vino
-Crear 8 imágenes placeholder de botellas de vino en `src/assets/wines/`:
-- `tinto-rioja.jpg` — Botella de Rioja tinto
-- `tinto-ribera.jpg` — Botella de Ribera del Duero
-- `tinto-priorat.jpg` — Botella de Priorat
-- `blanco-albarino.jpg` — Botella de Albariño
-- `blanco-verdejo.jpg` — Botella de Verdejo
-- `rosado-navarra.jpg` — Botella de rosado
-- `espumoso-cava.jpg` — Botella de cava
-- `dulce-moscatel.jpg` — Botella de moscatel
+### Cambios en `src/pages/PublicRestaurant.tsx` (líneas 56-74)
 
-### 2. Actualizar modelo Wine (`src/data/mockData.ts`)
-- Añadir `photoUrl?: string` a la interfaz `Wine`
-- Asignar la imagen correspondiente a cada vino en los datos mock
+1. **Aumentar altura de la imagen hero**: de `h-48` a `h-56` para dar más espacio
+2. **Mejorar gradiente de overlay**: hacer el degradado más oscuro y alto (`h-32` con `from-black/70`) para que el texto sea legible sobre cualquier imagen
+3. **Texto en blanco sobre el overlay**: nombre, subtítulo y badge en blanco/semitransparente para máximo contraste
+4. **Botones con fondo semitransparente oscuro**: `bg-black/30 backdrop-blur` para los controles de idioma y compartir
+5. **Mover todo el contenido de texto dentro del overlay** (posición absoluta sobre la imagen) en vez del truco actual de `margin-top negativo` que causa el solapamiento feo
 
-### 3. Actualizar vistas
-- **`src/pages/PublicRestaurant.tsx`**: Reemplazar el bloque gradiente por `<img src={wine.photoUrl}>` con fallback
-- **`src/pages/Dashboard.tsx`**: Igual en la sección de vinos del panel
+### Resultado visual
+- Imagen hero grande con gradiente oscuro en la parte inferior
+- Nombre del restaurante en blanco/bold sobre el gradiente
+- Subtítulo en blanco/70% opacidad
+- Badge "Abierto" con fondo semitransparente
+- Controles con backdrop-blur
 
 ### Archivos
 | Archivo | Cambio |
 |---------|--------|
-| `src/assets/wines/*.jpg` | 8 imágenes nuevas |
-| `src/data/mockData.ts` | Añadir `photoUrl` a `Wine` y asignar imágenes |
-| `src/pages/PublicRestaurant.tsx` | Mostrar foto del vino |
-| `src/pages/Dashboard.tsx` | Mostrar foto del vino |
+| `src/pages/PublicRestaurant.tsx` | Refactorizar header (líneas 56-74) |
 
