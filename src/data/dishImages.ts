@@ -19,6 +19,11 @@ import tartaQueso from "@/assets/dishes/tarta-queso.jpg";
 import tiramisu from "@/assets/dishes/tiramisu.jpg";
 import cremaCatalana from "@/assets/dishes/crema-catalana.jpg";
 import sorbeteLimon from "@/assets/dishes/sorbete-limon.jpg";
+import vinoTintoCopa from "@/assets/dishes/vino-tinto-copa.jpg";
+import cervezaArtesana from "@/assets/dishes/cerveza-artesana.jpg";
+import aguaMineral from "@/assets/dishes/agua-mineral.jpg";
+import refrescos from "@/assets/dishes/refrescos.jpg";
+import cafeCortado from "@/assets/dishes/cafe-cortado.jpg";
 
 export { heroRestaurant };
 
