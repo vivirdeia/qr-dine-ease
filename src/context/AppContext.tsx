@@ -95,6 +95,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [reservations, setReservations] = useLocalStorage<Reservation[]>("carta_reservations", defaultReservations);
   const [dailyMenu, setDailyMenu] = useLocalStorage<DailyMenu>("carta_dailyMenu", defaultDailyMenu);
   const [isLoggedIn, setIsLoggedIn] = useLocalStorage<boolean>("carta_loggedIn", false);
+  const [userPlan, setUserPlanState] = useLocalStorage<"free" | "pro" | "business">("carta_userPlan", "pro");
+  const [userEmail, setUserEmail] = useLocalStorage<string>("carta_userEmail", "");
+  const [userName, setUserName] = useLocalStorage<string>("carta_userName", "");
+  const [registeredCredentials, setRegisteredCredentials] = useLocalStorage<{ email: string; password: string } | null>("carta_credentials", null);
   const [notifications, setNotifications] = useLocalStorage<NotificationSettings>("carta_notifications", {
     emailOnReservation: true,
     emailOnCancellation: true,

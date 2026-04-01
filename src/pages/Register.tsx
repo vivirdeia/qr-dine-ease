@@ -131,12 +131,14 @@ const Register = () => {
       if (firstDish.name && firstDish.price) {
         // Small delay to ensure category is created first
         setTimeout(() => {
-          addDish({
+      addDish({
             name: firstDish.name,
             description: firstDish.description,
             price: parseFloat(firstDish.price),
-            categoryId: "", // Will be latest category
+            categoryId: "",
             allergens: [],
+            dietary: [],
+            isNew: true,
             available: true,
             position: 1,
           });
