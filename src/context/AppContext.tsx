@@ -34,10 +34,15 @@ interface AppState {
   dailyMenu: DailyMenu;
   isLoggedIn: boolean;
   notifications: NotificationSettings;
+  userPlan: "free" | "pro" | "business";
+  userEmail: string;
+  userName: string;
 
   // Auth
   login: (email: string, password: string) => boolean;
   logout: () => void;
+  register: (email: string, password: string, name: string) => void;
+  setUserPlan: (plan: "free" | "pro" | "business") => void;
 
   // Restaurant
   updateRestaurant: (data: Partial<Restaurant>) => void;
