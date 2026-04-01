@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider, useApp } from "./context/AppContext";
 import Landing from "./pages/Landing";
+import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Register from "./pages/Register";
 import PublicRestaurant from "./pages/PublicRestaurant";
@@ -14,7 +15,7 @@ const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isLoggedIn } = useApp();
-  if (!isLoggedIn) return <Navigate to="/dashboard" replace />;
+  if (!isLoggedIn) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
 
@@ -33,10 +34,15 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Landing />} />
+            <Route path="/login" element={
+              <RedirectIfLoggedIn><Login /></RedirectIfLoggedIn>
+            } />
             <Route path="/register" element={
               <RedirectIfLoggedIn><Register /></RedirectIfLoggedIn>
             } />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard" element={
+              <ProtectedRoute><Dashboard /></ProtectedRoute>
+            } />
             <Route path="/r/:slug" element={<PublicRestaurant />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
