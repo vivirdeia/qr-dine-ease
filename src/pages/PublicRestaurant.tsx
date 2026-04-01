@@ -293,7 +293,7 @@ const PublicRestaurant = () => {
 
         {/* Wines */}
         <div ref={el => { categoryRefs.current["vinos"] = el; }}>
-          <h2 className="text-xl font-bold mb-4">🍷 Carta de vinos</h2>
+          <h2 className="text-xl font-bold mb-4">🍷 {t(lang, "menu.wines")}</h2>
           <div className="flex gap-2 overflow-x-auto pb-3">
             {["Todos", "Tintos", "Blancos", "Rosados", "Espumosos", "Dulces"].map(t => (
               <button key={t} onClick={() => setWineFilter(t)}
