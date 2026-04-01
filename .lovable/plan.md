@@ -1,83 +1,63 @@
 
 
-# Plan: Paleta de colores personalizable, tracking/píxeles, y CRUD completo de categorías y fotos de platos
+# Plan: Flujo completo simulado de registro y suscripción
 
-## 1. Paleta de colores personalizable
+## Resumen
+Crear el flujo completo: **Landing → Registro → Selección de plan → Checkout simulado → Onboarding wizard → Dashboard**, todo con localStorage (sin backend).
 
-**Problema:** Todos los restaurantes ven la misma paleta (naranja/terracota). Cada restaurante necesita adaptar colores a su marca.
+## Flujo del usuario
 
-**Solución:**
-- Añadir a `Restaurant` un campo `brandColors: { primary: string; accent: string; background: string }` con valores por defecto
-- Nueva sección en **Settings > Personalización** con 3 color pickers (color primario, color acento, color fondo)
-- Al guardar, aplicar los colores como CSS custom properties (`--primary`, `--gold`, `--background`) en el `<style>` del documento
-- Los colores se persisten en localStorage junto con el resto de datos del restaurante
-- En la **carta pública** (`PublicRestaurant.tsx`), aplicar los colores del restaurante al montar el componente con `document.documentElement.style.setProperty()`
-- El dashboard siempre usa la paleta por defecto (los colores personalizados solo afectan la carta pública)
+```text
+Landing (/) 
+  └─ CTA "Crear mi carta gratis" o "Comenzar" en un plan
+       └─ Registro (/register) — nombre, email, password
+            └─ Selección de plan (/register?step=plan) — Free / Pro / Business
+                 └─ Si plan de pago → Checkout simulado (/register?step=checkout)
+                      └─ Formulario fake de tarjeta (4242...) → confirmación
+                 └─ Si Free → salta checkout
+                      └─ Onboarding wizard (/register?step=onboarding)
+                           └─ 3 pasos: datos básicos, horarios, primera categoría/plato
+                                └─ Dashboard (/dashboard) con datos del wizard
+```
 
-**Archivos:**
-| Archivo | Cambio |
-|---------|--------|
-| `src/data/mockData.ts` | Añadir `brandColors` a `Restaurant` |
-| `src/pages/Dashboard.tsx` | Nueva subsección "Personalización" en Settings con color pickers |
-| `src/pages/PublicRestaurant.tsx` | Aplicar `brandColors` al montar |
-| `src/context/AppContext.tsx` | Ya cubierto por `updateRestaurant` |
+## Cambios por archivo
 
-## 2. Tracking: Meta Pixel, Google Analytics, etc.
+### 1. `src/pages/Register.tsx` (NUEVO)
+- Página multi-step con estado `step: "signup" | "plan" | "checkout" | "onboarding"`
+- **Step 1 — Registro**: nombre del restaurante, email, contraseña. Guarda en localStorage como usuario registrado.
+- **Step 2 — Plan**: muestra los 3 planes con features. El plan se selecciona y guarda. Si viene desde un CTA de plan específico, se preselecciona.
+- **Step 3 — Checkout** (solo si Pro/Business): formulario simulado de tarjeta (número, fecha, CVV). Botón "Pagar €29/mes". Simula un delay de 2s con spinner → confirmación con confetti/toast.
+- **Step 4 — Onboarding wizard** (3 sub-pasos):
+  - Paso 1: Nombre restaurante, dirección, teléfono, tipo de cocina
+  - Paso 2: Horarios (mañana/noche, días de la semana)
+  - Paso 3: Crear primera categoría + primer plato (nombre, precio, descripción)
+- Al finalizar: guarda todo en localStorage via AppContext y redirige a `/dashboard`
 
-**Problema:** No hay forma de insertar códigos de seguimiento.
+### 2. `src/pages/Landing.tsx`
+- Los CTAs de "Crear mi carta gratis" apuntan a `/register`
+- Los botones "Comenzar" de cada plan apuntan a `/register?plan=free|pro|business`
+- "Iniciar sesión" sigue apuntando a `/dashboard`
 
-**Solución:**
-- Añadir a `Restaurant` un campo `tracking: { googleAnalyticsId?: string; metaPixelId?: string; customHeadScript?: string }`
-- Nueva subsección en **Settings > Tracking** con inputs para GA ID, Meta Pixel ID y un textarea para scripts personalizados
-- En `PublicRestaurant.tsx`, al montar: inyectar dinámicamente los scripts de GA y Meta Pixel en el `<head>` según los IDs configurados
-- Usar `useEffect` con cleanup para eliminar los scripts al desmontar
+### 3. `src/context/AppContext.tsx`
+- Añadir campo `userPlan: "free" | "pro" | "business"` al estado
+- Añadir campo `userEmail: string` y `userName: string`
+- Nuevo método `register(email, password, name)` que crea la sesión
+- Actualizar `login` para verificar contra el usuario registrado en localStorage
 
-**Archivos:**
-| Archivo | Cambio |
-|---------|--------|
-| `src/data/mockData.ts` | Añadir `tracking` a `Restaurant` |
-| `src/pages/Dashboard.tsx` | Inputs de tracking en Settings |
-| `src/pages/PublicRestaurant.tsx` | Inyectar scripts GA/Meta al montar |
+### 4. `src/pages/Dashboard.tsx`
+- La sección de Facturación lee `userPlan` del contexto en vez del texto estático "PRO"
+- "Gestionar suscripción" abre un modal donde se puede cambiar de plan (simulado)
+- Si el usuario está en plan Free, mostrar un banner sutil "Upgrade a Pro" con las features que se desbloquean
 
-## 3. CRUD completo de categorías (editar + eliminar)
-
-**Problema:** Solo se pueden crear categorías. No se pueden editar ni eliminar.
-
-**Solución:**
-- Añadir `updateCategory(id, data)` y `deleteCategory(id)` al AppContext
-- `deleteCategory` mueve los platos de esa categoría a "Sin categoría" o los elimina (con confirmación)
-- En la sidebar de categorías del dashboard, añadir botones de editar (lápiz) y eliminar (papelera) por categoría
-- Modal de edición reutilizando el modal de nueva categoría con los datos precargados
-- Confirmación antes de eliminar con aviso de cuántos platos tiene
-
-**Archivos:**
-| Archivo | Cambio |
-|---------|--------|
-| `src/context/AppContext.tsx` | `updateCategory`, `deleteCategory` |
-| `src/pages/Dashboard.tsx` | Botones editar/eliminar en categorías, modal edición |
-
-## 4. Cambiar fotos de platos
-
-**Problema:** Las fotos son estáticas del mapa `dishImages`. No se pueden cambiar desde el dashboard.
-
-**Solución:**
-- En el modal de editar/crear plato, añadir un campo de **URL de imagen** (input de texto) y un botón de **subir foto** que use `FileReader` para convertir a base64 y guardar en localStorage
-- Añadir `photoUrl` al `Dish` (ya existe en la interfaz pero no se usa)
-- Prioridad de imagen: `dish.photoUrl` > `dishImages[dish.id]` > gradiente placeholder
-- Actualizar tanto Dashboard como PublicRestaurant para usar esta prioridad
-- Límite: imágenes se guardan como base64 en localStorage (funcional sin backend, con advertencia de límite ~5MB)
-
-**Archivos:**
-| Archivo | Cambio |
-|---------|--------|
-| `src/pages/Dashboard.tsx` | Input URL + botón subir en modal de plato |
-| `src/pages/PublicRestaurant.tsx` | Prioridad `photoUrl` > `dishImages` > placeholder |
+### 5. `src/App.tsx`
+- Añadir ruta `/register` → `Register.tsx`
 
 ## Detalles técnicos
 
-- Color pickers: inputs nativos `<input type="color">` (sin dependencias extra)
-- Conversión HSL: los colores del picker (hex) se convierten a HSL para las CSS custom properties
-- Scripts de tracking: se inyectan solo en la carta pública, nunca en el dashboard
-- Fotos base64: se comprimen/redimensionan con canvas antes de guardar (max 800px, quality 0.7) para no saturar localStorage
-- Las categorías protegidas (las 6 originales) pueden editarse pero no eliminarse
+- Sin backend: todo es localStorage. El "pago" es simulado (delay + toast de éxito)
+- El checkout acepta cualquier número de tarjeta (es una demo)
+- El onboarding sobreescribe los datos mock con los datos reales del usuario
+- Progress bar visual en la parte superior del registro (4 pasos)
+- Mobile-first: diseñado para 390px primero, responsive para desktop
+- Credenciales dinámicas: tras registrarse, el login funciona con el email/password elegidos (ya no solo demo@carta.app)
 
