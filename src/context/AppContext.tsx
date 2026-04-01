@@ -51,6 +51,8 @@ interface AppState {
 
   // Categories
   addCategory: (name: string, icon: string) => void;
+  updateCategory: (id: string, data: Partial<Category>) => void;
+  deleteCategory: (id: string) => void;
 
   // Daily menu
   updateDailyMenu: (data: Partial<DailyMenu>) => void;
