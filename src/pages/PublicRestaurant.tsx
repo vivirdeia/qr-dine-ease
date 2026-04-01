@@ -431,7 +431,25 @@ const PublicRestaurant = () => {
                 </div>
                 <p className="text-xs text-muted-foreground">Te enviaremos la confirmación por WhatsApp al {resData.phone}</p>
                 <div className="flex gap-3">
-                  <Button variant="outline-primary" className="flex-1">Añadir al calendario</Button>
+                  <Button variant="outline-primary" className="flex-1" onClick={() => {
+                    const dtStart = resData.date.replace(/-/g, '') + 'T' + resData.time.replace(':', '') + '00';
+                    const [h, m] = resData.time.split(':').map(Number);
+                    const endH = String(h + 2).padStart(2, '0');
+                    const dtEnd = resData.date.replace(/-/g, '') + 'T' + endH + String(m).padStart(2, '0') + '00';
+                    const ics = [
+                      'BEGIN:VCALENDAR', 'VERSION:2.0', 'BEGIN:VEVENT',
+                      `DTSTART:${dtStart}`, `DTEND:${dtEnd}`,
+                      `SUMMARY:Reserva en ${restaurant.name}`,
+                      `DESCRIPTION:${resData.guests} personas - ${resData.zone}`,
+                      `LOCATION:${restaurant.address}`,
+                      'END:VEVENT', 'END:VCALENDAR'
+                    ].join('\r\n');
+                    const blob = new Blob([ics], { type: 'text/calendar' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url; a.download = 'reserva.ics'; a.click();
+                    URL.revokeObjectURL(url);
+                    toast.success("Archivo de calendario descargado");
+                  }}>Añadir al calendario</Button>
                   <Button variant="gradient" className="flex-1" onClick={() => setShowReservation(false)}>Volver a la carta</Button>
                 </div>
               </div>

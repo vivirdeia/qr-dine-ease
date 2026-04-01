@@ -161,6 +161,7 @@ const RestaurantSection = () => {
                   </button>
                   {!h.closed && h.morning && (
                     <div className="flex items-center gap-1 text-sm">
+                      <span className="text-xs text-muted-foreground mr-1">M:</span>
                       <input type="time" value={h.morning.open} className="px-1 py-0.5 bg-secondary border border-border rounded text-xs w-20" onChange={e => {
                         const hours = [...form.hours];
                         hours[i] = { ...hours[i], morning: { ...hours[i].morning!, open: e.target.value } };
@@ -170,6 +171,22 @@ const RestaurantSection = () => {
                       <input type="time" value={h.morning.close} className="px-1 py-0.5 bg-secondary border border-border rounded text-xs w-20" onChange={e => {
                         const hours = [...form.hours];
                         hours[i] = { ...hours[i], morning: { ...hours[i].morning!, close: e.target.value } };
+                        setForm(prev => ({ ...prev, hours }));
+                      }} />
+                    </div>
+                  )}
+                  {!h.closed && h.evening && !h.continuous && (
+                    <div className="flex items-center gap-1 text-sm">
+                      <span className="text-xs text-muted-foreground mr-1">N:</span>
+                      <input type="time" value={h.evening.open} className="px-1 py-0.5 bg-secondary border border-border rounded text-xs w-20" onChange={e => {
+                        const hours = [...form.hours];
+                        hours[i] = { ...hours[i], evening: { ...hours[i].evening!, open: e.target.value } };
+                        setForm(prev => ({ ...prev, hours }));
+                      }} />
+                      <span>-</span>
+                      <input type="time" value={h.evening.close} className="px-1 py-0.5 bg-secondary border border-border rounded text-xs w-20" onChange={e => {
+                        const hours = [...form.hours];
+                        hours[i] = { ...hours[i], evening: { ...hours[i].evening!, close: e.target.value } };
                         setForm(prev => ({ ...prev, hours }));
                       }} />
                     </div>
