@@ -312,12 +312,21 @@ const PublicRestaurant = () => {
                   <label className="text-sm font-medium mb-2 block">¿Cuántos sois?</label>
                   <div className="flex gap-2 flex-wrap">
                     {[1,2,3,4,5,6,7,8].map(n => (
-                      <button key={n} onClick={() => setResData(d => ({...d, guests: n}))}
-                        className={`w-10 h-10 rounded-full text-sm font-medium transition-colors ${resData.guests === n ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
+                      <button key={n} onClick={() => { setResData(d => ({...d, guests: n})); setCustomGuests(false); }}
+                        className={`w-10 h-10 rounded-full text-sm font-medium transition-colors ${resData.guests === n && !customGuests ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
                         {n}
                       </button>
                     ))}
-                    <button className="w-10 h-10 rounded-full text-sm font-medium bg-secondary text-muted-foreground">9+</button>
+                    <button onClick={() => { setCustomGuests(true); setResData(d => ({...d, guests: 9})); }}
+                      className={`w-10 h-10 rounded-full text-sm font-medium transition-colors ${customGuests ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>9+</button>
+                  </div>
+                  {customGuests && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <input type="number" min={9} max={30} value={resData.guests} onChange={e => setResData(d => ({...d, guests: parseInt(e.target.value) || 9}))}
+                        className="w-20 px-3 py-2 bg-secondary border border-border rounded-xl text-sm" />
+                      <span className="text-xs text-muted-foreground">personas</span>
+                    </div>
+                  )}
                   </div>
                 </div>
                 <div>
