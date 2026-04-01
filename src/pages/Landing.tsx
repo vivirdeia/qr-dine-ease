@@ -30,7 +30,7 @@ const Navbar = () => {
         </div>
         <div className="hidden md:flex items-center gap-3">
           <Button variant="outline-primary" size="sm" asChild>
-            <Link to="/dashboard">Iniciar sesión</Link>
+            <Link to="/login">Iniciar sesión</Link>
           </Button>
           <Button variant="gradient" size="sm" asChild>
             <Link to="/register">Crear mi carta gratis</Link>
