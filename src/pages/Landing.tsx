@@ -413,7 +413,7 @@ const CTAFinal = () => (
         Crea tu carta digital en 10 minutos. Gratis. Sin comisiones. Sin tarjeta.
       </p>
       <Button size="xl" className="bg-card text-primary hover:bg-card/90 rounded-full shadow-warm-lg" asChild>
-        <Link to="/dashboard">Crear mi carta gratis <ArrowRight className="ml-1" /></Link>
+        <Link to="/register">Crear mi carta gratis <ArrowRight className="ml-1" /></Link>
       </Button>
       <p className="text-primary-foreground/60 text-sm">800+ restaurantes · 0% comisiones · Para siempre</p>
     </div>
