@@ -222,9 +222,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setDishes(prev => prev.map(d => d.id === id ? { ...d, available: !d.available } : d));
   }, [setDishes]);
 
-  const addCategory = useCallback((name: string, icon: string) => {
+  const addCategory = useCallback((name: string, icon: string): string => {
     const maxPos = Math.max(...categories.map(c => c.position), 0);
-    setCategories(prev => [...prev, { id: genId("c"), name, icon, position: maxPos + 1, visible: true, dishCount: 0 }]);
+    const id = genId("c");
+    setCategories(prev => [...prev, { id, name, icon, position: maxPos + 1, visible: true, dishCount: 0 }]);
+    return id;
   }, [categories, setCategories]);
 
   const updateCategory = useCallback((id: string, data: Partial<Category>) => {
