@@ -30,7 +30,7 @@ const Navbar = () => {
         </div>
         <div className="hidden md:flex items-center gap-3">
           <Button variant="outline-primary" size="sm" asChild>
-            <Link to="/dashboard">Iniciar sesión</Link>
+            <Link to="/login">Iniciar sesión</Link>
           </Button>
           <Button variant="gradient" size="sm" asChild>
             <Link to="/register">Crear mi carta gratis</Link>
@@ -47,7 +47,7 @@ const Navbar = () => {
           <a href="#testimonials" className="block text-sm text-muted-foreground">Testimonios</a>
           <div className="flex gap-2 pt-2">
             <Button variant="outline-primary" size="sm" asChild className="flex-1">
-              <Link to="/dashboard">Iniciar sesión</Link>
+              <Link to="/login">Iniciar sesión</Link>
             </Button>
             <Button variant="gradient" size="sm" asChild className="flex-1">
               <Link to="/register">Crear mi carta</Link>
@@ -413,7 +413,7 @@ const CTAFinal = () => (
         Crea tu carta digital en 10 minutos. Gratis. Sin comisiones. Sin tarjeta.
       </p>
       <Button size="xl" className="bg-card text-primary hover:bg-card/90 rounded-full shadow-warm-lg" asChild>
-        <Link to="/dashboard">Crear mi carta gratis <ArrowRight className="ml-1" /></Link>
+        <Link to="/register">Crear mi carta gratis <ArrowRight className="ml-1" /></Link>
       </Button>
       <p className="text-primary-foreground/60 text-sm">800+ restaurantes · 0% comisiones · Para siempre</p>
     </div>

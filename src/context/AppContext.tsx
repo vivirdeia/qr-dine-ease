@@ -76,7 +76,7 @@ interface AppState {
   toggleDishAvailability: (id: string) => void;
 
   // Categories
-  addCategory: (name: string, icon: string) => void;
+  addCategory: (name: string, icon: string) => string;
   updateCategory: (id: string, data: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
 
@@ -169,8 +169,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setRegisteredCredentials({ email, password });
     setUserEmail(email);
     setUserName(name);
+    // Clear mock data so new users start fresh
+    setDishes([]);
+    setCategories([]);
+    setWines([]);
+    setReservations([]);
+    setTables([]);
+    setDailyMenu({ ...defaultDailyMenu, visible: false });
+    setRestaurant({ ...defaultRestaurant, name: "" });
     setIsLoggedIn(true);
-  }, [setRegisteredCredentials, setUserEmail, setUserName, setIsLoggedIn]);
+  }, [setRegisteredCredentials, setUserEmail, setUserName, setIsLoggedIn, setDishes, setCategories, setWines, setReservations, setTables, setDailyMenu, setRestaurant]);
 
   const setUserPlan = useCallback((plan: "free" | "pro" | "business") => {
     setUserPlanState(plan);
@@ -214,9 +222,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setDishes(prev => prev.map(d => d.id === id ? { ...d, available: !d.available } : d));
   }, [setDishes]);
 
-  const addCategory = useCallback((name: string, icon: string) => {
+  const addCategory = useCallback((name: string, icon: string): string => {
     const maxPos = Math.max(...categories.map(c => c.position), 0);
-    setCategories(prev => [...prev, { id: genId("c"), name, icon, position: maxPos + 1, visible: true, dishCount: 0 }]);
+    const id = genId("c");
+    setCategories(prev => [...prev, { id, name, icon, position: maxPos + 1, visible: true, dishCount: 0 }]);
+    return id;
   }, [categories, setCategories]);
 
   const updateCategory = useCallback((id: string, data: Partial<Category>) => {

@@ -127,15 +127,14 @@ const Register = () => {
     });
 
     if (firstCategory.name) {
-      addCategory(firstCategory.name, firstCategory.icon);
+      const newCategoryId = addCategory(firstCategory.name, firstCategory.icon);
       if (firstDish.name && firstDish.price) {
-        // Small delay to ensure category is created first
         setTimeout(() => {
-      addDish({
+          addDish({
             name: firstDish.name,
             description: firstDish.description,
             price: parseFloat(firstDish.price),
-            categoryId: "",
+            categoryId: newCategoryId,
             allergens: [],
             dietary: [],
             isNew: true,
