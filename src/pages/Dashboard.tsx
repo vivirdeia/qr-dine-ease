@@ -1032,85 +1032,135 @@ const TablesSection = () => {
 };
 
 // ── Metrics Section ──
-const MetricsSection = () => (
-  <div className="space-y-6">
-    <div>
-      <h2 className="text-xl sm:text-2xl font-bold mb-1">Métricas</h2>
-      <p className="text-muted-foreground text-sm">Datos de los últimos 30 días</p>
-    </div>
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-      {[
-        { label: "Reservas totales", value: metricsData.totalReservations },
-        { label: "Cubiertos totales", value: metricsData.totalCoversMonth },
-        { label: "Ocupación media", value: `${metricsData.avgOccupancy}%` },
-        { label: "Tasa no-show", value: `${metricsData.noshowRate}%` },
-      ].map((kpi, i) => (
-        <div key={i} className="bg-card rounded-xl border border-border p-3 sm:p-4">
-          <div className="text-[10px] sm:text-xs text-muted-foreground mb-1">{kpi.label}</div>
-          <div className="text-xl sm:text-2xl font-bold">{kpi.value}</div>
-        </div>
-      ))}
-    </div>
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-      <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
-        <h3 className="text-sm font-bold font-sans mb-4">Reservas por día</h3>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={metricsData.reservationsByDay}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="day" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
-            <Bar dataKey="lunch" name="Mediodía" fill="hsl(var(--primary))" radius={[4,4,0,0]} />
-            <Bar dataKey="dinner" name="Noche" fill="hsl(var(--gold))" radius={[4,4,0,0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
-        <h3 className="text-sm font-bold font-sans mb-4">Ocupación semanal</h3>
-        <ResponsiveContainer width="100%" height={220}>
-          <LineChart data={metricsData.weeklyOccupancy}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="week" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} />
-            <Tooltip />
-            <Line type="monotone" dataKey="occupancy" name="Ocupación %" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
-        <h3 className="text-sm font-bold font-sans mb-4">Platos más vistos</h3>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={metricsData.topDishes} layout="vertical">
-            <XAxis type="number" tick={{ fontSize: 11 }} />
-            <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={80} />
-            <Tooltip />
-            <Bar dataKey="views" fill="hsl(var(--primary))" radius={[0,4,4,0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
-        <h3 className="text-sm font-bold font-sans mb-4">Reservas por fuente</h3>
-        <ResponsiveContainer width="100%" height={220}>
-          <PieChart>
-            <Pie data={metricsData.reservationsBySource} dataKey="value" nameKey="source" cx="50%" cy="50%" outerRadius={70} label={({ source, value }) => `${source} ${value}%`}>
-              {metricsData.reservationsBySource.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-    <div className="bg-primary/5 rounded-2xl border border-primary/20 p-4 sm:p-6">
-      <div className="flex items-start gap-3">
-        <TrendingUp className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+const MetricsSection = () => {
+  const { reservations, tables, dishes } = useApp();
+
+  const metrics = useMemo(() => {
+    const total = reservations.length;
+    const confirmed = reservations.filter(r => r.status === "confirmed" || r.status === "completed").length;
+    const completed = reservations.filter(r => r.status === "completed").length;
+    const cancelled = reservations.filter(r => r.status === "cancelled").length;
+    const noshows = reservations.filter(r => r.status === "noshow").length;
+    const totalGuests = reservations.filter(r => r.status !== "cancelled").reduce((s, r) => s + r.guests, 0);
+    const avgParty = total > 0 ? (totalGuests / (total - cancelled)).toFixed(1) : "0";
+    const noshowRate = total > 0 ? ((noshows / total) * 100).toFixed(1) : "0";
+    const totalCapacity = tables.reduce((s, t) => s + t.capacity, 0);
+    const occupancy = totalCapacity > 0 ? Math.round((totalGuests / (totalCapacity * 7)) * 100) : 0;
+
+    // Reservations by day
+    const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+    const byDay = dayNames.map(day => ({ day, lunch: 0, dinner: 0 }));
+    reservations.forEach(r => {
+      const d = new Date(r.date).getDay();
+      const hour = parseInt(r.time.split(":")[0]);
+      if (hour < 17) byDay[d].lunch++;
+      else byDay[d].dinner++;
+    });
+
+    // By source
+    const digital = reservations.filter(r => r.source === "digital").length;
+    const manual = reservations.filter(r => r.source === "manual").length;
+    const phone = reservations.filter(r => r.source === "phone").length;
+    const sourceData = [
+      { source: "Carta digital", value: total > 0 ? Math.round((digital / total) * 100) : 0, fill: "hsl(var(--primary))" },
+      { source: "Manual", value: total > 0 ? Math.round((manual / total) * 100) : 0, fill: "hsl(var(--gold))" },
+      { source: "Teléfono", value: total > 0 ? Math.round((phone / total) * 100) : 0, fill: "hsl(var(--muted-foreground))" },
+    ];
+
+    return { total, confirmed, completed, cancelled, noshows, totalGuests, avgParty, noshowRate, occupancy, byDay, sourceData };
+  }, [reservations, tables]);
+
+  const exportCSV = () => {
+    const header = "ID,Nombre,Teléfono,Email,Fecha,Hora,Personas,Estado,Fuente,Notas\n";
+    const rows = reservations.map(r =>
+      `${r.id},"${r.name}","${r.phone}","${r.email || ""}",${r.date},${r.time},${r.guests},${r.status},${r.source},"${(r.notes || "").replace(/"/g, '""')}"`
+    ).join("\n");
+    const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `reservas_${new Date().toISOString().split("T")[0]}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast.success("CSV descargado");
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h4 className="font-bold text-sm font-sans">Insight</h4>
-          <p className="text-sm text-muted-foreground mt-1">Los viernes y sábados noche tienes un 94% de ocupación. Los martes mediodía solo un 45%. Considera una promoción de menú del día los martes.</p>
+          <h2 className="text-xl sm:text-2xl font-bold mb-1">Métricas</h2>
+          <p className="text-muted-foreground text-sm">Datos calculados de tus reservas reales</p>
+        </div>
+        <Button variant="outline-primary" size="sm" onClick={exportCSV}>
+          <FileDown className="h-4 w-4 mr-1" /> Exportar CSV
+        </Button>
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        {[
+          { label: "Reservas totales", value: metrics.total },
+          { label: "Cubiertos totales", value: metrics.totalGuests },
+          { label: "Ocupación estimada", value: `${metrics.occupancy}%` },
+          { label: "Tasa no-show", value: `${metrics.noshowRate}%` },
+        ].map((kpi, i) => (
+          <div key={i} className="bg-card rounded-xl border border-border p-3 sm:p-4">
+            <div className="text-[10px] sm:text-xs text-muted-foreground mb-1">{kpi.label}</div>
+            <div className="text-xl sm:text-2xl font-bold">{kpi.value}</div>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
+          <h3 className="text-sm font-bold font-sans mb-4">Reservas por día</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={metrics.byDay}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="day" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} />
+              <Tooltip />
+              <Bar dataKey="lunch" name="Mediodía" fill="hsl(var(--primary))" radius={[4,4,0,0]} />
+              <Bar dataKey="dinner" name="Noche" fill="hsl(var(--gold))" radius={[4,4,0,0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
+          <h3 className="text-sm font-bold font-sans mb-4">Reservas por fuente</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <PieChart>
+              <Pie data={metrics.sourceData} dataKey="value" nameKey="source" cx="50%" cy="50%" outerRadius={70} label={({ source, value }) => `${source} ${value}%`}>
+                {metrics.sourceData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Confirmadas", value: metrics.confirmed, color: "text-success" },
+          { label: "Completadas", value: metrics.completed, color: "text-primary" },
+          { label: "Canceladas", value: metrics.cancelled, color: "text-destructive" },
+          { label: "Tamaño medio", value: `${metrics.avgParty} pers.`, color: "text-foreground" },
+        ].map((kpi, i) => (
+          <div key={i} className="bg-card rounded-xl border border-border p-3">
+            <div className="text-[10px] text-muted-foreground mb-1">{kpi.label}</div>
+            <div className={`text-lg font-bold ${kpi.color}`}>{kpi.value}</div>
+          </div>
+        ))}
+      </div>
+      <div className="bg-primary/5 rounded-2xl border border-primary/20 p-4 sm:p-6">
+        <div className="flex items-start gap-3">
+          <TrendingUp className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+          <div>
+            <h4 className="font-bold text-sm font-sans">Insight</h4>
+            <p className="text-sm text-muted-foreground mt-1">
+              {metrics.noshows > 0 
+                ? `Tienes ${metrics.noshows} no-shows (${metrics.noshowRate}%). Considera enviar recordatorios por WhatsApp.`
+                : "¡Genial! No tienes no-shows. Tus clientes son puntuales."}
+            </p>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ── QR Section ──
 const QRSection = () => {
