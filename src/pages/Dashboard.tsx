@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
-import { metricsData, ALLERGENS, type Dish, type Reservation, type Table as TableType } from "@/data/mockData";
+import { metricsData, ALLERGENS, type Dish, type Category, type Reservation, type Table as TableType } from "@/data/mockData";
 import { dishImages } from "@/data/dishImages";
 import { getWineImage } from "@/data/wineImages";
 import { QRCodeSVG } from "qrcode.react";
