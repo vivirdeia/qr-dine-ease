@@ -33,7 +33,7 @@ const Navbar = () => {
             <Link to="/dashboard">Iniciar sesión</Link>
           </Button>
           <Button variant="gradient" size="sm" asChild>
-            <Link to="/dashboard">Crear mi carta gratis</Link>
+            <Link to="/register">Crear mi carta gratis</Link>
           </Button>
         </div>
         <button className="md:hidden p-2" onClick={() => setMobileOpen(!mobileOpen)}>
