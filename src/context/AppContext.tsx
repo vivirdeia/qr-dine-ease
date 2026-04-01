@@ -175,7 +175,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setWines([]);
     setReservations([]);
     setTables([]);
-    setDailyMenu({ ...defaultDailyMenu, active: false });
+    setDailyMenu({ ...defaultDailyMenu, visible: false });
     setRestaurant({ ...defaultRestaurant, name: "" });
     setIsLoggedIn(true);
   }, [setRegisteredCredentials, setUserEmail, setUserName, setIsLoggedIn, setDishes, setCategories, setWines, setReservations, setTables, setDailyMenu, setRestaurant]);
