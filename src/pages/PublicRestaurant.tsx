@@ -262,9 +262,9 @@ const PublicRestaurant = () => {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-medium text-sm">{dish.name}</span>
-                            {dish.isNew && <span className="bg-gold text-gold-foreground text-[10px] px-1.5 py-0.5 rounded-full font-bold">Nuevo</span>}
-                            {!dish.available && <span className="bg-muted text-muted-foreground text-[10px] px-1.5 py-0.5 rounded-full font-bold">Agotado</span>}
+                          <span className="font-medium text-sm">{dish.name}</span>
+                            {dish.isNew && <span className="bg-gold text-gold-foreground text-[10px] px-1.5 py-0.5 rounded-full font-bold">{t(lang, "menu.new")}</span>}
+                            {!dish.available && <span className="bg-muted text-muted-foreground text-[10px] px-1.5 py-0.5 rounded-full font-bold">{t(lang, "menu.soldout")}</span>}
                           </div>
                           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{dish.description}</p>
                         </div>
