@@ -327,7 +327,6 @@ const PublicRestaurant = () => {
                       <span className="text-xs text-muted-foreground">personas</span>
                     </div>
                   )}
-                  </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-2 block">¿Qué día?</label>
