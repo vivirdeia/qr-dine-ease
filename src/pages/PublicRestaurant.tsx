@@ -206,9 +206,9 @@ const PublicRestaurant = () => {
           </div>
           <div className="flex gap-2 pb-1">
             {[
-              { id: "vegetarian", label: "🌿 Vegetariano" },
-              { id: "vegan", label: "🌱 Vegano" },
-              { id: "gluten-free", label: "Sin gluten" },
+              { id: "vegetarian", label: t(lang, "filter.vegetarian") },
+              { id: "vegan", label: t(lang, "filter.vegan") },
+              { id: "gluten-free", label: t(lang, "filter.glutenFree") },
             ].map(f => (
               <button
                 key={f.id}
