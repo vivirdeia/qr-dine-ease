@@ -5,6 +5,7 @@ import { useApp } from "@/context/AppContext";
 import { ALLERGENS } from "@/data/mockData";
 import { heroRestaurant, dishImages } from "@/data/dishImages";
 import { getWineImage } from "@/data/wineImages";
+import { t, type Lang } from "@/data/translations";
 import { toast } from "sonner";
 import {
   Clock, MapPin, Phone, Instagram, Share2, Search, ChevronRight,
@@ -17,7 +18,7 @@ const PublicRestaurant = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [dietaryFilter, setDietaryFilter] = useState<string[]>([]);
   const [showReservation, setShowReservation] = useState(false);
-  const [lang, setLang] = useState("ES");
+  const [lang, setLang] = useState<Lang>("ES");
   const [reservationStep, setReservationStep] = useState(0);
   const [resData, setResData] = useState({ guests: 2, date: "", period: "", time: "", name: "", phone: "", email: "", notes: "", zone: "Sin preferencia" });
   const [wineFilter, setWineFilter] = useState("Todos");
@@ -120,8 +121,8 @@ const PublicRestaurant = () => {
         <img src={heroRestaurant} alt={restaurant.name} className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
         <div className="absolute top-3 right-3 flex items-center gap-2">
-          <select value={lang} onChange={e => setLang(e.target.value)} className="text-xs text-white bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg px-2 py-1">
-            <option>ES</option><option>EN</option><option>FR</option><option>CA</option>
+          <select value={lang} onChange={e => setLang(e.target.value as Lang)} className="text-xs text-white bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg px-2 py-1">
+            <option value="ES">ES</option><option value="EN">EN</option><option value="FR">FR</option><option value="CA">CA</option>
           </select>
           <button className="p-2 bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg text-white" onClick={async () => {
             const shareData = { title: restaurant.name, text: `${restaurant.name} — ${restaurant.subtitle}`, url: window.location.href };
@@ -134,7 +135,7 @@ const PublicRestaurant = () => {
           <p className="text-sm text-white/70 mt-0.5">{restaurant.subtitle}</p>
           <span className={`mt-2 inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${isOpen() ? 'bg-green-500/20 text-green-300 border border-green-400/30' : 'bg-red-500/20 text-red-300 border border-red-400/30'}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${isOpen() ? 'bg-green-400' : 'bg-red-400'}`} />
-            {isOpen() ? "Abierto" : "Cerrado"}
+            {isOpen() ? t(lang, "menu.open") : t(lang, "menu.closed")}
           </span>
         </div>
       </div>
@@ -144,12 +145,12 @@ const PublicRestaurant = () => {
         <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
           <div className="flex items-center gap-2 text-sm">
             <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span>Hoy: {(() => {
+            <span>{t(lang, "menu.today")}: {(() => {
               const d = new Date().getDay();
               const dayMap = [6, 0, 1, 2, 3, 4, 5];
               const h = restaurant.hours[dayMap[d]];
-              if (h?.closed) return "Cerrado";
-              if (h?.continuous) return `${h.morning?.open} - ${h.morning?.close} (continuo)`;
+              if (h?.closed) return t(lang, "menu.closed");
+              if (h?.continuous) return `${h.morning?.open} - ${h.morning?.close} (${t(lang, "menu.continuous")})`;
               return `${h?.morning?.open}-${h?.morning?.close}${h?.evening ? ` / ${h.evening.open}-${h.evening.close}` : ''}`;
             })()}</span>
           </div>
@@ -176,7 +177,7 @@ const PublicRestaurant = () => {
             <input
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Buscar plato..."
+              placeholder={t(lang, "menu.search")}
               className="w-full pl-9 pr-3 py-2 bg-secondary border border-border rounded-xl text-sm"
             />
           </div>
@@ -185,7 +186,7 @@ const PublicRestaurant = () => {
               onClick={() => scrollToCategory("menu-del-dia")}
               className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${activeCategory === "menu-del-dia" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}
             >
-              📌 Menú del día
+              📌 {t(lang, "menu.daily")}
             </button>
             {categories.filter(c => c.id !== "c0" && c.visible).map(cat => (
               <button
@@ -200,14 +201,14 @@ const PublicRestaurant = () => {
               onClick={() => scrollToCategory("vinos")}
               className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${activeCategory === "vinos" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}
             >
-              🍷 Vinos
+              🍷 {t(lang, "menu.wines")}
             </button>
           </div>
           <div className="flex gap-2 pb-1">
             {[
-              { id: "vegetarian", label: "🌿 Vegetariano" },
-              { id: "vegan", label: "🌱 Vegano" },
-              { id: "gluten-free", label: "Sin gluten" },
+              { id: "vegetarian", label: t(lang, "filter.vegetarian") },
+              { id: "vegan", label: t(lang, "filter.vegan") },
+              { id: "gluten-free", label: t(lang, "filter.glutenFree") },
             ].map(f => (
               <button
                 key={f.id}
@@ -228,7 +229,7 @@ const PublicRestaurant = () => {
           <div ref={el => { categoryRefs.current["menu-del-dia"] = el; }}>
             <div className="bg-primary/5 rounded-2xl border border-primary/20 p-5 space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">📌 Menú del día</h2>
+                <h2 className="text-xl font-bold">📌 {t(lang, "menu.daily")}</h2>
                 <span className="text-xl font-bold text-primary">€{dailyMenu.price.toFixed(2)}</span>
               </div>
               <div className="space-y-2">
@@ -261,9 +262,9 @@ const PublicRestaurant = () => {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-medium text-sm">{dish.name}</span>
-                            {dish.isNew && <span className="bg-gold text-gold-foreground text-[10px] px-1.5 py-0.5 rounded-full font-bold">Nuevo</span>}
-                            {!dish.available && <span className="bg-muted text-muted-foreground text-[10px] px-1.5 py-0.5 rounded-full font-bold">Agotado</span>}
+                          <span className="font-medium text-sm">{dish.name}</span>
+                            {dish.isNew && <span className="bg-gold text-gold-foreground text-[10px] px-1.5 py-0.5 rounded-full font-bold">{t(lang, "menu.new")}</span>}
+                            {!dish.available && <span className="bg-muted text-muted-foreground text-[10px] px-1.5 py-0.5 rounded-full font-bold">{t(lang, "menu.soldout")}</span>}
                           </div>
                           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{dish.description}</p>
                         </div>
@@ -292,12 +293,12 @@ const PublicRestaurant = () => {
 
         {/* Wines */}
         <div ref={el => { categoryRefs.current["vinos"] = el; }}>
-          <h2 className="text-xl font-bold mb-4">🍷 Carta de vinos</h2>
+          <h2 className="text-xl font-bold mb-4">🍷 {t(lang, "menu.wines")}</h2>
           <div className="flex gap-2 overflow-x-auto pb-3">
-            {["Todos", "Tintos", "Blancos", "Rosados", "Espumosos", "Dulces"].map(t => (
-              <button key={t} onClick={() => setWineFilter(t)}
-                className={`shrink-0 px-3 py-1 rounded-full text-xs transition-colors ${wineFilter === t ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
-                {t}
+            {[{k: "Todos", tk: "menu.all"}, {k: "Tintos", tk: "menu.reds"}, {k: "Blancos", tk: "menu.whites"}, {k: "Rosados", tk: "menu.roses"}, {k: "Espumosos", tk: "menu.sparkling"}, {k: "Dulces", tk: "menu.sweet"}].map(({k: tKey, tk}) => (
+              <button key={tKey} onClick={() => setWineFilter(tKey)}
+                className={`shrink-0 px-3 py-1 rounded-full text-xs transition-colors ${wineFilter === tKey ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
+                {t(lang, tk)}
               </button>
             ))}
           </div>
@@ -315,13 +316,13 @@ const PublicRestaurant = () => {
                   {wine.description && <div className="text-xs text-muted-foreground mt-0.5">{wine.description}</div>}
                 </div>
                 <div className="text-right shrink-0 text-sm">
-                  {wine.priceGlass && <div className="text-muted-foreground text-xs">Copa €{wine.priceGlass.toFixed(2)}</div>}
+                  {wine.priceGlass && <div className="text-muted-foreground text-xs">{t(lang, "menu.glass")} €{wine.priceGlass.toFixed(2)}</div>}
                   <div className="font-bold text-primary">€{wine.priceBottle.toFixed(2)}</div>
                 </div>
               </div>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground mt-3 italic">Pregunta al camarero por las sugerencias de maridaje</p>
+          <p className="text-xs text-muted-foreground mt-3 italic">{t(lang, "menu.pairing")}</p>
         </div>
       </div>
 
@@ -340,15 +341,15 @@ const PublicRestaurant = () => {
           <a href={`tel:${restaurant.phone}`} className="flex items-center gap-1"><Phone className="h-4 w-4" />{restaurant.phone}</a>
           <span className="text-muted-foreground">{restaurant.instagram}</span>
         </div>
-        <p className="text-xs text-muted-foreground pt-2">Powered by <Link to="/" className="text-primary font-medium">Carta</Link></p>
-        <p className="text-[10px] text-muted-foreground">Todos nuestros platos se elaboran con producto fresco. Consulta alérgenos con el personal.</p>
+        <p className="text-xs text-muted-foreground pt-2">{t(lang, "menu.poweredBy")} <Link to="/" className="text-primary font-medium">Carta</Link></p>
+        <p className="text-[10px] text-muted-foreground">{t(lang, "menu.allergens")}</p>
       </div>
 
       {/* Floating reserve button */}
       {!showReservation && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-lg w-full px-4">
           <Button variant="gradient" size="xl" className="w-full shadow-warm-lg" onClick={() => { setShowReservation(true); setReservationStep(0); }}>
-            <CalendarCheck className="mr-2 h-5 w-5" /> Reservar mesa
+            <CalendarCheck className="mr-2 h-5 w-5" /> {t(lang, "reserve.title")}
           </Button>
         </div>
       )}
@@ -359,10 +360,10 @@ const PublicRestaurant = () => {
           <div className="bg-card w-full max-w-lg rounded-t-3xl md:rounded-3xl p-6 max-h-[85vh] overflow-y-auto space-y-6" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold">
-                {reservationStep === 0 && "Reservar mesa"}
-                {reservationStep === 1 && "Elige hora"}
-                {reservationStep === 2 && "Tus datos"}
-                {reservationStep === 3 && "¡Reserva confirmada!"}
+                {reservationStep === 0 && t(lang, "reserve.title")}
+                {reservationStep === 1 && t(lang, "reserve.selectTime")}
+                {reservationStep === 2 && t(lang, "reserve.yourData")}
+                {reservationStep === 3 && t(lang, "reserve.confirmed")}
               </h3>
               <button onClick={() => setShowReservation(false)}><X className="h-5 w-5 text-muted-foreground" /></button>
             </div>
@@ -370,7 +371,7 @@ const PublicRestaurant = () => {
             {reservationStep === 0 && (
               <div className="space-y-6">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">¿Cuántos sois?</label>
+                  <label className="text-sm font-medium mb-2 block">{t(lang, "reserve.howMany")}</label>
                   <div className="flex gap-2 flex-wrap">
                     {[1,2,3,4,5,6,7,8].map(n => (
                       <button key={n} onClick={() => { setResData(d => ({...d, guests: n})); setCustomGuests(false); }}
@@ -390,14 +391,14 @@ const PublicRestaurant = () => {
                   )}
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">¿Qué día?</label>
+                  <label className="text-sm font-medium mb-2 block">{t(lang, "reserve.whatDay")}</label>
                   <input type="date" value={resData.date} onChange={e => setResData(d => ({...d, date: e.target.value}))}
                     className="w-full px-3 py-2 bg-secondary border border-border rounded-xl text-sm" min={new Date().toISOString().split('T')[0]} />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">¿Mediodía o noche?</label>
+                  <label className="text-sm font-medium mb-2 block">{t(lang, "reserve.period")}</label>
                   <div className="flex gap-2">
-                    {[{id: "lunch", label: "Mediodía (13:00-16:00)"}, {id: "dinner", label: "Noche (20:30-23:30)"}].map(p => (
+                    {[{id: "lunch", label: t(lang, "reserve.lunch")}, {id: "dinner", label: t(lang, "reserve.dinner")}].map(p => (
                       <button key={p.id} onClick={() => setResData(d => ({...d, period: p.id}))}
                         className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${resData.period === p.id ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
                         {p.label}
@@ -407,14 +408,14 @@ const PublicRestaurant = () => {
                 </div>
                 <Button variant="gradient" size="lg" className="w-full" disabled={!resData.date || !resData.period}
                   onClick={() => setReservationStep(1)}>
-                  Ver disponibilidad <ChevronRight className="ml-1" />
+                  {t(lang, "reserve.availability")} <ChevronRight className="ml-1" />
                 </Button>
               </div>
             )}
 
             {reservationStep === 1 && (
               <div className="space-y-6">
-                <label className="text-sm font-medium mb-2 block">Hora disponible</label>
+                <label className="text-sm font-medium mb-2 block">{t(lang, "reserve.time")}</label>
                 <div className="grid grid-cols-3 gap-2">
                   {(resData.period === "lunch" ? ["13:00","13:30","14:00","14:30","15:00"] : ["20:30","21:00","21:30","22:00"]).map(t => (
                     <button key={t} onClick={() => setResData(d => ({...d, time: t}))}
@@ -424,13 +425,13 @@ const PublicRestaurant = () => {
                   ))}
                   <button disabled className="py-3 rounded-xl text-sm bg-muted text-muted-foreground/40 cursor-not-allowed">
                     {resData.period === "lunch" ? "15:30" : "22:30"}
-                    <span className="block text-[10px]">Completo</span>
+                    <span className="block text-[10px]">{t(lang, "reserve.full")}</span>
                   </button>
                 </div>
                 <div className="flex gap-3">
                   <Button variant="outline-primary" onClick={() => setReservationStep(0)}><ArrowLeft className="h-4 w-4" /></Button>
                   <Button variant="gradient" size="lg" className="flex-1" disabled={!resData.time} onClick={() => setReservationStep(2)}>
-                    Continuar <ChevronRight className="ml-1" />
+                    {t(lang, "reserve.continue")} <ChevronRight className="ml-1" />
                   </Button>
                 </div>
               </div>
@@ -438,17 +439,17 @@ const PublicRestaurant = () => {
 
             {reservationStep === 2 && (
               <div className="space-y-4">
-                <div><label className="text-xs font-medium text-muted-foreground">Nombre *</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-xl text-sm" value={resData.name} onChange={e => setResData(d => ({...d, name: e.target.value}))} /></div>
-                <div><label className="text-xs font-medium text-muted-foreground">Teléfono *</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-xl text-sm" value={resData.phone} onChange={e => setResData(d => ({...d, phone: e.target.value}))} /></div>
-                <div><label className="text-xs font-medium text-muted-foreground">Email</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-xl text-sm" value={resData.email} onChange={e => setResData(d => ({...d, email: e.target.value}))} /></div>
-                <div><label className="text-xs font-medium text-muted-foreground">Notas</label><textarea className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-xl text-sm" rows={2} placeholder="Ej: Cumpleaños, alergias, silla de bebé..." value={resData.notes} onChange={e => setResData(d => ({...d, notes: e.target.value}))} /></div>
+                <div><label className="text-xs font-medium text-muted-foreground">{t(lang, "reserve.name")} *</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-xl text-sm" value={resData.name} onChange={e => setResData(d => ({...d, name: e.target.value}))} /></div>
+                <div><label className="text-xs font-medium text-muted-foreground">{t(lang, "reserve.phone")} *</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-xl text-sm" value={resData.phone} onChange={e => setResData(d => ({...d, phone: e.target.value}))} /></div>
+                <div><label className="text-xs font-medium text-muted-foreground">{t(lang, "reserve.email")}</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-xl text-sm" value={resData.email} onChange={e => setResData(d => ({...d, email: e.target.value}))} /></div>
+                <div><label className="text-xs font-medium text-muted-foreground">{t(lang, "reserve.notes")}</label><textarea className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-xl text-sm" rows={2} placeholder={t(lang, "reserve.notesPlaceholder")} value={resData.notes} onChange={e => setResData(d => ({...d, notes: e.target.value}))} /></div>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Preferencia de zona</label>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">{t(lang, "reserve.zone")}</label>
                   <div className="flex gap-2">
-                    {["Interior", "Terraza", "Sin preferencia"].map(z => (
+                    {[{v: "Interior", l: t(lang, "reserve.interior")}, {v: "Terraza", l: t(lang, "reserve.terrace")}, {v: "Sin preferencia", l: t(lang, "reserve.noPreference")}].map(({v: z, l}) => (
                       <button key={z} onClick={() => setResData(d => ({...d, zone: z}))}
                         className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors ${resData.zone === z ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
-                        {z}
+                        {l}
                       </button>
                     ))}
                   </div>
@@ -471,7 +472,7 @@ const PublicRestaurant = () => {
                       toast.success("¡Reserva enviada!");
                       setReservationStep(3);
                     }}>
-                    Confirmar reserva
+                    {t(lang, "reserve.confirm")}
                   </Button>
                 </div>
               </div>
@@ -482,15 +483,15 @@ const PublicRestaurant = () => {
                 <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto">
                   <Check className="h-8 w-8 text-success" />
                 </div>
-                <h3 className="text-xl font-bold">¡Reserva confirmada!</h3>
+                <h3 className="text-xl font-bold">{t(lang, "reserve.confirmed")}</h3>
                 <div className="bg-secondary rounded-xl p-4 text-sm space-y-2 text-left">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Nombre</span><span className="font-medium">{resData.name}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Fecha</span><span className="font-medium">{resData.date && new Date(resData.date).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Hora</span><span className="font-medium">{resData.time}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Personas</span><span className="font-medium">{resData.guests}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Zona</span><span className="font-medium">{resData.zone}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t(lang, "reserve.name")}</span><span className="font-medium">{resData.name}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t(lang, "reserve.date")}</span><span className="font-medium">{resData.date && new Date(resData.date).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t(lang, "reserve.selectTime")}</span><span className="font-medium">{resData.time}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t(lang, "reserve.guests")}</span><span className="font-medium">{resData.guests}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t(lang, "reserve.zone")}</span><span className="font-medium">{resData.zone}</span></div>
                 </div>
-                <p className="text-xs text-muted-foreground">Te enviaremos la confirmación por WhatsApp al {resData.phone}</p>
+                <p className="text-xs text-muted-foreground">{t(lang, "reserve.whatsapp")} {resData.phone}</p>
                 <div className="flex gap-3">
                   <Button variant="outline-primary" className="flex-1" onClick={() => {
                     const dtStart = resData.date.replace(/-/g, '') + 'T' + resData.time.replace(':', '') + '00';
@@ -510,8 +511,8 @@ const PublicRestaurant = () => {
                     const a = document.createElement('a'); a.href = url; a.download = 'reserva.ics'; a.click();
                     URL.revokeObjectURL(url);
                     toast.success("Archivo de calendario descargado");
-                  }}>Añadir al calendario</Button>
-                  <Button variant="gradient" className="flex-1" onClick={() => setShowReservation(false)}>Volver a la carta</Button>
+                  }}>{t(lang, "reserve.calendar")}</Button>
+                  <Button variant="gradient" className="flex-1" onClick={() => setShowReservation(false)}>{t(lang, "reserve.backToMenu")}</Button>
                 </div>
               </div>
             )}

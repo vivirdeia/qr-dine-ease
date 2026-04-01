@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
-import { metricsData, ALLERGENS, type Dish, type Category, type Reservation, type Table as TableType } from "@/data/mockData";
+import { ALLERGENS, type Dish, type Category, type Reservation, type Table as TableType, type Wine } from "@/data/mockData";
 import { dishImages } from "@/data/dishImages";
 import { getWineImage } from "@/data/wineImages";
 import { QRCodeSVG } from "qrcode.react";
@@ -12,6 +12,7 @@ import {
   QrCode, Settings, Bell, ChevronDown, Plus, Edit, Trash2, Copy,
   GripVertical, X, Clock, Users, XCircle, CheckCircle2,
   Download, ExternalLink, TrendingUp, LogOut, Eye, EyeOff, Menu,
+  FileDown, AlertTriangle, Sparkles,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -238,7 +239,7 @@ const RestaurantSection = () => {
 
 // ── Menu Section ──
 const MenuSection = () => {
-  const { categories, dishes, wines, dailyMenu, addDish, updateDish, deleteDish, duplicateDish, toggleDishAvailability, addCategory, updateCategory, deleteCategory, updateDailyMenu } = useApp();
+  const { categories, dishes, wines, dailyMenu, addDish, updateDish, deleteDish, duplicateDish, toggleDishAvailability, addCategory, updateCategory, deleteCategory, updateDailyMenu, addWine, updateWine, deleteWine, canAddDish, canAddCategory, userPlan, planLimits } = useApp();
   const [activeCategory, setActiveCategory] = useState("c1");
   const [showDishModal, setShowDishModal] = useState(false);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
@@ -251,6 +252,9 @@ const MenuSection = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleteCatConfirm, setDeleteCatConfirm] = useState<string | null>(null);
   const [showCatDrawer, setShowCatDrawer] = useState(false);
+  const [showWineModal, setShowWineModal] = useState(false);
+  const [editingWine, setEditingWine] = useState<Wine | null>(null);
+  const [wineForm, setWineForm] = useState<Partial<Wine>>({});
 
   const [dishForm, setDishForm] = useState<Partial<Dish>>({});
 
@@ -258,6 +262,10 @@ const MenuSection = () => {
   const activeCat = categories.find(c => c.id === activeCategory);
 
   const openNewDish = () => {
+    if (!canAddDish) {
+      toast.error(`Plan ${userPlan}: máximo ${planLimits.maxDishes} platos. Haz upgrade para añadir más.`);
+      return;
+    }
     setEditingDish(null);
     setDishForm({ categoryId: activeCategory, name: "", description: "", price: 0, allergens: [], dietary: [], available: true, isNew: false, position: categoryDishes.length + 1 });
     setShowDishModal(true);
@@ -307,6 +315,10 @@ const MenuSection = () => {
       updateCategory(editingCategory.id, { name: newCatName, icon: newCatIcon });
       toast.success("Categoría actualizada");
     } else {
+      if (!canAddCategory) {
+        toast.error(`Plan ${userPlan}: máximo ${planLimits.maxCategories} categorías. Haz upgrade para añadir más.`);
+        return;
+      }
       addCategory(newCatName, newCatIcon);
       toast.success("Categoría añadida");
     }
@@ -454,12 +466,19 @@ const MenuSection = () => {
         </div>
       </div>
 
-      {/* Wine section */}
+      {/* Wine section with CRUD */}
       <div className="space-y-4">
-        <h3 className="text-lg font-bold font-sans flex items-center gap-2">🍷 Carta de vinos</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold font-sans flex items-center gap-2">🍷 Carta de vinos</h3>
+          <Button size="sm" variant="gradient" onClick={() => {
+            setEditingWine(null);
+            setWineForm({ name: "", region: "", grape: "", type: "tinto", priceBottle: 0, position: wines.length + 1 });
+            setShowWineModal(true);
+          }}><Plus className="h-4 w-4 mr-1" /> Añadir vino</Button>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {wines.map(wine => (
-            <div key={wine.id} className="bg-card rounded-xl border border-border p-4 flex items-center gap-4">
+            <div key={wine.id} className="bg-card rounded-xl border border-border p-4 flex items-center gap-4 group">
               <img src={getWineImage(wine.id, wine.type)} alt={wine.name} className="w-10 h-14 rounded object-cover shrink-0" loading="lazy" />
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-sm">{wine.name} {wine.year && <span className="text-muted-foreground">{wine.year}</span>}</div>
@@ -469,10 +488,53 @@ const MenuSection = () => {
                 {wine.priceGlass && <div className="text-muted-foreground">Copa €{wine.priceGlass.toFixed(2)}</div>}
                 <div className="font-bold text-primary">€{wine.priceBottle.toFixed(2)}</div>
               </div>
+              <div className="hidden group-hover:flex items-center gap-0.5">
+                <button onClick={() => { setEditingWine(wine); setWineForm({ ...wine }); setShowWineModal(true); }} className="p-1 hover:bg-secondary rounded"><Edit className="h-3 w-3 text-muted-foreground" /></button>
+                <button onClick={() => { deleteWine(wine.id); toast.success("Vino eliminado"); }} className="p-1 hover:bg-secondary rounded"><Trash2 className="h-3 w-3 text-destructive/60" /></button>
+              </div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Wine modal */}
+      {showWineModal && (
+        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowWineModal(false)}>
+          <div className="bg-card rounded-t-2xl sm:rounded-2xl border border-border p-5 sm:p-6 w-full sm:max-w-lg max-h-[90vh] overflow-y-auto space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold font-sans">{editingWine ? "Editar vino" : "Nuevo vino"}</h3>
+            <div className="space-y-3">
+              <div><label className="text-xs font-medium text-muted-foreground">Nombre *</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={wineForm.name || ""} onChange={e => setWineForm(prev => ({ ...prev, name: e.target.value }))} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="text-xs font-medium text-muted-foreground">Región/DO</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={wineForm.region || ""} onChange={e => setWineForm(prev => ({ ...prev, region: e.target.value }))} /></div>
+                <div><label className="text-xs font-medium text-muted-foreground">Uva</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={wineForm.grape || ""} onChange={e => setWineForm(prev => ({ ...prev, grape: e.target.value }))} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Tipo</label>
+                  <select className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={wineForm.type || "tinto"} onChange={e => setWineForm(prev => ({ ...prev, type: e.target.value as Wine["type"] }))}>
+                    <option value="tinto">Tinto</option><option value="blanco">Blanco</option><option value="rosado">Rosado</option><option value="espumoso">Espumoso</option><option value="dulce">Dulce</option>
+                  </select>
+                </div>
+                <div><label className="text-xs font-medium text-muted-foreground">Año</label><input type="number" className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={wineForm.year || ""} onChange={e => setWineForm(prev => ({ ...prev, year: parseInt(e.target.value) || undefined }))} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="text-xs font-medium text-muted-foreground">Precio botella (€) *</label><input type="number" step="0.01" className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={wineForm.priceBottle || ""} onChange={e => setWineForm(prev => ({ ...prev, priceBottle: parseFloat(e.target.value) || 0 }))} /></div>
+                <div><label className="text-xs font-medium text-muted-foreground">Precio copa (€)</label><input type="number" step="0.01" className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={wineForm.priceGlass || ""} onChange={e => setWineForm(prev => ({ ...prev, priceGlass: parseFloat(e.target.value) || undefined }))} /></div>
+              </div>
+              <div><label className="text-xs font-medium text-muted-foreground">Descripción</label><textarea className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" rows={2} value={wineForm.description || ""} onChange={e => setWineForm(prev => ({ ...prev, description: e.target.value }))} /></div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button variant="gradient" className="flex-1" onClick={() => {
+                if (!wineForm.name || !wineForm.priceBottle) { toast.error("Nombre y precio son obligatorios"); return; }
+                if (editingWine) { updateWine(editingWine.id, wineForm); toast.success("Vino actualizado"); }
+                else { addWine(wineForm as Omit<Wine, "id">); toast.success("Vino añadido"); }
+                setShowWineModal(false);
+              }}>Guardar</Button>
+              <Button variant="outline-primary" onClick={() => setShowWineModal(false)}>Cancelar</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Dish modal */}
       {showDishModal && (
@@ -970,85 +1032,135 @@ const TablesSection = () => {
 };
 
 // ── Metrics Section ──
-const MetricsSection = () => (
-  <div className="space-y-6">
-    <div>
-      <h2 className="text-xl sm:text-2xl font-bold mb-1">Métricas</h2>
-      <p className="text-muted-foreground text-sm">Datos de los últimos 30 días</p>
-    </div>
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-      {[
-        { label: "Reservas totales", value: metricsData.totalReservations },
-        { label: "Cubiertos totales", value: metricsData.totalCoversMonth },
-        { label: "Ocupación media", value: `${metricsData.avgOccupancy}%` },
-        { label: "Tasa no-show", value: `${metricsData.noshowRate}%` },
-      ].map((kpi, i) => (
-        <div key={i} className="bg-card rounded-xl border border-border p-3 sm:p-4">
-          <div className="text-[10px] sm:text-xs text-muted-foreground mb-1">{kpi.label}</div>
-          <div className="text-xl sm:text-2xl font-bold">{kpi.value}</div>
-        </div>
-      ))}
-    </div>
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-      <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
-        <h3 className="text-sm font-bold font-sans mb-4">Reservas por día</h3>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={metricsData.reservationsByDay}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="day" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
-            <Bar dataKey="lunch" name="Mediodía" fill="hsl(var(--primary))" radius={[4,4,0,0]} />
-            <Bar dataKey="dinner" name="Noche" fill="hsl(var(--gold))" radius={[4,4,0,0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
-        <h3 className="text-sm font-bold font-sans mb-4">Ocupación semanal</h3>
-        <ResponsiveContainer width="100%" height={220}>
-          <LineChart data={metricsData.weeklyOccupancy}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="week" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} />
-            <Tooltip />
-            <Line type="monotone" dataKey="occupancy" name="Ocupación %" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
-        <h3 className="text-sm font-bold font-sans mb-4">Platos más vistos</h3>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={metricsData.topDishes} layout="vertical">
-            <XAxis type="number" tick={{ fontSize: 11 }} />
-            <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={80} />
-            <Tooltip />
-            <Bar dataKey="views" fill="hsl(var(--primary))" radius={[0,4,4,0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
-        <h3 className="text-sm font-bold font-sans mb-4">Reservas por fuente</h3>
-        <ResponsiveContainer width="100%" height={220}>
-          <PieChart>
-            <Pie data={metricsData.reservationsBySource} dataKey="value" nameKey="source" cx="50%" cy="50%" outerRadius={70} label={({ source, value }) => `${source} ${value}%`}>
-              {metricsData.reservationsBySource.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-    <div className="bg-primary/5 rounded-2xl border border-primary/20 p-4 sm:p-6">
-      <div className="flex items-start gap-3">
-        <TrendingUp className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+const MetricsSection = () => {
+  const { reservations, tables, dishes } = useApp();
+
+  const metrics = useMemo(() => {
+    const total = reservations.length;
+    const confirmed = reservations.filter(r => r.status === "confirmed" || r.status === "completed").length;
+    const completed = reservations.filter(r => r.status === "completed").length;
+    const cancelled = reservations.filter(r => r.status === "cancelled").length;
+    const noshows = reservations.filter(r => r.status === "noshow").length;
+    const totalGuests = reservations.filter(r => r.status !== "cancelled").reduce((s, r) => s + r.guests, 0);
+    const avgParty = total > 0 ? (totalGuests / (total - cancelled)).toFixed(1) : "0";
+    const noshowRate = total > 0 ? ((noshows / total) * 100).toFixed(1) : "0";
+    const totalCapacity = tables.reduce((s, t) => s + t.capacity, 0);
+    const occupancy = totalCapacity > 0 ? Math.round((totalGuests / (totalCapacity * 7)) * 100) : 0;
+
+    // Reservations by day
+    const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+    const byDay = dayNames.map(day => ({ day, lunch: 0, dinner: 0 }));
+    reservations.forEach(r => {
+      const d = new Date(r.date).getDay();
+      const hour = parseInt(r.time.split(":")[0]);
+      if (hour < 17) byDay[d].lunch++;
+      else byDay[d].dinner++;
+    });
+
+    // By source
+    const digital = reservations.filter(r => r.source === "digital").length;
+    const manual = reservations.filter(r => r.source === "manual").length;
+    const phone = reservations.filter(r => r.source === "phone").length;
+    const sourceData = [
+      { source: "Carta digital", value: total > 0 ? Math.round((digital / total) * 100) : 0, fill: "hsl(var(--primary))" },
+      { source: "Manual", value: total > 0 ? Math.round((manual / total) * 100) : 0, fill: "hsl(var(--gold))" },
+      { source: "Teléfono", value: total > 0 ? Math.round((phone / total) * 100) : 0, fill: "hsl(var(--muted-foreground))" },
+    ];
+
+    return { total, confirmed, completed, cancelled, noshows, totalGuests, avgParty, noshowRate, occupancy, byDay, sourceData };
+  }, [reservations, tables]);
+
+  const exportCSV = () => {
+    const header = "ID,Nombre,Teléfono,Email,Fecha,Hora,Personas,Estado,Fuente,Notas\n";
+    const rows = reservations.map(r =>
+      `${r.id},"${r.name}","${r.phone}","${r.email || ""}",${r.date},${r.time},${r.guests},${r.status},${r.source},"${(r.notes || "").replace(/"/g, '""')}"`
+    ).join("\n");
+    const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `reservas_${new Date().toISOString().split("T")[0]}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast.success("CSV descargado");
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h4 className="font-bold text-sm font-sans">Insight</h4>
-          <p className="text-sm text-muted-foreground mt-1">Los viernes y sábados noche tienes un 94% de ocupación. Los martes mediodía solo un 45%. Considera una promoción de menú del día los martes.</p>
+          <h2 className="text-xl sm:text-2xl font-bold mb-1">Métricas</h2>
+          <p className="text-muted-foreground text-sm">Datos calculados de tus reservas reales</p>
+        </div>
+        <Button variant="outline-primary" size="sm" onClick={exportCSV}>
+          <FileDown className="h-4 w-4 mr-1" /> Exportar CSV
+        </Button>
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        {[
+          { label: "Reservas totales", value: metrics.total },
+          { label: "Cubiertos totales", value: metrics.totalGuests },
+          { label: "Ocupación estimada", value: `${metrics.occupancy}%` },
+          { label: "Tasa no-show", value: `${metrics.noshowRate}%` },
+        ].map((kpi, i) => (
+          <div key={i} className="bg-card rounded-xl border border-border p-3 sm:p-4">
+            <div className="text-[10px] sm:text-xs text-muted-foreground mb-1">{kpi.label}</div>
+            <div className="text-xl sm:text-2xl font-bold">{kpi.value}</div>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
+          <h3 className="text-sm font-bold font-sans mb-4">Reservas por día</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={metrics.byDay}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="day" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} />
+              <Tooltip />
+              <Bar dataKey="lunch" name="Mediodía" fill="hsl(var(--primary))" radius={[4,4,0,0]} />
+              <Bar dataKey="dinner" name="Noche" fill="hsl(var(--gold))" radius={[4,4,0,0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
+          <h3 className="text-sm font-bold font-sans mb-4">Reservas por fuente</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <PieChart>
+              <Pie data={metrics.sourceData} dataKey="value" nameKey="source" cx="50%" cy="50%" outerRadius={70} label={({ source, value }) => `${source} ${value}%`}>
+                {metrics.sourceData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Confirmadas", value: metrics.confirmed, color: "text-success" },
+          { label: "Completadas", value: metrics.completed, color: "text-primary" },
+          { label: "Canceladas", value: metrics.cancelled, color: "text-destructive" },
+          { label: "Tamaño medio", value: `${metrics.avgParty} pers.`, color: "text-foreground" },
+        ].map((kpi, i) => (
+          <div key={i} className="bg-card rounded-xl border border-border p-3">
+            <div className="text-[10px] text-muted-foreground mb-1">{kpi.label}</div>
+            <div className={`text-lg font-bold ${kpi.color}`}>{kpi.value}</div>
+          </div>
+        ))}
+      </div>
+      <div className="bg-primary/5 rounded-2xl border border-primary/20 p-4 sm:p-6">
+        <div className="flex items-start gap-3">
+          <TrendingUp className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+          <div>
+            <h4 className="font-bold text-sm font-sans">Insight</h4>
+            <p className="text-sm text-muted-foreground mt-1">
+              {metrics.noshows > 0 
+                ? `Tienes ${metrics.noshows} no-shows (${metrics.noshowRate}%). Considera enviar recordatorios por WhatsApp.`
+                : "¡Genial! No tienes no-shows. Tus clientes son puntuales."}
+            </p>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // ── QR Section ──
 const QRSection = () => {
@@ -1315,10 +1427,13 @@ const sections: Record<Section, React.FC> = {
 };
 
 const Dashboard = () => {
-  const { isLoggedIn, logout, restaurant, userPlan, setUserPlan } = useApp();
+  const { isLoggedIn, logout, restaurant, userPlan, setUserPlan, appNotifications, markNotificationRead, markAllNotificationsRead, canAddDish, canAddCategory } = useApp();
   const [active, setActive] = useState<Section>("restaurant");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const ActiveSection = sections[active];
+
+  const unreadCount = appNotifications.filter(n => !n.read).length;
 
   if (!isLoggedIn) return <LoginScreen />;
 
@@ -1369,16 +1484,64 @@ const Dashboard = () => {
             <ChevronDown className="h-3 w-3 text-muted-foreground hidden sm:block" />
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <button className="relative p-2 hover:bg-secondary rounded-lg">
-              <Bell className="h-4 w-4 text-muted-foreground" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
-            </button>
+            <div className="relative">
+              <button className="relative p-2 hover:bg-secondary rounded-lg" onClick={() => setNotifOpen(!notifOpen)}>
+                <Bell className="h-4 w-4 text-muted-foreground" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[9px] font-bold rounded-full flex items-center justify-center">{unreadCount > 9 ? "9+" : unreadCount}</span>
+                )}
+              </button>
+              {notifOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-50 w-80 bg-card rounded-2xl border border-border shadow-warm-lg overflow-hidden">
+                    <div className="flex items-center justify-between p-3 border-b border-border">
+                      <h4 className="text-sm font-bold">Notificaciones</h4>
+                      {unreadCount > 0 && (
+                        <button onClick={() => markAllNotificationsRead()} className="text-xs text-primary hover:underline">Marcar todas leídas</button>
+                      )}
+                    </div>
+                    <div className="max-h-80 overflow-y-auto">
+                      {appNotifications.length === 0 ? (
+                        <p className="p-4 text-sm text-muted-foreground text-center">No hay notificaciones</p>
+                      ) : (
+                        appNotifications.slice(0, 15).map(n => (
+                          <button key={n.id} onClick={() => markNotificationRead(n.id)}
+                            className={`w-full text-left p-3 border-b border-border last:border-0 hover:bg-secondary/50 transition-colors ${!n.read ? 'bg-primary/5' : ''}`}>
+                            <div className="flex items-start gap-2">
+                              {!n.read && <span className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />}
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-medium">{n.title}</div>
+                                <div className="text-xs text-muted-foreground line-clamp-2">{n.message}</div>
+                                <div className="text-[10px] text-muted-foreground mt-0.5">{new Date(n.date).toLocaleDateString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</div>
+                              </div>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             <button onClick={() => { logout(); toast.success("Sesión cerrada"); }} className="p-2 hover:bg-secondary rounded-lg" title="Cerrar sesión">
               <LogOut className="h-4 w-4 text-muted-foreground" />
             </button>
             <div className="w-8 h-8 rounded-full bg-gradient-primary" />
           </div>
         </header>
+
+        {/* Plan limits banner */}
+        {userPlan === "free" && (
+          <div className="bg-primary/5 border-b border-primary/20 px-4 py-2 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs">
+              <Sparkles className="h-4 w-4 text-primary shrink-0" />
+              <span>Plan Free: reservas, fotos y multi-idioma no disponibles.</span>
+            </div>
+            <Button variant="gradient" size="sm" className="text-xs shrink-0" onClick={() => { setUserPlan("pro"); toast.success("¡Plan actualizado a Pro!"); }}>Upgrade</Button>
+          </div>
+        )}
+
         <main className="flex-1 p-4 sm:p-6 overflow-auto pb-20 md:pb-6">
           <ActiveSection />
         </main>
