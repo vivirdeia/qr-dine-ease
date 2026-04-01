@@ -220,8 +220,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const value: AppState = {
     restaurant, categories, dishes, wines, tables, reservations, dailyMenu,
-    isLoggedIn, notifications,
-    login, logout,
+    isLoggedIn, notifications, userPlan, userEmail, userName,
+    login, logout, register: registerUser, setUserPlan,
     updateRestaurant,
     addDish, updateDish, deleteDish, duplicateDish, toggleDishAvailability,
     addCategory, updateCategory, deleteCategory,
