@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useCallback } from "react";
+import React, { createContext, useContext, useCallback, useMemo } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import {
   restaurant as defaultRestaurant,
@@ -24,6 +24,21 @@ interface NotificationSettings {
   noshowAlert: boolean;
 }
 
+export interface AppNotification {
+  id: string;
+  type: "reservation" | "cancellation" | "noshow" | "system";
+  title: string;
+  message: string;
+  date: string;
+  read: boolean;
+}
+
+const PLAN_LIMITS = {
+  free: { maxDishes: 20, maxCategories: 3 },
+  pro: { maxDishes: Infinity, maxCategories: Infinity },
+  business: { maxDishes: Infinity, maxCategories: Infinity },
+};
+
 interface AppState {
   restaurant: Restaurant;
   categories: Category[];
@@ -34,9 +49,15 @@ interface AppState {
   dailyMenu: DailyMenu;
   isLoggedIn: boolean;
   notifications: NotificationSettings;
+  appNotifications: AppNotification[];
   userPlan: "free" | "pro" | "business";
   userEmail: string;
   userName: string;
+
+  // Plan limits
+  planLimits: { maxDishes: number; maxCategories: number };
+  canAddDish: boolean;
+  canAddCategory: boolean;
 
   // Auth
   login: (email: string, password: string) => boolean;
@@ -71,8 +92,15 @@ interface AppState {
   addReservation: (reservation: Omit<Reservation, "id" | "createdAt">) => void;
   updateReservationStatus: (id: string, status: Reservation["status"]) => void;
 
+  // Wines
+  addWine: (wine: Omit<Wine, "id">) => void;
+  updateWine: (id: string, data: Partial<Wine>) => void;
+  deleteWine: (id: string) => void;
+
   // Notifications
   toggleNotification: (key: keyof NotificationSettings) => void;
+  markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -90,7 +118,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [restaurant, setRestaurant] = useLocalStorage<Restaurant>("carta_restaurant", defaultRestaurant);
   const [categories, setCategories] = useLocalStorage<Category[]>("carta_categories", defaultCategories);
   const [dishes, setDishes] = useLocalStorage<Dish[]>("carta_dishes", defaultDishes);
-  const [wines] = useLocalStorage<Wine[]>("carta_wines", defaultWines);
+  const [wines, setWines] = useLocalStorage<Wine[]>("carta_wines", defaultWines);
   const [tables, setTables] = useLocalStorage<Table[]>("carta_tables", defaultTables);
   const [reservations, setReservations] = useLocalStorage<Reservation[]>("carta_reservations", defaultReservations);
   const [dailyMenu, setDailyMenu] = useLocalStorage<DailyMenu>("carta_dailyMenu", defaultDailyMenu);
@@ -105,14 +133,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     dailySummary: false,
     noshowAlert: true,
   });
+  const [appNotifications, setAppNotifications] = useLocalStorage<AppNotification[]>("carta_appNotifications", []);
+
+  const planLimits = PLAN_LIMITS[userPlan];
+  const canAddDish = dishes.length < planLimits.maxDishes;
+  const canAddCategory = categories.filter(c => c.id !== "c0").length < planLimits.maxCategories;
+
+  const addNotification = useCallback((type: AppNotification["type"], title: string, message: string) => {
+    const notif: AppNotification = {
+      id: genId("n"),
+      type,
+      title,
+      message,
+      date: new Date().toISOString(),
+      read: false,
+    };
+    setAppNotifications(prev => [notif, ...prev].slice(0, 50));
+  }, [setAppNotifications]);
 
   const login = useCallback((email: string, password: string) => {
-    // Check registered credentials first
     if (registeredCredentials && email === registeredCredentials.email && password === registeredCredentials.password) {
       setIsLoggedIn(true);
       return true;
     }
-    // Fallback demo credentials
     if (email === "demo@carta.app" && password === "demo1234") {
       setIsLoggedIn(true);
       return true;
@@ -208,19 +251,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString().split("T")[0],
     };
     setReservations(prev => [...prev, newRes]);
-  }, [setReservations]);
+    addNotification("reservation", "Nueva reserva", `${reservation.name} — ${reservation.guests} pers. el ${reservation.date} a las ${reservation.time}`);
+  }, [setReservations, addNotification]);
 
   const updateReservationStatus = useCallback((id: string, status: Reservation["status"]) => {
-    setReservations(prev => prev.map(r => r.id === id ? { ...r, status } : r));
-  }, [setReservations]);
+    setReservations(prev => {
+      const res = prev.find(r => r.id === id);
+      if (res) {
+        if (status === "cancelled") {
+          addNotification("cancellation", "Reserva cancelada", `${res.name} canceló su reserva del ${res.date}`);
+        } else if (status === "noshow") {
+          addNotification("noshow", "No-show", `${res.name} no se presentó a su reserva del ${res.date}`);
+        }
+      }
+      return prev.map(r => r.id === id ? { ...r, status } : r);
+    });
+  }, [setReservations, addNotification]);
+
+  // Wine CRUD
+  const addWine = useCallback((wine: Omit<Wine, "id">) => {
+    setWines(prev => [...prev, { ...wine, id: genId("w") }]);
+  }, [setWines]);
+
+  const updateWine = useCallback((id: string, data: Partial<Wine>) => {
+    setWines(prev => prev.map(w => w.id === id ? { ...w, ...data } : w));
+  }, [setWines]);
+
+  const deleteWine = useCallback((id: string) => {
+    setWines(prev => prev.filter(w => w.id !== id));
+  }, [setWines]);
 
   const toggleNotification = useCallback((key: keyof NotificationSettings) => {
     setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
   }, [setNotifications]);
 
+  const markNotificationRead = useCallback((id: string) => {
+    setAppNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  }, [setAppNotifications]);
+
+  const markAllNotificationsRead = useCallback(() => {
+    setAppNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  }, [setAppNotifications]);
+
   const value: AppState = {
     restaurant, categories, dishes, wines, tables, reservations, dailyMenu,
-    isLoggedIn, notifications, userPlan, userEmail, userName,
+    isLoggedIn, notifications, appNotifications, userPlan, userEmail, userName,
+    planLimits, canAddDish, canAddCategory,
     login, logout, register: registerUser, setUserPlan,
     updateRestaurant,
     addDish, updateDish, deleteDish, duplicateDish, toggleDishAvailability,
@@ -228,7 +304,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateDailyMenu,
     addTable, updateTable, deleteTable,
     addReservation, updateReservationStatus,
-    toggleNotification,
+    addWine, updateWine, deleteWine,
+    toggleNotification, markNotificationRead, markAllNotificationsRead,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
