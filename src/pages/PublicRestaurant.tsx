@@ -425,7 +425,7 @@ const PublicRestaurant = () => {
                   ))}
                   <button disabled className="py-3 rounded-xl text-sm bg-muted text-muted-foreground/40 cursor-not-allowed">
                     {resData.period === "lunch" ? "15:30" : "22:30"}
-                    <span className="block text-[10px]">Completo</span>
+                    <span className="block text-[10px]">{t(lang, "reserve.full")}</span>
                   </button>
                 </div>
                 <div className="flex gap-3">
