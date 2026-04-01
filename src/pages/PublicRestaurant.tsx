@@ -234,13 +234,14 @@ const PublicRestaurant = () => {
           <h2 className="text-xl font-bold mb-4">🍷 Carta de vinos</h2>
           <div className="flex gap-2 overflow-x-auto pb-3">
             {["Todos", "Tintos", "Blancos", "Rosados", "Espumosos", "Dulces"].map(t => (
-              <button key={t} className="shrink-0 px-3 py-1 rounded-full text-xs bg-secondary text-muted-foreground">
+              <button key={t} onClick={() => setWineFilter(t)}
+                className={`shrink-0 px-3 py-1 rounded-full text-xs transition-colors ${wineFilter === t ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
                 {t}
               </button>
             ))}
           </div>
           <div className="space-y-3">
-            {wines.map(wine => (
+            {wines.filter(w => wineFilter === "Todos" || w.type === wineFilter.toLowerCase().replace("s", "").replace("tinto", "tinto").replace("blanco", "blanco")).map(wine => (
               <div key={wine.id} className="flex gap-3 bg-card rounded-xl border border-border p-3">
                 <img src={getWineImage(wine.id, wine.type)} alt={wine.name} loading="lazy" className="w-10 h-14 rounded object-cover shrink-0" />
                 <div className="flex-1 min-w-0">
