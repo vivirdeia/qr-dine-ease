@@ -62,7 +62,11 @@ const PublicRestaurant = () => {
           <select value={lang} onChange={e => setLang(e.target.value)} className="text-xs text-white bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg px-2 py-1">
             <option>ES</option><option>EN</option><option>FR</option><option>CA</option>
           </select>
-          <button className="p-2 bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg text-white"><Share2 className="h-4 w-4" /></button>
+          <button className="p-2 bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg text-white" onClick={async () => {
+            const shareData = { title: restaurant.name, text: `${restaurant.name} — ${restaurant.subtitle}`, url: window.location.href };
+            if (navigator.share) { try { await navigator.share(shareData); } catch {} }
+            else { await navigator.clipboard.writeText(window.location.href); toast.success("Enlace copiado al portapapeles"); }
+          }}><Share2 className="h-4 w-4" /></button>
         </div>
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-4">
           <h1 className="text-2xl font-bold text-white drop-shadow-lg">{restaurant.name}</h1>
