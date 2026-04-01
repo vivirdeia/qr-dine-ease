@@ -76,7 +76,7 @@ const Hero = () => (
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
           <Button variant="gradient" size="xl" asChild>
-            <Link to="/dashboard">Crear mi carta gratis <ArrowRight className="ml-1 h-5 w-5" /></Link>
+            <Link to="/register">Crear mi carta gratis <ArrowRight className="ml-1 h-5 w-5" /></Link>
           </Button>
           <Button variant="outline-primary" size="xl" asChild>
             <Link to="/r/casa-martin">Ver demo en vivo</Link>
