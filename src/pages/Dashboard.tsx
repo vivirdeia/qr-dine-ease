@@ -31,51 +31,7 @@ const sidebarItems: { id: Section; label: string; icon: React.ElementType }[] = 
   { id: "settings", label: "Ajustes", icon: Settings },
 ];
 
-// ── Login Screen ──
-const LoginScreen = () => {
-  const { login } = useApp();
-  const [email, setEmail] = useState("demo@carta.app");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (login(email, password)) {
-      toast.success("¡Bienvenido al panel de Carta!");
-    } else {
-      setError(true);
-      toast.error("Credenciales incorrectas");
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-sm space-y-8">
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <UtensilsCrossed className="h-8 w-8 text-primary" />
-            <span className="font-serif text-2xl font-bold">CARTA</span>
-          </div>
-          <p className="text-muted-foreground text-sm">Accede al panel de tu restaurante</p>
-        </div>
-        <form onSubmit={handleSubmit} className="bg-card rounded-2xl border border-border p-6 space-y-4">
-          <div>
-            <label className="text-xs font-medium text-muted-foreground">Email</label>
-            <input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" type="email" value={email} onChange={e => { setEmail(e.target.value); setError(false); }} />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-muted-foreground">Contraseña</label>
-            <input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" type="password" value={password} onChange={e => { setPassword(e.target.value); setError(false); }} />
-          </div>
-          {error && <p className="text-xs text-destructive">Email o contraseña incorrectos</p>}
-          <Button variant="gradient" className="w-full" type="submit">Iniciar sesión</Button>
-          <p className="text-xs text-muted-foreground text-center">Demo: demo@carta.app / demo1234</p>
-        </form>
-      </div>
-    </div>
-  );
-};
-
+// LoginScreen removed — now handled by /login route
 // ── Restaurant Section ──
 const RestaurantSection = () => {
   const { restaurant, updateRestaurant } = useApp();
