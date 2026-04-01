@@ -396,7 +396,7 @@ const PublicRestaurant = () => {
                     className="w-full px-3 py-2 bg-secondary border border-border rounded-xl text-sm" min={new Date().toISOString().split('T')[0]} />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">¿Mediodía o noche?</label>
+                  <label className="text-sm font-medium mb-2 block">{t(lang, "reserve.period")}</label>
                   <div className="flex gap-2">
                     {[{id: "lunch", label: "Mediodía (13:00-16:00)"}, {id: "dinner", label: "Noche (20:30-23:30)"}].map(p => (
                       <button key={p.id} onClick={() => setResData(d => ({...d, period: p.id}))}
