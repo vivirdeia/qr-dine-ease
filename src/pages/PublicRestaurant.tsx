@@ -241,7 +241,11 @@ const PublicRestaurant = () => {
             ))}
           </div>
           <div className="space-y-3">
-            {wines.filter(w => wineFilter === "Todos" || w.type === wineFilter.toLowerCase().replace("s", "").replace("tinto", "tinto").replace("blanco", "blanco")).map(wine => (
+            {wines.filter(w => {
+              if (wineFilter === "Todos") return true;
+              const map: Record<string, string> = { Tintos: "tinto", Blancos: "blanco", Rosados: "rosado", Espumosos: "espumoso", Dulces: "dulce" };
+              return w.type === map[wineFilter];
+            }).map(wine => (
               <div key={wine.id} className="flex gap-3 bg-card rounded-xl border border-border p-3">
                 <img src={getWineImage(wine.id, wine.type)} alt={wine.name} loading="lazy" className="w-10 h-14 rounded object-cover shrink-0" />
                 <div className="flex-1 min-w-0">
