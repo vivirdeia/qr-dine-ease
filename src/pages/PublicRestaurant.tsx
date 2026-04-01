@@ -33,6 +33,67 @@ const PublicRestaurant = () => {
 
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
+  // Apply brand colors
+  useEffect(() => {
+    const colors = restaurant.brandColors;
+    if (!colors) return;
+    const root = document.documentElement;
+    const hexToHsl = (hex: string): string => {
+      const r = parseInt(hex.slice(1, 3), 16) / 255;
+      const g = parseInt(hex.slice(3, 5), 16) / 255;
+      const b = parseInt(hex.slice(5, 7), 16) / 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h = 0, s = 0;
+      const l = (max + min) / 2;
+      if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+          case g: h = ((b - r) / d + 2) / 6; break;
+          case b: h = ((r - g) / d + 4) / 6; break;
+        }
+      }
+      return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+    };
+    const origPrimary = getComputedStyle(root).getPropertyValue('--primary').trim();
+    const origGold = getComputedStyle(root).getPropertyValue('--gold').trim();
+    const origBg = getComputedStyle(root).getPropertyValue('--background').trim();
+    root.style.setProperty('--primary', hexToHsl(colors.primary));
+    root.style.setProperty('--gold', hexToHsl(colors.accent));
+    root.style.setProperty('--background', hexToHsl(colors.background));
+    return () => {
+      root.style.setProperty('--primary', origPrimary);
+      root.style.setProperty('--gold', origGold);
+      root.style.setProperty('--background', origBg);
+    };
+  }, [restaurant.brandColors]);
+
+  // Inject tracking scripts
+  useEffect(() => {
+    const t = restaurant.tracking;
+    if (!t) return;
+    const scripts: HTMLScriptElement[] = [];
+    if (t.googleAnalyticsId) {
+      const s1 = document.createElement('script');
+      s1.src = `https://www.googletagmanager.com/gtag/js?id=${t.googleAnalyticsId}`;
+      s1.async = true;
+      document.head.appendChild(s1);
+      scripts.push(s1);
+      const s2 = document.createElement('script');
+      s2.textContent = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${t.googleAnalyticsId}');`;
+      document.head.appendChild(s2);
+      scripts.push(s2);
+    }
+    if (t.metaPixelId) {
+      const s = document.createElement('script');
+      s.textContent = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${t.metaPixelId}');fbq('track','PageView');`;
+      document.head.appendChild(s);
+      scripts.push(s);
+    }
+    return () => { scripts.forEach(s => s.remove()); };
+  }, [restaurant.tracking]);
+
   const scrollToCategory = (catId: string) => {
     setActiveCategory(catId);
     const el = categoryRefs.current[catId];
