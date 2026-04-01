@@ -488,6 +488,37 @@ const MenuSection = () => {
               </div>
               <div><label className="text-xs font-medium text-muted-foreground">Nota del chef</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={dishForm.chefNote || ""} onChange={e => setDishForm(prev => ({ ...prev, chefNote: e.target.value }))} /></div>
               <div>
+                <label className="text-xs font-medium text-muted-foreground">Foto del plato</label>
+                <div className="mt-1 flex items-center gap-2">
+                  {(dishForm.photoUrl || (editingDish && dishImages[editingDish.id])) && (
+                    <img src={dishForm.photoUrl || (editingDish ? dishImages[editingDish.id] : '')} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                  )}
+                  <input className="flex-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" placeholder="URL de imagen" value={dishForm.photoUrl || ""} onChange={e => setDishForm(prev => ({ ...prev, photoUrl: e.target.value }))} />
+                  <label className="px-3 py-2 bg-primary/10 text-primary rounded-lg text-xs font-medium cursor-pointer hover:bg-primary/20 transition-colors">
+                    Subir
+                    <input type="file" accept="image/*" className="hidden" onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 5 * 1024 * 1024) { toast.error("Imagen demasiado grande (máx 5MB)"); return; }
+                      const canvas = document.createElement('canvas');
+                      const img = new Image();
+                      img.onload = () => {
+                        const max = 800;
+                        let w = img.width, h = img.height;
+                        if (w > max) { h = h * max / w; w = max; }
+                        if (h > max) { w = w * max / h; h = max; }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d')?.drawImage(img, 0, 0, w, h);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        setDishForm(prev => ({ ...prev, photoUrl: dataUrl }));
+                      };
+                      img.src = URL.createObjectURL(file);
+                    }} />
+                  </label>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Pega una URL o sube una foto (máx 5MB, se comprime)</p>
+              </div>
+              <div>
                 <label className="text-xs font-medium text-muted-foreground">Alérgenos</label>
                 <div className="flex flex-wrap gap-1.5 mt-1">
                   {ALLERGENS.map(a => (
