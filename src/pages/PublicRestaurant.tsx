@@ -186,7 +186,7 @@ const PublicRestaurant = () => {
               onClick={() => scrollToCategory("menu-del-dia")}
               className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${activeCategory === "menu-del-dia" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}
             >
-              📌 Menú del día
+              📌 {t(lang, "menu.daily")}
             </button>
             {categories.filter(c => c.id !== "c0" && c.visible).map(cat => (
               <button
