@@ -341,8 +341,8 @@ const PublicRestaurant = () => {
           <a href={`tel:${restaurant.phone}`} className="flex items-center gap-1"><Phone className="h-4 w-4" />{restaurant.phone}</a>
           <span className="text-muted-foreground">{restaurant.instagram}</span>
         </div>
-        <p className="text-xs text-muted-foreground pt-2">Powered by <Link to="/" className="text-primary font-medium">Carta</Link></p>
-        <p className="text-[10px] text-muted-foreground">Todos nuestros platos se elaboran con producto fresco. Consulta alérgenos con el personal.</p>
+        <p className="text-xs text-muted-foreground pt-2">{t(lang, "menu.poweredBy")} <Link to="/" className="text-primary font-medium">Carta</Link></p>
+        <p className="text-[10px] text-muted-foreground">{t(lang, "menu.allergens")}</p>
       </div>
 
       {/* Floating reserve button */}
