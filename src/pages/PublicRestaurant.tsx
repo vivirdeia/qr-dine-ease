@@ -491,7 +491,7 @@ const PublicRestaurant = () => {
                   <div className="flex justify-between"><span className="text-muted-foreground">{t(lang, "reserve.guests")}</span><span className="font-medium">{resData.guests}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">{t(lang, "reserve.zone")}</span><span className="font-medium">{resData.zone}</span></div>
                 </div>
-                <p className="text-xs text-muted-foreground">Te enviaremos la confirmación por WhatsApp al {resData.phone}</p>
+                <p className="text-xs text-muted-foreground">{t(lang, "reserve.whatsapp")} {resData.phone}</p>
                 <div className="flex gap-3">
                   <Button variant="outline-primary" className="flex-1" onClick={() => {
                     const dtStart = resData.date.replace(/-/g, '') + 'T' + resData.time.replace(':', '') + '00';
