@@ -296,9 +296,9 @@ const PublicRestaurant = () => {
           <h2 className="text-xl font-bold mb-4">🍷 {t(lang, "menu.wines")}</h2>
           <div className="flex gap-2 overflow-x-auto pb-3">
             {[{k: "Todos", tk: "menu.all"}, {k: "Tintos", tk: "menu.reds"}, {k: "Blancos", tk: "menu.whites"}, {k: "Rosados", tk: "menu.roses"}, {k: "Espumosos", tk: "menu.sparkling"}, {k: "Dulces", tk: "menu.sweet"}].map(({k: tKey, tk}) => (
-              <button key={t} onClick={() => setWineFilter(t)}
-                className={`shrink-0 px-3 py-1 rounded-full text-xs transition-colors ${wineFilter === t ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
-                {t}
+              <button key={tKey} onClick={() => setWineFilter(tKey)}
+                className={`shrink-0 px-3 py-1 rounded-full text-xs transition-colors ${wineFilter === tKey ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
+                {t(lang, tk)}
               </button>
             ))}
           </div>
