@@ -135,7 +135,7 @@ const PublicRestaurant = () => {
           <p className="text-sm text-white/70 mt-0.5">{restaurant.subtitle}</p>
           <span className={`mt-2 inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${isOpen() ? 'bg-green-500/20 text-green-300 border border-green-400/30' : 'bg-red-500/20 text-red-300 border border-red-400/30'}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${isOpen() ? 'bg-green-400' : 'bg-red-400'}`} />
-            {isOpen() ? "Abierto" : "Cerrado"}
+            {isOpen() ? t(lang, "menu.open") : t(lang, "menu.closed")}
           </span>
         </div>
       </div>
