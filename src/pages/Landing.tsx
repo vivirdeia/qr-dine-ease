@@ -88,7 +88,7 @@ const Hero = () => (
               <div key={i} className="w-8 h-8 rounded-full border-2 border-background bg-gradient-primary" />
             ))}
           </div>
-          <span className="text-sm text-muted-foreground">Más de 800 restaurantes en España y Andorra</span>
+          <span className="text-sm text-muted-foreground">Más de 800 restaurantes</span>
         </div>
       </div>
       <div className="mt-16 flex justify-center gap-6 px-4">
