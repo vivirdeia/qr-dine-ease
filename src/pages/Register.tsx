@@ -126,12 +126,9 @@ const Register = () => {
       hours,
     });
 
-    let newCategoryId = "";
     if (firstCategory.name) {
-      newCategoryId = `c${Date.now()}`;
-      addCategory(firstCategory.name, firstCategory.icon);
+      const newCategoryId = addCategory(firstCategory.name, firstCategory.icon);
       if (firstDish.name && firstDish.price) {
-        // Use a small delay to ensure category state is updated
         setTimeout(() => {
           addDish({
             name: firstDish.name,
