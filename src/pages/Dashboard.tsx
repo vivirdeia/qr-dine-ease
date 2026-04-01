@@ -414,8 +414,8 @@ const MenuSection = () => {
             <div key={dish.id} className={`bg-card rounded-xl border border-border p-3 sm:p-4 ${!dish.available ? 'opacity-60' : ''}`}>
               <div className="flex items-start gap-3">
                 <GripVertical className="h-4 w-4 text-muted-foreground/40 cursor-grab mt-1 hidden sm:block" />
-                {dishImages[dish.id] ? (
-                  <img src={dishImages[dish.id]} alt={dish.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover shrink-0" loading="lazy" />
+                {(dish.photoUrl || dishImages[dish.id]) ? (
+                  <img src={dish.photoUrl || dishImages[dish.id]} alt={dish.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover shrink-0" loading="lazy" />
                 ) : (
                   <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-gradient-to-br from-primary/10 to-gold/10 shrink-0" />
                 )}
