@@ -229,7 +229,7 @@ const PublicRestaurant = () => {
           <div ref={el => { categoryRefs.current["menu-del-dia"] = el; }}>
             <div className="bg-primary/5 rounded-2xl border border-primary/20 p-5 space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">📌 Menú del día</h2>
+                <h2 className="text-xl font-bold">📌 {t(lang, "menu.daily")}</h2>
                 <span className="text-xl font-bold text-primary">€{dailyMenu.price.toFixed(2)}</span>
               </div>
               <div className="space-y-2">
