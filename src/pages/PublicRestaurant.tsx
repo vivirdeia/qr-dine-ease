@@ -201,7 +201,7 @@ const PublicRestaurant = () => {
               onClick={() => scrollToCategory("vinos")}
               className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${activeCategory === "vinos" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}
             >
-              🍷 Vinos
+              🍷 {t(lang, "menu.wines")}
             </button>
           </div>
           <div className="flex gap-2 pb-1">
