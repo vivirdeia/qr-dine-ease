@@ -149,8 +149,8 @@ const PublicRestaurant = () => {
               const d = new Date().getDay();
               const dayMap = [6, 0, 1, 2, 3, 4, 5];
               const h = restaurant.hours[dayMap[d]];
-              if (h?.closed) return "Cerrado";
-              if (h?.continuous) return `${h.morning?.open} - ${h.morning?.close} (continuo)`;
+              if (h?.closed) return t(lang, "menu.closed");
+              if (h?.continuous) return `${h.morning?.open} - ${h.morning?.close} (${t(lang, "menu.continuous")})`;
               return `${h?.morning?.open}-${h?.morning?.close}${h?.evening ? ` / ${h.evening.open}-${h.evening.close}` : ''}`;
             })()}</span>
           </div>
