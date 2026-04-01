@@ -371,7 +371,7 @@ const PublicRestaurant = () => {
             {reservationStep === 0 && (
               <div className="space-y-6">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">¿Cuántos sois?</label>
+                  <label className="text-sm font-medium mb-2 block">{t(lang, "reserve.howMany")}</label>
                   <div className="flex gap-2 flex-wrap">
                     {[1,2,3,4,5,6,7,8].map(n => (
                       <button key={n} onClick={() => { setResData(d => ({...d, guests: n})); setCustomGuests(false); }}
