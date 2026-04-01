@@ -53,22 +53,20 @@ const PublicRestaurant = () => {
   return (
     <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto relative">
       {/* Header */}
-      <div className="relative">
-        <img src={heroRestaurant} alt={restaurant.name} className="h-48 w-full object-cover" />
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background to-transparent h-20" />
-        <div className="relative px-4 -mt-12">
-          <div className="flex items-center justify-between mb-1">
-            <h1 className="text-2xl font-bold">{restaurant.name}</h1>
-            <div className="flex items-center gap-2">
-              <select value={lang} onChange={e => setLang(e.target.value)} className="text-xs bg-secondary border border-border rounded-lg px-2 py-1">
-                <option>ES</option><option>EN</option><option>FR</option><option>CA</option>
-              </select>
-              <button className="p-2 bg-secondary rounded-lg"><Share2 className="h-4 w-4" /></button>
-            </div>
-          </div>
-          <p className="text-sm text-muted-foreground">{restaurant.subtitle}</p>
-          <span className={`mt-2 inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${isOpen() ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${isOpen() ? 'bg-success' : 'bg-destructive'}`} />
+      <div className="relative h-56">
+        <img src={heroRestaurant} alt={restaurant.name} className="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+        <div className="absolute top-3 right-3 flex items-center gap-2">
+          <select value={lang} onChange={e => setLang(e.target.value)} className="text-xs text-white bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg px-2 py-1">
+            <option>ES</option><option>EN</option><option>FR</option><option>CA</option>
+          </select>
+          <button className="p-2 bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg text-white"><Share2 className="h-4 w-4" /></button>
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 px-4 pb-4">
+          <h1 className="text-2xl font-bold text-white drop-shadow-lg">{restaurant.name}</h1>
+          <p className="text-sm text-white/70 mt-0.5">{restaurant.subtitle}</p>
+          <span className={`mt-2 inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${isOpen() ? 'bg-green-500/20 text-green-300 border border-green-400/30' : 'bg-red-500/20 text-red-300 border border-red-400/30'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${isOpen() ? 'bg-green-400' : 'bg-red-400'}`} />
             {isOpen() ? "Abierto" : "Cerrado"}
           </span>
         </div>
