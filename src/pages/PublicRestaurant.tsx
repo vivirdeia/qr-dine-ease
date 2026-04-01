@@ -446,7 +446,7 @@ const PublicRestaurant = () => {
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">{t(lang, "reserve.zone")}</label>
                   <div className="flex gap-2">
-                    {["Interior", "Terraza", "Sin preferencia"].map(z => (
+                    {[{v: "Interior", l: t(lang, "reserve.interior")}, {v: "Terraza", l: t(lang, "reserve.terrace")}, {v: "Sin preferencia", l: t(lang, "reserve.noPreference")}].map(({v: z, l}) => (
                       <button key={z} onClick={() => setResData(d => ({...d, zone: z}))}
                         className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors ${resData.zone === z ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
                         {z}
