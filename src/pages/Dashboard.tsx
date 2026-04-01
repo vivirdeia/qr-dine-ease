@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
-import { metricsData, ALLERGENS, type Dish, type Category, type Reservation, type Table as TableType } from "@/data/mockData";
+import { ALLERGENS, type Dish, type Category, type Reservation, type Table as TableType, type Wine } from "@/data/mockData";
 import { dishImages } from "@/data/dishImages";
 import { getWineImage } from "@/data/wineImages";
 import { QRCodeSVG } from "qrcode.react";
@@ -12,6 +12,7 @@ import {
   QrCode, Settings, Bell, ChevronDown, Plus, Edit, Trash2, Copy,
   GripVertical, X, Clock, Users, XCircle, CheckCircle2,
   Download, ExternalLink, TrendingUp, LogOut, Eye, EyeOff, Menu,
+  FileDown, AlertTriangle, Sparkles,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
