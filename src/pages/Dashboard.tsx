@@ -259,6 +259,10 @@ const MenuSection = () => {
   const activeCat = categories.find(c => c.id === activeCategory);
 
   const openNewDish = () => {
+    if (!canAddDish) {
+      toast.error(`Plan ${userPlan}: máximo ${planLimits.maxDishes} platos. Haz upgrade para añadir más.`);
+      return;
+    }
     setEditingDish(null);
     setDishForm({ categoryId: activeCategory, name: "", description: "", price: 0, allergens: [], dietary: [], available: true, isNew: false, position: categoryDishes.length + 1 });
     setShowDishModal(true);
