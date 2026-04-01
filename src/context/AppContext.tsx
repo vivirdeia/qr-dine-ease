@@ -107,14 +107,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const login = useCallback((email: string, password: string) => {
+    // Check registered credentials first
+    if (registeredCredentials && email === registeredCredentials.email && password === registeredCredentials.password) {
+      setIsLoggedIn(true);
+      return true;
+    }
+    // Fallback demo credentials
     if (email === "demo@carta.app" && password === "demo1234") {
       setIsLoggedIn(true);
       return true;
     }
     return false;
-  }, [setIsLoggedIn]);
+  }, [setIsLoggedIn, registeredCredentials]);
 
   const logout = useCallback(() => setIsLoggedIn(false), [setIsLoggedIn]);
+
+  const registerUser = useCallback((email: string, password: string, name: string) => {
+    setRegisteredCredentials({ email, password });
+    setUserEmail(email);
+    setUserName(name);
+    setIsLoggedIn(true);
+  }, [setRegisteredCredentials, setUserEmail, setUserName, setIsLoggedIn]);
+
+  const setUserPlan = useCallback((plan: "free" | "pro" | "business") => {
+    setUserPlanState(plan);
+  }, [setUserPlanState]);
 
   const updateRestaurant = useCallback((data: Partial<Restaurant>) => {
     setRestaurant(prev => ({ ...prev, ...data }));
