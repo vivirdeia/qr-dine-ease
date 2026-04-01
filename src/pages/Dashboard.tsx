@@ -384,14 +384,20 @@ const MenuSection = () => {
         {/* Desktop: Categories sidebar */}
         <div className="hidden lg:block w-56 shrink-0 space-y-2">
           {categories.filter(c => c.id !== "c0").map(cat => (
-            <button key={cat.id} onClick={() => setActiveCategory(cat.id)}
-              className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-left transition-colors ${activeCategory === cat.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-secondary text-muted-foreground'}`}>
-              <span>{cat.icon}</span>
-              <span className="flex-1">{cat.name}</span>
-              <span className="text-xs text-muted-foreground">{dishes.filter(d => d.categoryId === cat.id).length}</span>
-            </button>
+            <div key={cat.id} className="group flex items-center gap-1">
+              <button onClick={() => setActiveCategory(cat.id)}
+                className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-left transition-colors ${activeCategory === cat.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-secondary text-muted-foreground'}`}>
+                <span>{cat.icon}</span>
+                <span className="flex-1">{cat.name}</span>
+                <span className="text-xs text-muted-foreground">{dishes.filter(d => d.categoryId === cat.id).length}</span>
+              </button>
+              <div className="hidden group-hover:flex items-center gap-0.5">
+                <button onClick={() => openEditCategory(cat)} className="p-1 hover:bg-secondary rounded"><Edit className="h-3 w-3 text-muted-foreground" /></button>
+                <button onClick={() => setDeleteCatConfirm(cat.id)} className="p-1 hover:bg-secondary rounded"><Trash2 className="h-3 w-3 text-destructive/60" /></button>
+              </div>
+            </div>
           ))}
-          <Button variant="ghost" size="sm" className="w-full justify-start text-primary" onClick={() => setShowCategoryModal(true)}>
+          <Button variant="ghost" size="sm" className="w-full justify-start text-primary" onClick={() => { setEditingCategory(null); setNewCatName(""); setNewCatIcon("🍽️"); setShowCategoryModal(true); }}>
             <Plus className="h-4 w-4 mr-1" /> Añadir categoría
           </Button>
         </div>
