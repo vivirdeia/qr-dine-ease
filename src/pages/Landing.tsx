@@ -33,7 +33,7 @@ const Navbar = () => {
             <Link to="/dashboard">Iniciar sesión</Link>
           </Button>
           <Button variant="gradient" size="sm" asChild>
-            <Link to="/dashboard">Crear mi carta gratis</Link>
+            <Link to="/register">Crear mi carta gratis</Link>
           </Button>
         </div>
         <button className="md:hidden p-2" onClick={() => setMobileOpen(!mobileOpen)}>
@@ -50,7 +50,7 @@ const Navbar = () => {
               <Link to="/dashboard">Iniciar sesión</Link>
             </Button>
             <Button variant="gradient" size="sm" asChild className="flex-1">
-              <Link to="/dashboard">Crear mi carta</Link>
+              <Link to="/register">Crear mi carta</Link>
             </Button>
           </div>
         </div>
@@ -76,7 +76,7 @@ const Hero = () => (
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
           <Button variant="gradient" size="xl" asChild>
-            <Link to="/dashboard">Crear mi carta gratis <ArrowRight className="ml-1 h-5 w-5" /></Link>
+            <Link to="/register">Crear mi carta gratis <ArrowRight className="ml-1 h-5 w-5" /></Link>
           </Button>
           <Button variant="outline-primary" size="xl" asChild>
             <Link to="/r/casa-martin">Ver demo en vivo</Link>
@@ -324,7 +324,9 @@ const Pricing = () => {
                   <span className="text-muted-foreground">/mes</span>
                 </div>
               </div>
-              <Button variant={p.variant} size="lg" className="w-full">{p.cta}</Button>
+              <Button variant={p.variant} size="lg" className="w-full" asChild>
+                <Link to={`/register?plan=${p.name.toLowerCase()}`}>{p.cta}</Link>
+              </Button>
               {p.name === "Pro" && <p className="text-xs text-center text-muted-foreground">14 días gratis · Sin tarjeta</p>}
               <ul className="space-y-2">
                 {p.features.map((f, j) => (

@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "./context/AppContext";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
+import Register from "./pages/Register";
 import PublicRestaurant from "./pages/PublicRestaurant";
 import NotFound from "./pages/NotFound";
 
@@ -20,6 +21,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Landing />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/r/:slug" element={<PublicRestaurant />} />
             <Route path="*" element={<NotFound />} />

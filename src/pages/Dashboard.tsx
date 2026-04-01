@@ -1138,7 +1138,7 @@ const hslToHex = (hsl: string): string => {
 };
 
 const SettingsSection = () => {
-  const { notifications, toggleNotification, restaurant, updateRestaurant } = useApp();
+  const { notifications, toggleNotification, restaurant, updateRestaurant, userPlan, setUserPlan } = useApp();
   const [brandColors, setBrandColors] = useState({
     primary: restaurant.brandColors?.primary || "#c4704e",
     accent: restaurant.brandColors?.accent || "#d4a574",
@@ -1252,13 +1252,23 @@ const SettingsSection = () => {
           <h3 className="text-base sm:text-lg font-bold font-sans">Facturación</h3>
           <div className="flex items-center justify-between">
             <span className="text-sm">Plan actual</span>
-            <span className="bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full">PRO — €29/mes</span>
+            <span className="bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full uppercase">
+              {userPlan} — {userPlan === "free" ? "€0" : userPlan === "pro" ? "€29" : "€59"}/mes
+            </span>
           </div>
+          {userPlan === "free" && (
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 space-y-2">
+              <p className="text-xs text-foreground font-medium">🚀 Desbloquea reservas, fotos y multi-idioma con Pro</p>
+              <Button variant="gradient" size="sm" onClick={() => { setUserPlan("pro"); toast.success("¡Plan actualizado a Pro!"); }}>
+                Upgrade a Pro
+              </Button>
+            </div>
+          )}
           <div className="flex items-center justify-between py-2 border-b border-border">
             <span className="text-sm">Próxima factura</span>
             <span className="text-sm text-muted-foreground">15 abril 2026</span>
           </div>
-          <Button variant="outline-primary" size="sm">Gestionar suscripción</Button>
+          <Button variant="outline-primary" size="sm" onClick={() => toast.info("Gestión de suscripción (demo simulada)")}>Gestionar suscripción</Button>
         </div>
         <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-4">
           <h3 className="text-base sm:text-lg font-bold font-sans">Notificaciones</h3>
@@ -1305,7 +1315,7 @@ const sections: Record<Section, React.FC> = {
 };
 
 const Dashboard = () => {
-  const { isLoggedIn, logout, restaurant } = useApp();
+  const { isLoggedIn, logout, restaurant, userPlan, setUserPlan } = useApp();
   const [active, setActive] = useState<Section>("restaurant");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const ActiveSection = sections[active];
@@ -1344,7 +1354,7 @@ const Dashboard = () => {
           ))}
         </nav>
         <div className="absolute bottom-4 left-3 right-3 px-3">
-          <span className="bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full">PRO</span>
+          <span className="bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full uppercase">{userPlan}</span>
         </div>
       </aside>
 

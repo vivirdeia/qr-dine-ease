@@ -34,10 +34,15 @@ interface AppState {
   dailyMenu: DailyMenu;
   isLoggedIn: boolean;
   notifications: NotificationSettings;
+  userPlan: "free" | "pro" | "business";
+  userEmail: string;
+  userName: string;
 
   // Auth
   login: (email: string, password: string) => boolean;
   logout: () => void;
+  register: (email: string, password: string, name: string) => void;
+  setUserPlan: (plan: "free" | "pro" | "business") => void;
 
   // Restaurant
   updateRestaurant: (data: Partial<Restaurant>) => void;
@@ -90,6 +95,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [reservations, setReservations] = useLocalStorage<Reservation[]>("carta_reservations", defaultReservations);
   const [dailyMenu, setDailyMenu] = useLocalStorage<DailyMenu>("carta_dailyMenu", defaultDailyMenu);
   const [isLoggedIn, setIsLoggedIn] = useLocalStorage<boolean>("carta_loggedIn", false);
+  const [userPlan, setUserPlanState] = useLocalStorage<"free" | "pro" | "business">("carta_userPlan", "pro");
+  const [userEmail, setUserEmail] = useLocalStorage<string>("carta_userEmail", "");
+  const [userName, setUserName] = useLocalStorage<string>("carta_userName", "");
+  const [registeredCredentials, setRegisteredCredentials] = useLocalStorage<{ email: string; password: string } | null>("carta_credentials", null);
   const [notifications, setNotifications] = useLocalStorage<NotificationSettings>("carta_notifications", {
     emailOnReservation: true,
     emailOnCancellation: true,
@@ -98,14 +107,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const login = useCallback((email: string, password: string) => {
+    // Check registered credentials first
+    if (registeredCredentials && email === registeredCredentials.email && password === registeredCredentials.password) {
+      setIsLoggedIn(true);
+      return true;
+    }
+    // Fallback demo credentials
     if (email === "demo@carta.app" && password === "demo1234") {
       setIsLoggedIn(true);
       return true;
     }
     return false;
-  }, [setIsLoggedIn]);
+  }, [setIsLoggedIn, registeredCredentials]);
 
   const logout = useCallback(() => setIsLoggedIn(false), [setIsLoggedIn]);
+
+  const registerUser = useCallback((email: string, password: string, name: string) => {
+    setRegisteredCredentials({ email, password });
+    setUserEmail(email);
+    setUserName(name);
+    setIsLoggedIn(true);
+  }, [setRegisteredCredentials, setUserEmail, setUserName, setIsLoggedIn]);
+
+  const setUserPlan = useCallback((plan: "free" | "pro" | "business") => {
+    setUserPlanState(plan);
+  }, [setUserPlanState]);
 
   const updateRestaurant = useCallback((data: Partial<Restaurant>) => {
     setRestaurant(prev => ({ ...prev, ...data }));
@@ -194,8 +220,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const value: AppState = {
     restaurant, categories, dishes, wines, tables, reservations, dailyMenu,
-    isLoggedIn, notifications,
-    login, logout,
+    isLoggedIn, notifications, userPlan, userEmail, userName,
+    login, logout, register: registerUser, setUserPlan,
     updateRestaurant,
     addDish, updateDish, deleteDish, duplicateDish, toggleDishAvailability,
     addCategory, updateCategory, deleteCategory,
