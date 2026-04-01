@@ -511,8 +511,8 @@ const PublicRestaurant = () => {
                     const a = document.createElement('a'); a.href = url; a.download = 'reserva.ics'; a.click();
                     URL.revokeObjectURL(url);
                     toast.success("Archivo de calendario descargado");
-                  }}>Añadir al calendario</Button>
-                  <Button variant="gradient" className="flex-1" onClick={() => setShowReservation(false)}>Volver a la carta</Button>
+                  }}>{t(lang, "reserve.calendar")}</Button>
+                  <Button variant="gradient" className="flex-1" onClick={() => setShowReservation(false)}>{t(lang, "reserve.backToMenu")}</Button>
                 </div>
               </div>
             )}
