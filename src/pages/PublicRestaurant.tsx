@@ -485,11 +485,11 @@ const PublicRestaurant = () => {
                 </div>
                 <h3 className="text-xl font-bold">{t(lang, "reserve.confirmed")}</h3>
                 <div className="bg-secondary rounded-xl p-4 text-sm space-y-2 text-left">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Nombre</span><span className="font-medium">{resData.name}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Fecha</span><span className="font-medium">{resData.date && new Date(resData.date).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Hora</span><span className="font-medium">{resData.time}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Personas</span><span className="font-medium">{resData.guests}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Zona</span><span className="font-medium">{resData.zone}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t(lang, "reserve.name")}</span><span className="font-medium">{resData.name}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t(lang, "reserve.date")}</span><span className="font-medium">{resData.date && new Date(resData.date).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t(lang, "reserve.selectTime")}</span><span className="font-medium">{resData.time}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t(lang, "reserve.guests")}</span><span className="font-medium">{resData.guests}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{t(lang, "reserve.zone")}</span><span className="font-medium">{resData.zone}</span></div>
                 </div>
                 <p className="text-xs text-muted-foreground">Te enviaremos la confirmación por WhatsApp al {resData.phone}</p>
                 <div className="flex gap-3">
