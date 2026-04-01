@@ -18,7 +18,7 @@ const PublicRestaurant = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [dietaryFilter, setDietaryFilter] = useState<string[]>([]);
   const [showReservation, setShowReservation] = useState(false);
-  const [lang, setLang] = useState("ES");
+  const [lang, setLang] = useState<Lang>("ES");
   const [reservationStep, setReservationStep] = useState(0);
   const [resData, setResData] = useState({ guests: 2, date: "", period: "", time: "", name: "", phone: "", email: "", notes: "", zone: "Sin preferencia" });
   const [wineFilter, setWineFilter] = useState("Todos");
