@@ -303,10 +303,35 @@ const MenuSection = () => {
 
   const saveCategory = () => {
     if (!newCatName) return;
-    addCategory(newCatName, newCatIcon);
+    if (editingCategory) {
+      updateCategory(editingCategory.id, { name: newCatName, icon: newCatIcon });
+      toast.success("Categoría actualizada");
+    } else {
+      addCategory(newCatName, newCatIcon);
+      toast.success("Categoría añadida");
+    }
     setShowCategoryModal(false);
+    setEditingCategory(null);
     setNewCatName("");
-    toast.success("Categoría añadida");
+    setNewCatIcon("🍽️");
+  };
+
+  const openEditCategory = (cat: Category) => {
+    setEditingCategory(cat);
+    setNewCatName(cat.name);
+    setNewCatIcon(cat.icon);
+    setShowCategoryModal(true);
+  };
+
+  const handleDeleteCategory = (id: string) => {
+    const catDishCount = dishes.filter(d => d.categoryId === id).length;
+    if (catDishCount > 0) {
+      toast.error(`Esta categoría tiene ${catDishCount} platos. Se eliminarán todos.`);
+    }
+    deleteCategory(id);
+    setDeleteCatConfirm(null);
+    if (activeCategory === id) setActiveCategory(categories.find(c => c.id !== id && c.id !== "c0")?.id || "c1");
+    toast.success("Categoría eliminada");
   };
 
   const selectCategory = (id: string) => {
