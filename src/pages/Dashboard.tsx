@@ -1096,8 +1096,69 @@ const QRSection = () => {
 };
 
 // ── Settings Section ──
+const hexToHsl = (hex: string): string => {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+};
+
+const hslToHex = (hsl: string): string => {
+  const parts = hsl.match(/[\d.]+/g);
+  if (!parts || parts.length < 3) return "#c4704e";
+  const h = parseFloat(parts[0]) / 360;
+  const s = parseFloat(parts[1]) / 100;
+  const l = parseFloat(parts[2]) / 100;
+  const hue2rgb = (p: number, q: number, t: number) => {
+    if (t < 0) t += 1; if (t > 1) t -= 1;
+    if (t < 1/6) return p + (q - p) * 6 * t;
+    if (t < 1/2) return q;
+    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+    return p;
+  };
+  let r, g, b2;
+  if (s === 0) { r = g = b2 = l; } else {
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1/3); g = hue2rgb(p, q, h); b2 = hue2rgb(p, q, h - 1/3);
+  }
+  return `#${[r, g, b2].map(x => Math.round(x * 255).toString(16).padStart(2, '0')).join('')}`;
+};
+
 const SettingsSection = () => {
-  const { notifications, toggleNotification } = useApp();
+  const { notifications, toggleNotification, restaurant, updateRestaurant } = useApp();
+  const [brandColors, setBrandColors] = useState({
+    primary: restaurant.brandColors?.primary || "#c4704e",
+    accent: restaurant.brandColors?.accent || "#d4a574",
+    background: restaurant.brandColors?.background || "#faf6f1",
+  });
+  const [tracking, setTracking] = useState({
+    googleAnalyticsId: restaurant.tracking?.googleAnalyticsId || "",
+    metaPixelId: restaurant.tracking?.metaPixelId || "",
+    customHeadScript: restaurant.tracking?.customHeadScript || "",
+  });
+
+  const saveBrandColors = () => {
+    updateRestaurant({ brandColors });
+    toast.success("Paleta de colores guardada. Se aplicará en la carta pública.");
+  };
+
+  const saveTracking = () => {
+    updateRestaurant({ tracking });
+    toast.success("Códigos de tracking guardados");
+  };
 
   const notifItems: { key: keyof typeof notifications; label: string }[] = [
     { key: "emailOnReservation", label: "Email al recibir reserva" },
@@ -1110,9 +1171,70 @@ const SettingsSection = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl sm:text-2xl font-bold mb-1">Configuración</h2>
-        <p className="text-muted-foreground text-sm">Ajustes generales y facturación</p>
+        <p className="text-muted-foreground text-sm">Ajustes generales, marca y tracking</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        {/* Personalización */}
+        <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-4 sm:col-span-2">
+          <h3 className="text-base sm:text-lg font-bold font-sans">🎨 Personalización de marca</h3>
+          <p className="text-xs text-muted-foreground">Estos colores se aplican solo a la carta pública que ven tus clientes.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Color primario</label>
+              <div className="flex items-center gap-2 mt-1">
+                <input type="color" value={brandColors.primary} onChange={e => setBrandColors(prev => ({ ...prev, primary: e.target.value }))}
+                  className="w-10 h-10 rounded-lg border border-border cursor-pointer" />
+                <input className="flex-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm font-mono" value={brandColors.primary} onChange={e => setBrandColors(prev => ({ ...prev, primary: e.target.value }))} />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Color acento</label>
+              <div className="flex items-center gap-2 mt-1">
+                <input type="color" value={brandColors.accent} onChange={e => setBrandColors(prev => ({ ...prev, accent: e.target.value }))}
+                  className="w-10 h-10 rounded-lg border border-border cursor-pointer" />
+                <input className="flex-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm font-mono" value={brandColors.accent} onChange={e => setBrandColors(prev => ({ ...prev, accent: e.target.value }))} />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Fondo</label>
+              <div className="flex items-center gap-2 mt-1">
+                <input type="color" value={brandColors.background} onChange={e => setBrandColors(prev => ({ ...prev, background: e.target.value }))}
+                  className="w-10 h-10 rounded-lg border border-border cursor-pointer" />
+                <input className="flex-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm font-mono" value={brandColors.background} onChange={e => setBrandColors(prev => ({ ...prev, background: e.target.value }))} />
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1">
+              <div className="w-8 h-8 rounded-full border border-border" style={{ backgroundColor: brandColors.primary }} />
+              <div className="w-8 h-8 rounded-full border border-border" style={{ backgroundColor: brandColors.accent }} />
+              <div className="w-8 h-8 rounded-full border border-border" style={{ backgroundColor: brandColors.background }} />
+            </div>
+            <Button variant="gradient" size="sm" onClick={saveBrandColors}>Guardar colores</Button>
+          </div>
+        </div>
+
+        {/* Tracking */}
+        <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-4 sm:col-span-2">
+          <h3 className="text-base sm:text-lg font-bold font-sans">📊 Tracking y píxeles</h3>
+          <p className="text-xs text-muted-foreground">Los scripts se inyectan solo en la carta pública, nunca en el panel.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Google Analytics ID</label>
+              <input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm font-mono" placeholder="G-XXXXXXXXXX" value={tracking.googleAnalyticsId} onChange={e => setTracking(prev => ({ ...prev, googleAnalyticsId: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Meta Pixel ID</label>
+              <input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm font-mono" placeholder="1234567890" value={tracking.metaPixelId} onChange={e => setTracking(prev => ({ ...prev, metaPixelId: e.target.value }))} />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Script personalizado (head)</label>
+            <textarea className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-xs font-mono" rows={3} placeholder="<script>...</script>" value={tracking.customHeadScript} onChange={e => setTracking(prev => ({ ...prev, customHeadScript: e.target.value }))} />
+          </div>
+          <Button variant="gradient" size="sm" onClick={saveTracking}>Guardar tracking</Button>
+        </div>
+
         <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-4">
           <h3 className="text-base sm:text-lg font-bold font-sans">General</h3>
           {[
