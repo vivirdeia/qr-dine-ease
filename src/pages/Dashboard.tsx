@@ -1391,7 +1391,7 @@ const Dashboard = () => {
 
   const unreadCount = appNotifications.filter(n => !n.read).length;
 
-  if (!isLoggedIn) return <LoginScreen />;
+  // Auth is now handled by ProtectedRoute in App.tsx
 
   return (
     <div className="flex min-h-screen bg-background">

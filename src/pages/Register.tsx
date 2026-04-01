@@ -126,16 +126,18 @@ const Register = () => {
       hours,
     });
 
+    let newCategoryId = "";
     if (firstCategory.name) {
+      newCategoryId = `c${Date.now()}`;
       addCategory(firstCategory.name, firstCategory.icon);
       if (firstDish.name && firstDish.price) {
-        // Small delay to ensure category is created first
+        // Use a small delay to ensure category state is updated
         setTimeout(() => {
-      addDish({
+          addDish({
             name: firstDish.name,
             description: firstDish.description,
             price: parseFloat(firstDish.price),
-            categoryId: "",
+            categoryId: newCategoryId,
             allergens: [],
             dietary: [],
             isNew: true,

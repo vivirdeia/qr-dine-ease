@@ -169,8 +169,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setRegisteredCredentials({ email, password });
     setUserEmail(email);
     setUserName(name);
+    // Clear mock data so new users start fresh
+    setDishes([]);
+    setCategories([]);
+    setWines([]);
+    setReservations([]);
+    setTables([]);
+    setDailyMenu({ ...defaultDailyMenu, active: false });
+    setRestaurant({ ...defaultRestaurant, name: "" });
     setIsLoggedIn(true);
-  }, [setRegisteredCredentials, setUserEmail, setUserName, setIsLoggedIn]);
+  }, [setRegisteredCredentials, setUserEmail, setUserName, setIsLoggedIn, setDishes, setCategories, setWines, setReservations, setTables, setDailyMenu, setRestaurant]);
 
   const setUserPlan = useCallback((plan: "free" | "pro" | "business") => {
     setUserPlanState(plan);
