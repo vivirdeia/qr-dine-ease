@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
-import { metricsData, ALLERGENS, type Dish, type Reservation, type Table as TableType } from "@/data/mockData";
+import { metricsData, ALLERGENS, type Dish, type Category, type Reservation, type Table as TableType } from "@/data/mockData";
 import { dishImages } from "@/data/dishImages";
 import { getWineImage } from "@/data/wineImages";
 import { QRCodeSVG } from "qrcode.react";
@@ -238,16 +238,18 @@ const RestaurantSection = () => {
 
 // ── Menu Section ──
 const MenuSection = () => {
-  const { categories, dishes, wines, dailyMenu, addDish, updateDish, deleteDish, duplicateDish, toggleDishAvailability, addCategory, updateDailyMenu } = useApp();
+  const { categories, dishes, wines, dailyMenu, addDish, updateDish, deleteDish, duplicateDish, toggleDishAvailability, addCategory, updateCategory, deleteCategory, updateDailyMenu } = useApp();
   const [activeCategory, setActiveCategory] = useState("c1");
   const [showDishModal, setShowDishModal] = useState(false);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [newCatName, setNewCatName] = useState("");
   const [newCatIcon, setNewCatIcon] = useState("🍽️");
   const [showDailyModal, setShowDailyModal] = useState(false);
   const [dailyForm, setDailyForm] = useState({ ...dailyMenu });
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleteCatConfirm, setDeleteCatConfirm] = useState<string | null>(null);
   const [showCatDrawer, setShowCatDrawer] = useState(false);
 
   const [dishForm, setDishForm] = useState<Partial<Dish>>({});
@@ -301,10 +303,35 @@ const MenuSection = () => {
 
   const saveCategory = () => {
     if (!newCatName) return;
-    addCategory(newCatName, newCatIcon);
+    if (editingCategory) {
+      updateCategory(editingCategory.id, { name: newCatName, icon: newCatIcon });
+      toast.success("Categoría actualizada");
+    } else {
+      addCategory(newCatName, newCatIcon);
+      toast.success("Categoría añadida");
+    }
     setShowCategoryModal(false);
+    setEditingCategory(null);
     setNewCatName("");
-    toast.success("Categoría añadida");
+    setNewCatIcon("🍽️");
+  };
+
+  const openEditCategory = (cat: Category) => {
+    setEditingCategory(cat);
+    setNewCatName(cat.name);
+    setNewCatIcon(cat.icon);
+    setShowCategoryModal(true);
+  };
+
+  const handleDeleteCategory = (id: string) => {
+    const catDishCount = dishes.filter(d => d.categoryId === id).length;
+    if (catDishCount > 0) {
+      toast.error(`Esta categoría tiene ${catDishCount} platos. Se eliminarán todos.`);
+    }
+    deleteCategory(id);
+    setDeleteCatConfirm(null);
+    if (activeCategory === id) setActiveCategory(categories.find(c => c.id !== id && c.id !== "c0")?.id || "c1");
+    toast.success("Categoría eliminada");
   };
 
   const selectCategory = (id: string) => {
@@ -357,14 +384,20 @@ const MenuSection = () => {
         {/* Desktop: Categories sidebar */}
         <div className="hidden lg:block w-56 shrink-0 space-y-2">
           {categories.filter(c => c.id !== "c0").map(cat => (
-            <button key={cat.id} onClick={() => setActiveCategory(cat.id)}
-              className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-left transition-colors ${activeCategory === cat.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-secondary text-muted-foreground'}`}>
-              <span>{cat.icon}</span>
-              <span className="flex-1">{cat.name}</span>
-              <span className="text-xs text-muted-foreground">{dishes.filter(d => d.categoryId === cat.id).length}</span>
-            </button>
+            <div key={cat.id} className="group flex items-center gap-1">
+              <button onClick={() => setActiveCategory(cat.id)}
+                className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-left transition-colors ${activeCategory === cat.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-secondary text-muted-foreground'}`}>
+                <span>{cat.icon}</span>
+                <span className="flex-1">{cat.name}</span>
+                <span className="text-xs text-muted-foreground">{dishes.filter(d => d.categoryId === cat.id).length}</span>
+              </button>
+              <div className="hidden group-hover:flex items-center gap-0.5">
+                <button onClick={() => openEditCategory(cat)} className="p-1 hover:bg-secondary rounded"><Edit className="h-3 w-3 text-muted-foreground" /></button>
+                <button onClick={() => setDeleteCatConfirm(cat.id)} className="p-1 hover:bg-secondary rounded"><Trash2 className="h-3 w-3 text-destructive/60" /></button>
+              </div>
+            </div>
           ))}
-          <Button variant="ghost" size="sm" className="w-full justify-start text-primary" onClick={() => setShowCategoryModal(true)}>
+          <Button variant="ghost" size="sm" className="w-full justify-start text-primary" onClick={() => { setEditingCategory(null); setNewCatName(""); setNewCatIcon("🍽️"); setShowCategoryModal(true); }}>
             <Plus className="h-4 w-4 mr-1" /> Añadir categoría
           </Button>
         </div>
@@ -381,8 +414,8 @@ const MenuSection = () => {
             <div key={dish.id} className={`bg-card rounded-xl border border-border p-3 sm:p-4 ${!dish.available ? 'opacity-60' : ''}`}>
               <div className="flex items-start gap-3">
                 <GripVertical className="h-4 w-4 text-muted-foreground/40 cursor-grab mt-1 hidden sm:block" />
-                {dishImages[dish.id] ? (
-                  <img src={dishImages[dish.id]} alt={dish.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover shrink-0" loading="lazy" />
+                {(dish.photoUrl || dishImages[dish.id]) ? (
+                  <img src={dish.photoUrl || dishImages[dish.id]} alt={dish.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover shrink-0" loading="lazy" />
                 ) : (
                   <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-gradient-to-br from-primary/10 to-gold/10 shrink-0" />
                 )}
@@ -455,6 +488,37 @@ const MenuSection = () => {
               </div>
               <div><label className="text-xs font-medium text-muted-foreground">Nota del chef</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={dishForm.chefNote || ""} onChange={e => setDishForm(prev => ({ ...prev, chefNote: e.target.value }))} /></div>
               <div>
+                <label className="text-xs font-medium text-muted-foreground">Foto del plato</label>
+                <div className="mt-1 flex items-center gap-2">
+                  {(dishForm.photoUrl || (editingDish && dishImages[editingDish.id])) && (
+                    <img src={dishForm.photoUrl || (editingDish ? dishImages[editingDish.id] : '')} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                  )}
+                  <input className="flex-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" placeholder="URL de imagen" value={dishForm.photoUrl || ""} onChange={e => setDishForm(prev => ({ ...prev, photoUrl: e.target.value }))} />
+                  <label className="px-3 py-2 bg-primary/10 text-primary rounded-lg text-xs font-medium cursor-pointer hover:bg-primary/20 transition-colors">
+                    Subir
+                    <input type="file" accept="image/*" className="hidden" onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 5 * 1024 * 1024) { toast.error("Imagen demasiado grande (máx 5MB)"); return; }
+                      const canvas = document.createElement('canvas');
+                      const img = new Image();
+                      img.onload = () => {
+                        const max = 800;
+                        let w = img.width, h = img.height;
+                        if (w > max) { h = h * max / w; w = max; }
+                        if (h > max) { w = w * max / h; h = max; }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d')?.drawImage(img, 0, 0, w, h);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        setDishForm(prev => ({ ...prev, photoUrl: dataUrl }));
+                      };
+                      img.src = URL.createObjectURL(file);
+                    }} />
+                  </label>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Pega una URL o sube una foto (máx 5MB, se comprime)</p>
+              </div>
+              <div>
                 <label className="text-xs font-medium text-muted-foreground">Alérgenos</label>
                 <div className="flex flex-wrap gap-1.5 mt-1">
                   {ALLERGENS.map(a => (
@@ -500,14 +564,30 @@ const MenuSection = () => {
 
       {/* Category modal */}
       {showCategoryModal && (
-        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-center justify-center p-4" onClick={() => setShowCategoryModal(false)}>
+        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-center justify-center p-4" onClick={() => { setShowCategoryModal(false); setEditingCategory(null); }}>
           <div className="bg-card rounded-2xl border border-border p-6 max-w-sm w-full space-y-4" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold">Nueva categoría</h3>
+            <h3 className="text-lg font-bold">{editingCategory ? "Editar categoría" : "Nueva categoría"}</h3>
             <div><label className="text-xs font-medium text-muted-foreground">Nombre</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={newCatName} onChange={e => setNewCatName(e.target.value)} /></div>
             <div><label className="text-xs font-medium text-muted-foreground">Icono (emoji)</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={newCatIcon} onChange={e => setNewCatIcon(e.target.value)} /></div>
             <div className="flex gap-3">
-              <Button variant="gradient" className="flex-1" onClick={saveCategory}>Añadir</Button>
-              <Button variant="outline-primary" onClick={() => setShowCategoryModal(false)}>Cancelar</Button>
+              <Button variant="gradient" className="flex-1" onClick={saveCategory}>{editingCategory ? "Guardar" : "Añadir"}</Button>
+              <Button variant="outline-primary" onClick={() => { setShowCategoryModal(false); setEditingCategory(null); }}>Cancelar</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete category confirmation */}
+      {deleteCatConfirm && (
+        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-center justify-center p-4" onClick={() => setDeleteCatConfirm(null)}>
+          <div className="bg-card rounded-2xl border border-border p-6 max-w-sm w-full space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold">¿Eliminar categoría?</h3>
+            <p className="text-sm text-muted-foreground">
+              Se eliminará la categoría y sus {dishes.filter(d => d.categoryId === deleteCatConfirm).length} platos. Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-3">
+              <Button variant="destructive" className="flex-1" onClick={() => handleDeleteCategory(deleteCatConfirm)}>Eliminar</Button>
+              <Button variant="outline-primary" onClick={() => setDeleteCatConfirm(null)}>Cancelar</Button>
             </div>
           </div>
         </div>
@@ -1016,8 +1096,69 @@ const QRSection = () => {
 };
 
 // ── Settings Section ──
+const hexToHsl = (hex: string): string => {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+};
+
+const hslToHex = (hsl: string): string => {
+  const parts = hsl.match(/[\d.]+/g);
+  if (!parts || parts.length < 3) return "#c4704e";
+  const h = parseFloat(parts[0]) / 360;
+  const s = parseFloat(parts[1]) / 100;
+  const l = parseFloat(parts[2]) / 100;
+  const hue2rgb = (p: number, q: number, t: number) => {
+    if (t < 0) t += 1; if (t > 1) t -= 1;
+    if (t < 1/6) return p + (q - p) * 6 * t;
+    if (t < 1/2) return q;
+    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+    return p;
+  };
+  let r, g, b2;
+  if (s === 0) { r = g = b2 = l; } else {
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1/3); g = hue2rgb(p, q, h); b2 = hue2rgb(p, q, h - 1/3);
+  }
+  return `#${[r, g, b2].map(x => Math.round(x * 255).toString(16).padStart(2, '0')).join('')}`;
+};
+
 const SettingsSection = () => {
-  const { notifications, toggleNotification } = useApp();
+  const { notifications, toggleNotification, restaurant, updateRestaurant } = useApp();
+  const [brandColors, setBrandColors] = useState({
+    primary: restaurant.brandColors?.primary || "#c4704e",
+    accent: restaurant.brandColors?.accent || "#d4a574",
+    background: restaurant.brandColors?.background || "#faf6f1",
+  });
+  const [tracking, setTracking] = useState({
+    googleAnalyticsId: restaurant.tracking?.googleAnalyticsId || "",
+    metaPixelId: restaurant.tracking?.metaPixelId || "",
+    customHeadScript: restaurant.tracking?.customHeadScript || "",
+  });
+
+  const saveBrandColors = () => {
+    updateRestaurant({ brandColors });
+    toast.success("Paleta de colores guardada. Se aplicará en la carta pública.");
+  };
+
+  const saveTracking = () => {
+    updateRestaurant({ tracking });
+    toast.success("Códigos de tracking guardados");
+  };
 
   const notifItems: { key: keyof typeof notifications; label: string }[] = [
     { key: "emailOnReservation", label: "Email al recibir reserva" },
@@ -1030,9 +1171,70 @@ const SettingsSection = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl sm:text-2xl font-bold mb-1">Configuración</h2>
-        <p className="text-muted-foreground text-sm">Ajustes generales y facturación</p>
+        <p className="text-muted-foreground text-sm">Ajustes generales, marca y tracking</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        {/* Personalización */}
+        <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-4 sm:col-span-2">
+          <h3 className="text-base sm:text-lg font-bold font-sans">🎨 Personalización de marca</h3>
+          <p className="text-xs text-muted-foreground">Estos colores se aplican solo a la carta pública que ven tus clientes.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Color primario</label>
+              <div className="flex items-center gap-2 mt-1">
+                <input type="color" value={brandColors.primary} onChange={e => setBrandColors(prev => ({ ...prev, primary: e.target.value }))}
+                  className="w-10 h-10 rounded-lg border border-border cursor-pointer" />
+                <input className="flex-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm font-mono" value={brandColors.primary} onChange={e => setBrandColors(prev => ({ ...prev, primary: e.target.value }))} />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Color acento</label>
+              <div className="flex items-center gap-2 mt-1">
+                <input type="color" value={brandColors.accent} onChange={e => setBrandColors(prev => ({ ...prev, accent: e.target.value }))}
+                  className="w-10 h-10 rounded-lg border border-border cursor-pointer" />
+                <input className="flex-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm font-mono" value={brandColors.accent} onChange={e => setBrandColors(prev => ({ ...prev, accent: e.target.value }))} />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Fondo</label>
+              <div className="flex items-center gap-2 mt-1">
+                <input type="color" value={brandColors.background} onChange={e => setBrandColors(prev => ({ ...prev, background: e.target.value }))}
+                  className="w-10 h-10 rounded-lg border border-border cursor-pointer" />
+                <input className="flex-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm font-mono" value={brandColors.background} onChange={e => setBrandColors(prev => ({ ...prev, background: e.target.value }))} />
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1">
+              <div className="w-8 h-8 rounded-full border border-border" style={{ backgroundColor: brandColors.primary }} />
+              <div className="w-8 h-8 rounded-full border border-border" style={{ backgroundColor: brandColors.accent }} />
+              <div className="w-8 h-8 rounded-full border border-border" style={{ backgroundColor: brandColors.background }} />
+            </div>
+            <Button variant="gradient" size="sm" onClick={saveBrandColors}>Guardar colores</Button>
+          </div>
+        </div>
+
+        {/* Tracking */}
+        <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-4 sm:col-span-2">
+          <h3 className="text-base sm:text-lg font-bold font-sans">📊 Tracking y píxeles</h3>
+          <p className="text-xs text-muted-foreground">Los scripts se inyectan solo en la carta pública, nunca en el panel.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Google Analytics ID</label>
+              <input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm font-mono" placeholder="G-XXXXXXXXXX" value={tracking.googleAnalyticsId} onChange={e => setTracking(prev => ({ ...prev, googleAnalyticsId: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Meta Pixel ID</label>
+              <input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm font-mono" placeholder="1234567890" value={tracking.metaPixelId} onChange={e => setTracking(prev => ({ ...prev, metaPixelId: e.target.value }))} />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Script personalizado (head)</label>
+            <textarea className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-xs font-mono" rows={3} placeholder="<script>...</script>" value={tracking.customHeadScript} onChange={e => setTracking(prev => ({ ...prev, customHeadScript: e.target.value }))} />
+          </div>
+          <Button variant="gradient" size="sm" onClick={saveTracking}>Guardar tracking</Button>
+        </div>
+
         <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-4">
           <h3 className="text-base sm:text-lg font-bold font-sans">General</h3>
           {[

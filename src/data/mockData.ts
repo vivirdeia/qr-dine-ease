@@ -1,3 +1,15 @@
+export interface BrandColors {
+  primary: string;
+  accent: string;
+  background: string;
+}
+
+export interface TrackingConfig {
+  googleAnalyticsId?: string;
+  metaPixelId?: string;
+  customHeadScript?: string;
+}
+
 export interface Restaurant {
   id: string;
   name: string;
@@ -16,6 +28,8 @@ export interface Restaurant {
   hours: DayHours[];
   services: Record<string, boolean>;
   plan: "free" | "pro" | "business";
+  brandColors?: BrandColors;
+  tracking?: TrackingConfig;
 }
 
 export interface DayHours {

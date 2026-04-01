@@ -51,6 +51,8 @@ interface AppState {
 
   // Categories
   addCategory: (name: string, icon: string) => void;
+  updateCategory: (id: string, data: Partial<Category>) => void;
+  deleteCategory: (id: string) => void;
 
   // Daily menu
   updateDailyMenu: (data: Partial<DailyMenu>) => void;
@@ -148,6 +150,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCategories(prev => [...prev, { id: genId("c"), name, icon, position: maxPos + 1, visible: true, dishCount: 0 }]);
   }, [categories, setCategories]);
 
+  const updateCategory = useCallback((id: string, data: Partial<Category>) => {
+    setCategories(prev => prev.map(c => c.id === id ? { ...c, ...data } : c));
+  }, [setCategories]);
+
+  const deleteCategory = useCallback((id: string) => {
+    setDishes(prev => prev.filter(d => d.categoryId !== id));
+    setCategories(prev => prev.filter(c => c.id !== id));
+  }, [setDishes, setCategories]);
+
   const updateDailyMenu = useCallback((data: Partial<DailyMenu>) => {
     setDailyMenu(prev => ({ ...prev, ...data }));
   }, [setDailyMenu]);
@@ -187,7 +198,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     login, logout,
     updateRestaurant,
     addDish, updateDish, deleteDish, duplicateDish, toggleDishAvailability,
-    addCategory,
+    addCategory, updateCategory, deleteCategory,
     updateDailyMenu,
     addTable, updateTable, deleteTable,
     addReservation, updateReservationStatus,
