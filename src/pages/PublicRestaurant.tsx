@@ -431,7 +431,7 @@ const PublicRestaurant = () => {
                 <div className="flex gap-3">
                   <Button variant="outline-primary" onClick={() => setReservationStep(0)}><ArrowLeft className="h-4 w-4" /></Button>
                   <Button variant="gradient" size="lg" className="flex-1" disabled={!resData.time} onClick={() => setReservationStep(2)}>
-                    Continuar <ChevronRight className="ml-1" />
+                    {t(lang, "reserve.continue")} <ChevronRight className="ml-1" />
                   </Button>
                 </div>
               </div>
