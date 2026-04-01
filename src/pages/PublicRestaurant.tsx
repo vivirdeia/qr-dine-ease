@@ -483,7 +483,7 @@ const PublicRestaurant = () => {
                 <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto">
                   <Check className="h-8 w-8 text-success" />
                 </div>
-                <h3 className="text-xl font-bold">¡Reserva confirmada!</h3>
+                <h3 className="text-xl font-bold">{t(lang, "reserve.confirmed")}</h3>
                 <div className="bg-secondary rounded-xl p-4 text-sm space-y-2 text-left">
                   <div className="flex justify-between"><span className="text-muted-foreground">Nombre</span><span className="font-medium">{resData.name}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Fecha</span><span className="font-medium">{resData.date && new Date(resData.date).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}</span></div>
