@@ -415,7 +415,7 @@ const PublicRestaurant = () => {
 
             {reservationStep === 1 && (
               <div className="space-y-6">
-                <label className="text-sm font-medium mb-2 block">Hora disponible</label>
+                <label className="text-sm font-medium mb-2 block">{t(lang, "reserve.time")}</label>
                 <div className="grid grid-cols-3 gap-2">
                   {(resData.period === "lunch" ? ["13:00","13:30","14:00","14:30","15:00"] : ["20:30","21:00","21:30","22:00"]).map(t => (
                     <button key={t} onClick={() => setResData(d => ({...d, time: t}))}
