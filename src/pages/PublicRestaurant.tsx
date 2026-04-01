@@ -20,6 +20,8 @@ const PublicRestaurant = () => {
   const [lang, setLang] = useState("ES");
   const [reservationStep, setReservationStep] = useState(0);
   const [resData, setResData] = useState({ guests: 2, date: "", period: "", time: "", name: "", phone: "", email: "", notes: "", zone: "Sin preferencia" });
+  const [wineFilter, setWineFilter] = useState("Todos");
+  const [customGuests, setCustomGuests] = useState(false);
 
   const isOpen = () => {
     const now = new Date();
@@ -60,7 +62,11 @@ const PublicRestaurant = () => {
           <select value={lang} onChange={e => setLang(e.target.value)} className="text-xs text-white bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg px-2 py-1">
             <option>ES</option><option>EN</option><option>FR</option><option>CA</option>
           </select>
-          <button className="p-2 bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg text-white"><Share2 className="h-4 w-4" /></button>
+          <button className="p-2 bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg text-white" onClick={async () => {
+            const shareData = { title: restaurant.name, text: `${restaurant.name} — ${restaurant.subtitle}`, url: window.location.href };
+            if (navigator.share) { try { await navigator.share(shareData); } catch {} }
+            else { await navigator.clipboard.writeText(window.location.href); toast.success("Enlace copiado al portapapeles"); }
+          }}><Share2 className="h-4 w-4" /></button>
         </div>
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-4">
           <h1 className="text-2xl font-bold text-white drop-shadow-lg">{restaurant.name}</h1>
@@ -228,13 +234,18 @@ const PublicRestaurant = () => {
           <h2 className="text-xl font-bold mb-4">🍷 Carta de vinos</h2>
           <div className="flex gap-2 overflow-x-auto pb-3">
             {["Todos", "Tintos", "Blancos", "Rosados", "Espumosos", "Dulces"].map(t => (
-              <button key={t} className="shrink-0 px-3 py-1 rounded-full text-xs bg-secondary text-muted-foreground">
+              <button key={t} onClick={() => setWineFilter(t)}
+                className={`shrink-0 px-3 py-1 rounded-full text-xs transition-colors ${wineFilter === t ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
                 {t}
               </button>
             ))}
           </div>
           <div className="space-y-3">
-            {wines.map(wine => (
+            {wines.filter(w => {
+              if (wineFilter === "Todos") return true;
+              const map: Record<string, string> = { Tintos: "tinto", Blancos: "blanco", Rosados: "rosado", Espumosos: "espumoso", Dulces: "dulce" };
+              return w.type === map[wineFilter];
+            }).map(wine => (
               <div key={wine.id} className="flex gap-3 bg-card rounded-xl border border-border p-3">
                 <img src={getWineImage(wine.id, wine.type)} alt={wine.name} loading="lazy" className="w-10 h-14 rounded object-cover shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -301,13 +312,21 @@ const PublicRestaurant = () => {
                   <label className="text-sm font-medium mb-2 block">¿Cuántos sois?</label>
                   <div className="flex gap-2 flex-wrap">
                     {[1,2,3,4,5,6,7,8].map(n => (
-                      <button key={n} onClick={() => setResData(d => ({...d, guests: n}))}
-                        className={`w-10 h-10 rounded-full text-sm font-medium transition-colors ${resData.guests === n ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
+                      <button key={n} onClick={() => { setResData(d => ({...d, guests: n})); setCustomGuests(false); }}
+                        className={`w-10 h-10 rounded-full text-sm font-medium transition-colors ${resData.guests === n && !customGuests ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
                         {n}
                       </button>
                     ))}
-                    <button className="w-10 h-10 rounded-full text-sm font-medium bg-secondary text-muted-foreground">9+</button>
+                    <button onClick={() => { setCustomGuests(true); setResData(d => ({...d, guests: 9})); }}
+                      className={`w-10 h-10 rounded-full text-sm font-medium transition-colors ${customGuests ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>9+</button>
                   </div>
+                  {customGuests && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <input type="number" min={9} max={30} value={resData.guests} onChange={e => setResData(d => ({...d, guests: parseInt(e.target.value) || 9}))}
+                        className="w-20 px-3 py-2 bg-secondary border border-border rounded-xl text-sm" />
+                      <span className="text-xs text-muted-foreground">personas</span>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-2 block">¿Qué día?</label>
@@ -412,7 +431,25 @@ const PublicRestaurant = () => {
                 </div>
                 <p className="text-xs text-muted-foreground">Te enviaremos la confirmación por WhatsApp al {resData.phone}</p>
                 <div className="flex gap-3">
-                  <Button variant="outline-primary" className="flex-1">Añadir al calendario</Button>
+                  <Button variant="outline-primary" className="flex-1" onClick={() => {
+                    const dtStart = resData.date.replace(/-/g, '') + 'T' + resData.time.replace(':', '') + '00';
+                    const [h, m] = resData.time.split(':').map(Number);
+                    const endH = String(h + 2).padStart(2, '0');
+                    const dtEnd = resData.date.replace(/-/g, '') + 'T' + endH + String(m).padStart(2, '0') + '00';
+                    const ics = [
+                      'BEGIN:VCALENDAR', 'VERSION:2.0', 'BEGIN:VEVENT',
+                      `DTSTART:${dtStart}`, `DTEND:${dtEnd}`,
+                      `SUMMARY:Reserva en ${restaurant.name}`,
+                      `DESCRIPTION:${resData.guests} personas - ${resData.zone}`,
+                      `LOCATION:${restaurant.address}`,
+                      'END:VEVENT', 'END:VCALENDAR'
+                    ].join('\r\n');
+                    const blob = new Blob([ics], { type: 'text/calendar' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url; a.download = 'reserva.ics'; a.click();
+                    URL.revokeObjectURL(url);
+                    toast.success("Archivo de calendario descargado");
+                  }}>Añadir al calendario</Button>
                   <Button variant="gradient" className="flex-1" onClick={() => setShowReservation(false)}>Volver a la carta</Button>
                 </div>
               </div>
