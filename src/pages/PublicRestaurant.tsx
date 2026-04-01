@@ -360,10 +360,10 @@ const PublicRestaurant = () => {
           <div className="bg-card w-full max-w-lg rounded-t-3xl md:rounded-3xl p-6 max-h-[85vh] overflow-y-auto space-y-6" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold">
-                {reservationStep === 0 && "Reservar mesa"}
-                {reservationStep === 1 && "Elige hora"}
-                {reservationStep === 2 && "Tus datos"}
-                {reservationStep === 3 && "¡Reserva confirmada!"}
+                {reservationStep === 0 && t(lang, "reserve.title")}
+                {reservationStep === 1 && t(lang, "reserve.selectTime")}
+                {reservationStep === 2 && t(lang, "reserve.yourData")}
+                {reservationStep === 3 && t(lang, "reserve.confirmed")}
               </h3>
               <button onClick={() => setShowReservation(false)}><X className="h-5 w-5 text-muted-foreground" /></button>
             </div>
