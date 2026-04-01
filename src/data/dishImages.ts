@@ -48,4 +48,9 @@ export const dishImages: Record<string, string> = {
   d18: tiramisu,
   d19: cremaCatalana,
   d20: sorbeteLimon,
+  d21: vinoTintoCopa,
+  d22: cervezaArtesana,
+  d23: aguaMineral,
+  d24: refrescos,
+  d25: cafeCortado,
 };
