@@ -145,7 +145,7 @@ const PublicRestaurant = () => {
         <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
           <div className="flex items-center gap-2 text-sm">
             <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span>Hoy: {(() => {
+            <span>{t(lang, "menu.today")}: {(() => {
               const d = new Date().getDay();
               const dayMap = [6, 0, 1, 2, 3, 4, 5];
               const h = restaurant.hours[dayMap[d]];
