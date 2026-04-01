@@ -121,8 +121,8 @@ const PublicRestaurant = () => {
         <img src={heroRestaurant} alt={restaurant.name} className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
         <div className="absolute top-3 right-3 flex items-center gap-2">
-          <select value={lang} onChange={e => setLang(e.target.value)} className="text-xs text-white bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg px-2 py-1">
-            <option>ES</option><option>EN</option><option>FR</option><option>CA</option>
+          <select value={lang} onChange={e => setLang(e.target.value as Lang)} className="text-xs text-white bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg px-2 py-1">
+            <option value="ES">ES</option><option value="EN">EN</option><option value="FR">FR</option><option value="CA">CA</option>
           </select>
           <button className="p-2 bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg text-white" onClick={async () => {
             const shareData = { title: restaurant.name, text: `${restaurant.name} — ${restaurant.subtitle}`, url: window.location.href };
