@@ -391,7 +391,7 @@ const PublicRestaurant = () => {
                   )}
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">¿Qué día?</label>
+                  <label className="text-sm font-medium mb-2 block">{t(lang, "reserve.whatDay")}</label>
                   <input type="date" value={resData.date} onChange={e => setResData(d => ({...d, date: e.target.value}))}
                     className="w-full px-3 py-2 bg-secondary border border-border rounded-xl text-sm" min={new Date().toISOString().split('T')[0]} />
                 </div>
