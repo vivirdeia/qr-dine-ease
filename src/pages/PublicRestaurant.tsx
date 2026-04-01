@@ -177,7 +177,7 @@ const PublicRestaurant = () => {
             <input
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Buscar plato..."
+              placeholder={t(lang, "menu.search")}
               className="w-full pl-9 pr-3 py-2 bg-secondary border border-border rounded-xl text-sm"
             />
           </div>
