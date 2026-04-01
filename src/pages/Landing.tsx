@@ -50,7 +50,7 @@ const Navbar = () => {
               <Link to="/dashboard">Iniciar sesión</Link>
             </Button>
             <Button variant="gradient" size="sm" asChild className="flex-1">
-              <Link to="/dashboard">Crear mi carta</Link>
+              <Link to="/register">Crear mi carta</Link>
             </Button>
           </div>
         </div>
