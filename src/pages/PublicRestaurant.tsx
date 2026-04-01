@@ -408,7 +408,7 @@ const PublicRestaurant = () => {
                 </div>
                 <Button variant="gradient" size="lg" className="w-full" disabled={!resData.date || !resData.period}
                   onClick={() => setReservationStep(1)}>
-                  Ver disponibilidad <ChevronRight className="ml-1" />
+                  {t(lang, "reserve.availability")} <ChevronRight className="ml-1" />
                 </Button>
               </div>
             )}
