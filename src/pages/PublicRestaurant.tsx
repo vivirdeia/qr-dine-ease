@@ -252,8 +252,8 @@ const PublicRestaurant = () => {
               <div className="space-y-3">
                 {(searchQuery ? catDishes : dishes.filter(d => d.categoryId === cat.id)).map(dish => (
                   <div key={dish.id} className={`flex gap-3 ${!dish.available ? 'opacity-50' : ''}`}>
-                    {dishImages[dish.id] ? (
-                      <img src={dishImages[dish.id]} alt={dish.name} className="w-20 h-20 rounded-xl object-cover shrink-0" loading="lazy" />
+                    {(dish.photoUrl || dishImages[dish.id]) ? (
+                      <img src={dish.photoUrl || dishImages[dish.id]} alt={dish.name} className="w-20 h-20 rounded-xl object-cover shrink-0" loading="lazy" />
                     ) : (
                       <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-primary/10 to-gold/10 shrink-0" />
                     )}
