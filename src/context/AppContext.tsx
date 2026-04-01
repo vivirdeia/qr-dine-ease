@@ -198,7 +198,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     login, logout,
     updateRestaurant,
     addDish, updateDish, deleteDish, duplicateDish, toggleDishAvailability,
-    addCategory,
+    addCategory, updateCategory, deleteCategory,
     updateDailyMenu,
     addTable, updateTable, deleteTable,
     addReservation, updateReservationStatus,
