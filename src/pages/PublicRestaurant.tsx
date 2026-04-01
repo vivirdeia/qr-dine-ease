@@ -472,7 +472,7 @@ const PublicRestaurant = () => {
                       toast.success("¡Reserva enviada!");
                       setReservationStep(3);
                     }}>
-                    Confirmar reserva
+                    {t(lang, "reserve.confirm")}
                   </Button>
                 </div>
               </div>
