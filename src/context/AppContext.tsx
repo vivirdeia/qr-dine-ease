@@ -76,7 +76,7 @@ interface AppState {
   toggleDishAvailability: (id: string) => void;
 
   // Categories
-  addCategory: (name: string, icon: string) => void;
+  addCategory: (name: string, icon: string) => string;
   updateCategory: (id: string, data: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
 
