@@ -316,7 +316,7 @@ const PublicRestaurant = () => {
                   {wine.description && <div className="text-xs text-muted-foreground mt-0.5">{wine.description}</div>}
                 </div>
                 <div className="text-right shrink-0 text-sm">
-                  {wine.priceGlass && <div className="text-muted-foreground text-xs">Copa €{wine.priceGlass.toFixed(2)}</div>}
+                  {wine.priceGlass && <div className="text-muted-foreground text-xs">{t(lang, "menu.glass")} €{wine.priceGlass.toFixed(2)}</div>}
                   <div className="font-bold text-primary">€{wine.priceBottle.toFixed(2)}</div>
                 </div>
               </div>
