@@ -1,63 +1,92 @@
 
 
-# Plan: Flujo completo simulado de registro y suscripción
+# Lo que le falta a Carta para ser 100% funcional
 
-## Resumen
-Crear el flujo completo: **Landing → Registro → Selección de plan → Checkout simulado → Onboarding wizard → Dashboard**, todo con localStorage (sin backend).
+## Ya funciona
+- CRUD de platos, categorías, mesas, reservas (localStorage)
+- Registro + selección de plan + checkout simulado + onboarding
+- Login con credenciales dinámicas
+- Paleta de colores personalizable
+- Tracking (GA, Meta Pixel)
+- Filtro de vinos, compartir carta, calendario .ics
+- Fotos en platos, bebidas y vinos
 
-## Flujo del usuario
+## Lo que falta (por prioridad)
 
-```text
-Landing (/) 
-  └─ CTA "Crear mi carta gratis" o "Comenzar" en un plan
-       └─ Registro (/register) — nombre, email, password
-            └─ Selección de plan (/register?step=plan) — Free / Pro / Business
-                 └─ Si plan de pago → Checkout simulado (/register?step=checkout)
-                      └─ Formulario fake de tarjeta (4242...) → confirmación
-                 └─ Si Free → salta checkout
-                      └─ Onboarding wizard (/register?step=onboarding)
-                           └─ 3 pasos: datos básicos, horarios, primera categoría/plato
-                                └─ Dashboard (/dashboard) con datos del wizard
-```
+### 1. Protección de rutas
+- `/dashboard` sin login → redirige a `/register` o login
+- `/register` si ya logueado → redirige a `/dashboard`
+- Actualmente cualquiera puede acceder al dashboard directamente
 
-## Cambios por archivo
+### 2. Métricas con datos reales
+- Las métricas (reservas totales, ocupación, no-show) vienen de `metricsData` hardcodeado en mockData
+- Deberían calcularse a partir de las reservas reales del contexto
 
-### 1. `src/pages/Register.tsx` (NUEVO)
-- Página multi-step con estado `step: "signup" | "plan" | "checkout" | "onboarding"`
-- **Step 1 — Registro**: nombre del restaurante, email, contraseña. Guarda en localStorage como usuario registrado.
-- **Step 2 — Plan**: muestra los 3 planes con features. El plan se selecciona y guarda. Si viene desde un CTA de plan específico, se preselecciona.
-- **Step 3 — Checkout** (solo si Pro/Business): formulario simulado de tarjeta (número, fecha, CVV). Botón "Pagar €29/mes". Simula un delay de 2s con spinner → confirmación con confetti/toast.
-- **Step 4 — Onboarding wizard** (3 sub-pasos):
-  - Paso 1: Nombre restaurante, dirección, teléfono, tipo de cocina
-  - Paso 2: Horarios (mañana/noche, días de la semana)
-  - Paso 3: Crear primera categoría + primer plato (nombre, precio, descripción)
-- Al finalizar: guarda todo en localStorage via AppContext y redirige a `/dashboard`
+### 3. Multi-idioma en carta pública
+- El selector de idioma (ES/EN/FR) existe pero no traduce nada
+- Implementar traducción básica de la carta pública (títulos de sección, botones, labels)
 
-### 2. `src/pages/Landing.tsx`
-- Los CTAs de "Crear mi carta gratis" apuntan a `/register`
-- Los botones "Comenzar" de cada plan apuntan a `/register?plan=free|pro|business`
-- "Iniciar sesión" sigue apuntando a `/dashboard`
+### 4. Gestión de vinos completa
+- No se pueden crear/editar/eliminar vinos desde el dashboard
+- Solo se pueden ver
 
-### 3. `src/context/AppContext.tsx`
-- Añadir campo `userPlan: "free" | "pro" | "business"` al estado
-- Añadir campo `userEmail: string` y `userName: string`
-- Nuevo método `register(email, password, name)` que crea la sesión
-- Actualizar `login` para verificar contra el usuario registrado en localStorage
+### 5. Notificaciones funcionales
+- La campana del dashboard muestra un punto rojo estático
+- No hay lista de notificaciones ni centro de notificaciones
+- Los settings de notificaciones (email al reservar, resumen diario) no hacen nada visible
 
-### 4. `src/pages/Dashboard.tsx`
-- La sección de Facturación lee `userPlan` del contexto en vez del texto estático "PRO"
-- "Gestionar suscripción" abre un modal donde se puede cambiar de plan (simulado)
-- Si el usuario está en plan Free, mostrar un banner sutil "Upgrade a Pro" con las features que se desbloquean
+### 6. Drag & drop para reordenar
+- Categorías y platos tienen campo `position` pero no se pueden reordenar visualmente
+- Los iconos de grip (⠿) son decorativos
 
-### 5. `src/App.tsx`
-- Añadir ruta `/register` → `Register.tsx`
+### 7. Carta de vinos en el dashboard
+- CRUD de vinos: crear, editar, eliminar vinos con foto, precio, tipo, bodega
 
-## Detalles técnicos
+### 8. Exportar datos
+- No hay exportación de reservas a CSV/Excel
+- No hay descarga de la carta en PDF
 
-- Sin backend: todo es localStorage. El "pago" es simulado (delay + toast de éxito)
-- El checkout acepta cualquier número de tarjeta (es una demo)
-- El onboarding sobreescribe los datos mock con los datos reales del usuario
-- Progress bar visual en la parte superior del registro (4 pasos)
-- Mobile-first: diseñado para 390px primero, responsive para desktop
-- Credenciales dinámicas: tras registrarse, el login funciona con el email/password elegidos (ya no solo demo@carta.app)
+### 9. Validación de límites por plan
+- Plan Free dice "20 platos, 3 categorías" pero no se aplica ningún límite
+- El usuario Free puede crear platos ilimitados igual que Pro
+
+### 10. PWA / Offline
+- El `manifest.json` existe pero no hay service worker
+- La carta pública podría funcionar offline para el cliente final
+
+## Plan de implementación propuesto
+
+Abordaría los **5 más impactantes** en orden:
+
+### Fase 1 — Protección de rutas + límites de plan
+- Wrapper `<ProtectedRoute>` que redirige a login si no autenticado
+- Lógica en Dashboard que bloquea crear más platos/categorías si excede el límite del plan Free
+- Banner "Upgrade" cuando el usuario alcanza el límite
+
+### Fase 2 — Métricas reales
+- Reemplazar `metricsData` por cálculos sobre `reservations[]` del contexto
+- KPIs: total reservas, completadas, no-shows, tasa cancelación
+- Gráficos calculados por día/semana real
+
+### Fase 3 — CRUD de vinos
+- Sección de vinos en el dashboard con crear/editar/eliminar
+- Campos: nombre, bodega, tipo, DO, precio, año, descripción, foto
+- Métodos `addWine`, `updateWine`, `deleteWine` en AppContext
+
+### Fase 4 — Multi-idioma básico
+- Diccionario ES/EN/FR para labels de la carta pública
+- Traduce secciones, botones, alérgenos — no los nombres de platos (eso lo pone el restaurante)
+
+### Fase 5 — Notificaciones y exportación
+- Centro de notificaciones con lista de eventos recientes (nueva reserva, cancelación)
+- Exportar reservas a CSV desde el dashboard
+
+### Archivos afectados
+| Archivo | Cambios |
+|---------|---------|
+| `src/App.tsx` | ProtectedRoute wrapper |
+| `src/context/AppContext.tsx` | CRUD vinos, lógica de límites |
+| `src/pages/Dashboard.tsx` | Métricas reales, CRUD vinos, notificaciones, exportar CSV, limites plan |
+| `src/pages/PublicRestaurant.tsx` | Multi-idioma |
+| `src/data/mockData.ts` | Añadir métodos a Wine |
 
