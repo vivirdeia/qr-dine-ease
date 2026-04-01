@@ -398,7 +398,7 @@ const PublicRestaurant = () => {
                 <div>
                   <label className="text-sm font-medium mb-2 block">{t(lang, "reserve.period")}</label>
                   <div className="flex gap-2">
-                    {[{id: "lunch", label: "Mediodía (13:00-16:00)"}, {id: "dinner", label: "Noche (20:30-23:30)"}].map(p => (
+                    {[{id: "lunch", label: t(lang, "reserve.lunch")}, {id: "dinner", label: t(lang, "reserve.dinner")}].map(p => (
                       <button key={p.id} onClick={() => setResData(d => ({...d, period: p.id}))}
                         className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${resData.period === p.id ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
                         {p.label}
