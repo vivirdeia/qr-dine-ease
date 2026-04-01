@@ -564,14 +564,30 @@ const MenuSection = () => {
 
       {/* Category modal */}
       {showCategoryModal && (
-        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-center justify-center p-4" onClick={() => setShowCategoryModal(false)}>
+        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-center justify-center p-4" onClick={() => { setShowCategoryModal(false); setEditingCategory(null); }}>
           <div className="bg-card rounded-2xl border border-border p-6 max-w-sm w-full space-y-4" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold">Nueva categoría</h3>
+            <h3 className="text-lg font-bold">{editingCategory ? "Editar categoría" : "Nueva categoría"}</h3>
             <div><label className="text-xs font-medium text-muted-foreground">Nombre</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={newCatName} onChange={e => setNewCatName(e.target.value)} /></div>
             <div><label className="text-xs font-medium text-muted-foreground">Icono (emoji)</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={newCatIcon} onChange={e => setNewCatIcon(e.target.value)} /></div>
             <div className="flex gap-3">
-              <Button variant="gradient" className="flex-1" onClick={saveCategory}>Añadir</Button>
-              <Button variant="outline-primary" onClick={() => setShowCategoryModal(false)}>Cancelar</Button>
+              <Button variant="gradient" className="flex-1" onClick={saveCategory}>{editingCategory ? "Guardar" : "Añadir"}</Button>
+              <Button variant="outline-primary" onClick={() => { setShowCategoryModal(false); setEditingCategory(null); }}>Cancelar</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete category confirmation */}
+      {deleteCatConfirm && (
+        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-center justify-center p-4" onClick={() => setDeleteCatConfirm(null)}>
+          <div className="bg-card rounded-2xl border border-border p-6 max-w-sm w-full space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold">¿Eliminar categoría?</h3>
+            <p className="text-sm text-muted-foreground">
+              Se eliminará la categoría y sus {dishes.filter(d => d.categoryId === deleteCatConfirm).length} platos. Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-3">
+              <Button variant="destructive" className="flex-1" onClick={() => handleDeleteCategory(deleteCatConfirm)}>Eliminar</Button>
+              <Button variant="outline-primary" onClick={() => setDeleteCatConfirm(null)}>Cancelar</Button>
             </div>
           </div>
         </div>
