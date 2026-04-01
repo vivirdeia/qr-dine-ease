@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "./context/AppContext";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
+import Register from "./pages/Register";
 import PublicRestaurant from "./pages/PublicRestaurant";
 import NotFound from "./pages/NotFound";
 
