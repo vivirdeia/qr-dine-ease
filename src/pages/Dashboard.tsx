@@ -1427,10 +1427,13 @@ const sections: Record<Section, React.FC> = {
 };
 
 const Dashboard = () => {
-  const { isLoggedIn, logout, restaurant, userPlan, setUserPlan } = useApp();
+  const { isLoggedIn, logout, restaurant, userPlan, setUserPlan, appNotifications, markNotificationRead, markAllNotificationsRead, canAddDish, canAddCategory } = useApp();
   const [active, setActive] = useState<Section>("restaurant");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const ActiveSection = sections[active];
+
+  const unreadCount = appNotifications.filter(n => !n.read).length;
 
   if (!isLoggedIn) return <LoginScreen />;
 
@@ -1481,16 +1484,64 @@ const Dashboard = () => {
             <ChevronDown className="h-3 w-3 text-muted-foreground hidden sm:block" />
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <button className="relative p-2 hover:bg-secondary rounded-lg">
-              <Bell className="h-4 w-4 text-muted-foreground" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
-            </button>
+            <div className="relative">
+              <button className="relative p-2 hover:bg-secondary rounded-lg" onClick={() => setNotifOpen(!notifOpen)}>
+                <Bell className="h-4 w-4 text-muted-foreground" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[9px] font-bold rounded-full flex items-center justify-center">{unreadCount > 9 ? "9+" : unreadCount}</span>
+                )}
+              </button>
+              {notifOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-50 w-80 bg-card rounded-2xl border border-border shadow-warm-lg overflow-hidden">
+                    <div className="flex items-center justify-between p-3 border-b border-border">
+                      <h4 className="text-sm font-bold">Notificaciones</h4>
+                      {unreadCount > 0 && (
+                        <button onClick={() => markAllNotificationsRead()} className="text-xs text-primary hover:underline">Marcar todas leídas</button>
+                      )}
+                    </div>
+                    <div className="max-h-80 overflow-y-auto">
+                      {appNotifications.length === 0 ? (
+                        <p className="p-4 text-sm text-muted-foreground text-center">No hay notificaciones</p>
+                      ) : (
+                        appNotifications.slice(0, 15).map(n => (
+                          <button key={n.id} onClick={() => markNotificationRead(n.id)}
+                            className={`w-full text-left p-3 border-b border-border last:border-0 hover:bg-secondary/50 transition-colors ${!n.read ? 'bg-primary/5' : ''}`}>
+                            <div className="flex items-start gap-2">
+                              {!n.read && <span className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />}
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-medium">{n.title}</div>
+                                <div className="text-xs text-muted-foreground line-clamp-2">{n.message}</div>
+                                <div className="text-[10px] text-muted-foreground mt-0.5">{new Date(n.date).toLocaleDateString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</div>
+                              </div>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             <button onClick={() => { logout(); toast.success("Sesión cerrada"); }} className="p-2 hover:bg-secondary rounded-lg" title="Cerrar sesión">
               <LogOut className="h-4 w-4 text-muted-foreground" />
             </button>
             <div className="w-8 h-8 rounded-full bg-gradient-primary" />
           </div>
         </header>
+
+        {/* Plan limits banner */}
+        {userPlan === "free" && (
+          <div className="bg-primary/5 border-b border-primary/20 px-4 py-2 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs">
+              <Sparkles className="h-4 w-4 text-primary shrink-0" />
+              <span>Plan Free: reservas, fotos y multi-idioma no disponibles.</span>
+            </div>
+            <Button variant="gradient" size="sm" className="text-xs shrink-0" onClick={() => { setUserPlan("pro"); toast.success("¡Plan actualizado a Pro!"); }}>Upgrade</Button>
+          </div>
+        )}
+
         <main className="flex-1 p-4 sm:p-6 overflow-auto pb-20 md:pb-6">
           <ActiveSection />
         </main>
