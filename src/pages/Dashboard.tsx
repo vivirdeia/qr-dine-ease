@@ -252,6 +252,9 @@ const MenuSection = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleteCatConfirm, setDeleteCatConfirm] = useState<string | null>(null);
   const [showCatDrawer, setShowCatDrawer] = useState(false);
+  const [showWineModal, setShowWineModal] = useState(false);
+  const [editingWine, setEditingWine] = useState<Wine | null>(null);
+  const [wineForm, setWineForm] = useState<Partial<Wine>>({});
 
   const [dishForm, setDishForm] = useState<Partial<Dish>>({});
 
