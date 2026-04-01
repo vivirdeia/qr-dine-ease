@@ -1315,7 +1315,7 @@ const sections: Record<Section, React.FC> = {
 };
 
 const Dashboard = () => {
-  const { isLoggedIn, logout, restaurant } = useApp();
+  const { isLoggedIn, logout, restaurant, userPlan, setUserPlan } = useApp();
   const [active, setActive] = useState<Section>("restaurant");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const ActiveSection = sections[active];
