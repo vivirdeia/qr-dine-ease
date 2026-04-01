@@ -324,7 +324,9 @@ const Pricing = () => {
                   <span className="text-muted-foreground">/mes</span>
                 </div>
               </div>
-              <Button variant={p.variant} size="lg" className="w-full">{p.cta}</Button>
+              <Button variant={p.variant} size="lg" className="w-full" asChild>
+                <Link to={`/register?plan=${p.name.toLowerCase()}`}>{p.cta}</Link>
+              </Button>
               {p.name === "Pro" && <p className="text-xs text-center text-muted-foreground">14 días gratis · Sin tarjeta</p>}
               <ul className="space-y-2">
                 {p.features.map((f, j) => (
