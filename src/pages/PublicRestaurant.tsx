@@ -20,6 +20,8 @@ const PublicRestaurant = () => {
   const [lang, setLang] = useState("ES");
   const [reservationStep, setReservationStep] = useState(0);
   const [resData, setResData] = useState({ guests: 2, date: "", period: "", time: "", name: "", phone: "", email: "", notes: "", zone: "Sin preferencia" });
+  const [wineFilter, setWineFilter] = useState("Todos");
+  const [customGuests, setCustomGuests] = useState(false);
 
   const isOpen = () => {
     const now = new Date();
