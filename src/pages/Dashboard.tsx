@@ -243,11 +243,13 @@ const MenuSection = () => {
   const [showDishModal, setShowDishModal] = useState(false);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [newCatName, setNewCatName] = useState("");
   const [newCatIcon, setNewCatIcon] = useState("🍽️");
   const [showDailyModal, setShowDailyModal] = useState(false);
   const [dailyForm, setDailyForm] = useState({ ...dailyMenu });
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleteCatConfirm, setDeleteCatConfirm] = useState<string | null>(null);
   const [showCatDrawer, setShowCatDrawer] = useState(false);
 
   const [dishForm, setDishForm] = useState<Partial<Dish>>({});
