@@ -444,7 +444,7 @@ const PublicRestaurant = () => {
                 <div><label className="text-xs font-medium text-muted-foreground">{t(lang, "reserve.email")}</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-xl text-sm" value={resData.email} onChange={e => setResData(d => ({...d, email: e.target.value}))} /></div>
                 <div><label className="text-xs font-medium text-muted-foreground">{t(lang, "reserve.notes")}</label><textarea className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-xl text-sm" rows={2} placeholder={t(lang, "reserve.notesPlaceholder")} value={resData.notes} onChange={e => setResData(d => ({...d, notes: e.target.value}))} /></div>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Preferencia de zona</label>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">{t(lang, "reserve.zone")}</label>
                   <div className="flex gap-2">
                     {["Interior", "Terraza", "Sin preferencia"].map(z => (
                       <button key={z} onClick={() => setResData(d => ({...d, zone: z}))}
