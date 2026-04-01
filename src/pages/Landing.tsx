@@ -47,7 +47,7 @@ const Navbar = () => {
           <a href="#testimonials" className="block text-sm text-muted-foreground">Testimonios</a>
           <div className="flex gap-2 pt-2">
             <Button variant="outline-primary" size="sm" asChild className="flex-1">
-              <Link to="/dashboard">Iniciar sesión</Link>
+              <Link to="/login">Iniciar sesión</Link>
             </Button>
             <Button variant="gradient" size="sm" asChild className="flex-1">
               <Link to="/register">Crear mi carta</Link>
