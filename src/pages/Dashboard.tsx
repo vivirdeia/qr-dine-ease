@@ -312,6 +312,10 @@ const MenuSection = () => {
       updateCategory(editingCategory.id, { name: newCatName, icon: newCatIcon });
       toast.success("Categoría actualizada");
     } else {
+      if (!canAddCategory) {
+        toast.error(`Plan ${userPlan}: máximo ${planLimits.maxCategories} categorías. Haz upgrade para añadir más.`);
+        return;
+      }
       addCategory(newCatName, newCatIcon);
       toast.success("Categoría añadida");
     }
