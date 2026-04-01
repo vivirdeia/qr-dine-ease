@@ -1,92 +1,52 @@
 
 
-# Lo que le falta a Carta para ser 100% funcional
+# Análisis: ¿Qué falta para que funcione de punta a punta?
 
-## Ya funciona
-- CRUD de platos, categorías, mesas, reservas (localStorage)
-- Registro + selección de plan + checkout simulado + onboarding
-- Login con credenciales dinámicas
-- Paleta de colores personalizable
-- Tracking (GA, Meta Pixel)
-- Filtro de vinos, compartir carta, calendario .ics
-- Fotos en platos, bebidas y vinos
+## Bugs críticos que rompen el flujo
 
-## Lo que falta (por prioridad)
+### 1. ProtectedRoute redirige al sitio equivocado
+En `App.tsx` línea 17, `ProtectedRoute` redirige a `/dashboard` en vez de a `/register`:
+```
+if (!isLoggedIn) return <Navigate to="/dashboard" replace />; // ← BUCLE INFINITO
+```
+Debería ser `/register`. Además, `/dashboard` **no está envuelto** en `<ProtectedRoute>` (línea 39), así que cualquiera puede acceder sin login.
 
-### 1. Protección de rutas
-- `/dashboard` sin login → redirige a `/register` o login
-- `/register` si ya logueado → redirige a `/dashboard`
-- Actualmente cualquiera puede acceder al dashboard directamente
+### 2. "Iniciar sesión" en la Landing apunta a `/dashboard` directamente
+Línea 33 de Landing.tsx: `<Link to="/dashboard">Iniciar sesión</Link>`. No hay página de login independiente — el login está dentro del Dashboard. Si se protege la ruta, el usuario no podrá hacer login porque le redirige a `/register` en un bucle.
 
-### 2. Métricas con datos reales
-- Las métricas (reservas totales, ocupación, no-show) vienen de `metricsData` hardcodeado en mockData
-- Deberían calcularse a partir de las reservas reales del contexto
+### 3. El onboarding no asigna categoría al primer plato
+Línea 138: `categoryId: ""` — el plato se crea sin categoría, así que no aparece en la carta.
 
-### 3. Multi-idioma en carta pública
-- El selector de idioma (ES/EN/FR) existe pero no traduce nada
-- Implementar traducción básica de la carta pública (títulos de sección, botones, labels)
+### 4. Tras registro, los datos mock siguen cargados
+Al registrarse un usuario nuevo y completar el onboarding, los platos, categorías y vinos de "Casa Martín" siguen ahí. El usuario nuevo ve datos de otro restaurante.
 
-### 4. Gestión de vinos completa
-- No se pueden crear/editar/eliminar vinos desde el dashboard
-- Solo se pueden ver
+## Plan de corrección
 
-### 5. Notificaciones funcionales
-- La campana del dashboard muestra un punto rojo estático
-- No hay lista de notificaciones ni centro de notificaciones
-- Los settings de notificaciones (email al reservar, resumen diario) no hacen nada visible
+### Cambio 1: Arreglar protección de rutas + crear página de Login
+- Corregir `ProtectedRoute` para redirigir a `/login`
+- Crear ruta `/login` con formulario de email/password (extraer el login actual del Dashboard a su propia página)
+- Envolver `/dashboard` en `<ProtectedRoute>`
+- Landing: "Iniciar sesión" → `/login`
 
-### 6. Drag & drop para reordenar
-- Categorías y platos tienen campo `position` pero no se pueden reordenar visualmente
-- Los iconos de grip (⠿) son decorativos
+### Cambio 2: Limpiar datos al registrar usuario nuevo
+- En `register()`, resetear `dishes`, `categories`, `wines`, `reservations`, `tables` a arrays vacíos (o un set mínimo según el onboarding)
+- Solo cargar datos mock para el usuario `demo@carta.app`
 
-### 7. Carta de vinos en el dashboard
-- CRUD de vinos: crear, editar, eliminar vinos con foto, precio, tipo, bodega
+### Cambio 3: Asignar categoría al primer plato del onboarding
+- Guardar el ID de la categoría recién creada y pasarlo al `addDish`
+- Cambiar el `setTimeout` por un flujo síncrono correcto
 
-### 8. Exportar datos
-- No hay exportación de reservas a CSV/Excel
-- No hay descarga de la carta en PDF
-
-### 9. Validación de límites por plan
-- Plan Free dice "20 platos, 3 categorías" pero no se aplica ningún límite
-- El usuario Free puede crear platos ilimitados igual que Pro
-
-### 10. PWA / Offline
-- El `manifest.json` existe pero no hay service worker
-- La carta pública podría funcionar offline para el cliente final
-
-## Plan de implementación propuesto
-
-Abordaría los **5 más impactantes** en orden:
-
-### Fase 1 — Protección de rutas + límites de plan
-- Wrapper `<ProtectedRoute>` que redirige a login si no autenticado
-- Lógica en Dashboard que bloquea crear más platos/categorías si excede el límite del plan Free
-- Banner "Upgrade" cuando el usuario alcanza el límite
-
-### Fase 2 — Métricas reales
-- Reemplazar `metricsData` por cálculos sobre `reservations[]` del contexto
-- KPIs: total reservas, completadas, no-shows, tasa cancelación
-- Gráficos calculados por día/semana real
-
-### Fase 3 — CRUD de vinos
-- Sección de vinos en el dashboard con crear/editar/eliminar
-- Campos: nombre, bodega, tipo, DO, precio, año, descripción, foto
-- Métodos `addWine`, `updateWine`, `deleteWine` en AppContext
-
-### Fase 4 — Multi-idioma básico
-- Diccionario ES/EN/FR para labels de la carta pública
-- Traduce secciones, botones, alérgenos — no los nombres de platos (eso lo pone el restaurante)
-
-### Fase 5 — Notificaciones y exportación
-- Centro de notificaciones con lista de eventos recientes (nueva reserva, cancelación)
-- Exportar reservas a CSV desde el dashboard
+### Cambio 4: Flujo de login desde Landing
+- Crear `src/pages/Login.tsx` con formulario simple + link a "Crear cuenta" (`/register`)
+- Botón "¿Olvidaste tu contraseña?" (placeholder sin funcionalidad real)
 
 ### Archivos afectados
-| Archivo | Cambios |
-|---------|---------|
-| `src/App.tsx` | ProtectedRoute wrapper |
-| `src/context/AppContext.tsx` | CRUD vinos, lógica de límites |
-| `src/pages/Dashboard.tsx` | Métricas reales, CRUD vinos, notificaciones, exportar CSV, limites plan |
-| `src/pages/PublicRestaurant.tsx` | Multi-idioma |
-| `src/data/mockData.ts` | Añadir métodos a Wine |
+| Archivo | Cambio |
+|---------|--------|
+| `src/pages/Login.tsx` | **Nuevo** — página de login independiente |
+| `src/App.tsx` | Arreglar ProtectedRoute, añadir ruta `/login`, proteger `/dashboard` |
+| `src/pages/Landing.tsx` | "Iniciar sesión" → `/login` |
+| `src/context/AppContext.tsx` | `register()` limpia datos mock, `addCategory` retorna ID |
+| `src/pages/Register.tsx` | Usar ID de categoría al crear primer plato |
+| `src/pages/Dashboard.tsx` | Quitar el formulario de login embebido (ya no hace falta) |
 
