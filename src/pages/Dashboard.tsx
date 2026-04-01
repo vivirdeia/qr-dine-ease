@@ -463,12 +463,19 @@ const MenuSection = () => {
         </div>
       </div>
 
-      {/* Wine section */}
+      {/* Wine section with CRUD */}
       <div className="space-y-4">
-        <h3 className="text-lg font-bold font-sans flex items-center gap-2">🍷 Carta de vinos</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold font-sans flex items-center gap-2">🍷 Carta de vinos</h3>
+          <Button size="sm" variant="gradient" onClick={() => {
+            setEditingWine(null);
+            setWineForm({ name: "", region: "", grape: "", type: "tinto", priceBottle: 0, position: wines.length + 1 });
+            setShowWineModal(true);
+          }}><Plus className="h-4 w-4 mr-1" /> Añadir vino</Button>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {wines.map(wine => (
-            <div key={wine.id} className="bg-card rounded-xl border border-border p-4 flex items-center gap-4">
+            <div key={wine.id} className="bg-card rounded-xl border border-border p-4 flex items-center gap-4 group">
               <img src={getWineImage(wine.id, wine.type)} alt={wine.name} className="w-10 h-14 rounded object-cover shrink-0" loading="lazy" />
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-sm">{wine.name} {wine.year && <span className="text-muted-foreground">{wine.year}</span>}</div>
@@ -478,10 +485,53 @@ const MenuSection = () => {
                 {wine.priceGlass && <div className="text-muted-foreground">Copa €{wine.priceGlass.toFixed(2)}</div>}
                 <div className="font-bold text-primary">€{wine.priceBottle.toFixed(2)}</div>
               </div>
+              <div className="hidden group-hover:flex items-center gap-0.5">
+                <button onClick={() => { setEditingWine(wine); setWineForm({ ...wine }); setShowWineModal(true); }} className="p-1 hover:bg-secondary rounded"><Edit className="h-3 w-3 text-muted-foreground" /></button>
+                <button onClick={() => { deleteWine(wine.id); toast.success("Vino eliminado"); }} className="p-1 hover:bg-secondary rounded"><Trash2 className="h-3 w-3 text-destructive/60" /></button>
+              </div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Wine modal */}
+      {showWineModal && (
+        <div className="fixed inset-0 z-50 bg-foreground/40 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setShowWineModal(false)}>
+          <div className="bg-card rounded-t-2xl sm:rounded-2xl border border-border p-5 sm:p-6 w-full sm:max-w-lg max-h-[90vh] overflow-y-auto space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold font-sans">{editingWine ? "Editar vino" : "Nuevo vino"}</h3>
+            <div className="space-y-3">
+              <div><label className="text-xs font-medium text-muted-foreground">Nombre *</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={wineForm.name || ""} onChange={e => setWineForm(prev => ({ ...prev, name: e.target.value }))} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="text-xs font-medium text-muted-foreground">Región/DO</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={wineForm.region || ""} onChange={e => setWineForm(prev => ({ ...prev, region: e.target.value }))} /></div>
+                <div><label className="text-xs font-medium text-muted-foreground">Uva</label><input className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={wineForm.grape || ""} onChange={e => setWineForm(prev => ({ ...prev, grape: e.target.value }))} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Tipo</label>
+                  <select className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={wineForm.type || "tinto"} onChange={e => setWineForm(prev => ({ ...prev, type: e.target.value as Wine["type"] }))}>
+                    <option value="tinto">Tinto</option><option value="blanco">Blanco</option><option value="rosado">Rosado</option><option value="espumoso">Espumoso</option><option value="dulce">Dulce</option>
+                  </select>
+                </div>
+                <div><label className="text-xs font-medium text-muted-foreground">Año</label><input type="number" className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={wineForm.year || ""} onChange={e => setWineForm(prev => ({ ...prev, year: parseInt(e.target.value) || undefined }))} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="text-xs font-medium text-muted-foreground">Precio botella (€) *</label><input type="number" step="0.01" className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={wineForm.priceBottle || ""} onChange={e => setWineForm(prev => ({ ...prev, priceBottle: parseFloat(e.target.value) || 0 }))} /></div>
+                <div><label className="text-xs font-medium text-muted-foreground">Precio copa (€)</label><input type="number" step="0.01" className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" value={wineForm.priceGlass || ""} onChange={e => setWineForm(prev => ({ ...prev, priceGlass: parseFloat(e.target.value) || undefined }))} /></div>
+              </div>
+              <div><label className="text-xs font-medium text-muted-foreground">Descripción</label><textarea className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" rows={2} value={wineForm.description || ""} onChange={e => setWineForm(prev => ({ ...prev, description: e.target.value }))} /></div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button variant="gradient" className="flex-1" onClick={() => {
+                if (!wineForm.name || !wineForm.priceBottle) { toast.error("Nombre y precio son obligatorios"); return; }
+                if (editingWine) { updateWine(editingWine.id, wineForm); toast.success("Vino actualizado"); }
+                else { addWine(wineForm as Omit<Wine, "id">); toast.success("Vino añadido"); }
+                setShowWineModal(false);
+              }}>Guardar</Button>
+              <Button variant="outline-primary" onClick={() => setShowWineModal(false)}>Cancelar</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Dish modal */}
       {showDishModal && (
