@@ -239,7 +239,7 @@ const RestaurantSection = () => {
 
 // ── Menu Section ──
 const MenuSection = () => {
-  const { categories, dishes, wines, dailyMenu, addDish, updateDish, deleteDish, duplicateDish, toggleDishAvailability, addCategory, updateCategory, deleteCategory, updateDailyMenu } = useApp();
+  const { categories, dishes, wines, dailyMenu, addDish, updateDish, deleteDish, duplicateDish, toggleDishAvailability, addCategory, updateCategory, deleteCategory, updateDailyMenu, addWine, updateWine, deleteWine, canAddDish, canAddCategory, userPlan, planLimits } = useApp();
   const [activeCategory, setActiveCategory] = useState("c1");
   const [showDishModal, setShowDishModal] = useState(false);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
