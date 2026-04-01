@@ -1354,7 +1354,7 @@ const Dashboard = () => {
           ))}
         </nav>
         <div className="absolute bottom-4 left-3 right-3 px-3">
-          <span className="bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full">PRO</span>
+          <span className="bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full uppercase">{userPlan}</span>
         </div>
       </aside>
 
