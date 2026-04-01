@@ -322,7 +322,7 @@ const PublicRestaurant = () => {
               </div>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground mt-3 italic">Pregunta al camarero por las sugerencias de maridaje</p>
+          <p className="text-xs text-muted-foreground mt-3 italic">{t(lang, "menu.pairing")}</p>
         </div>
       </div>
 
