@@ -5,6 +5,7 @@ import { useApp } from "@/context/AppContext";
 import { ALLERGENS } from "@/data/mockData";
 import { heroRestaurant, dishImages } from "@/data/dishImages";
 import { getWineImage } from "@/data/wineImages";
+import { t, type Lang } from "@/data/translations";
 import { toast } from "sonner";
 import {
   Clock, MapPin, Phone, Instagram, Share2, Search, ChevronRight,
