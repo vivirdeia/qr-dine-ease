@@ -88,7 +88,7 @@ const Hero = () => (
         <span className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium">
           🍽️ +800 restaurantes ya usan Carta
         </span>
-        <h1 className="text-2xl md:text-6xl font-bold leading-tight tracking-tight">
+        <h1 className="text-2xl md:text-2xl font-bold leading-tight tracking-tight">
           Tu carta digital. Tus reservas. <span className="text-gradient-primary">Un solo QR.</span>
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
