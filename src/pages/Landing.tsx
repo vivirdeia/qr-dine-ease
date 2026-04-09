@@ -89,7 +89,7 @@ const Hero = () => (
           🍽️ +800 restaurantes ya usan Carta
         </span>
         <h1 className="text-2xl md:text-2xl font-bold leading-tight tracking-tight">
-          Tu carta digital. Tus reservas. <span className="text-gradient-primary">Un solo QR.</span>
+          Tu carta digital. <span className="text-gradient-primary">Un solo QR.</span>
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
           Crea la carta digital de tu restaurante en 10 minutos. Tus clientes escanean el QR, ven los platos, y reservan
