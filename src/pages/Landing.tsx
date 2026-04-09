@@ -561,7 +561,7 @@ const Testimonials = () => (
         {testimonials.map((t, i) => (
           <div
             key={i}
-            className="bg-card rounded-2xl border border-border p-2 space-y-4 hover:shadow-warm transition-shadow"
+            className="bg-card rounded-2xl border border-border p-6 space-y-4 hover:shadow-warm transition-shadow"
           >
             <div className="flex gap-0.5">
               {Array.from({ length: t.stars }).map((_, j) => (
