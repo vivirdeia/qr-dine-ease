@@ -11,6 +11,19 @@ import Register from "./pages/Register";
 import PublicRestaurant from "./pages/PublicRestaurant";
 import SuperAdmin from "./pages/SuperAdmin";
 import NotFound from "./pages/NotFound";
+import Privacidad from "./pages/legal/Privacidad";
+import Terminos from "./pages/legal/Terminos";
+import CookiesPage from "./pages/legal/Cookies";
+import GDPR from "./pages/legal/GDPR";
+import SobreNosotros from "./pages/info/SobreNosotros";
+import Contacto from "./pages/info/Contacto";
+import Caracteristicas from "./pages/info/Caracteristicas";
+import Pricing from "./pages/info/Pricing";
+import Demo from "./pages/info/Demo";
+import Changelog from "./pages/info/Changelog";
+import Ayuda from "./pages/info/Ayuda";
+import Guias from "./pages/info/Guias";
+import ApiDocs from "./pages/info/ApiDocs";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +63,19 @@ const App = () => (
               <ProtectedRoute requiredRole="superadmin"><SuperAdmin /></ProtectedRoute>
             } />
             <Route path="/r/:slug" element={<PublicRestaurant />} />
+            <Route path="/caracteristicas" element={<Caracteristicas />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/demo" element={<Demo />} />
+            <Route path="/changelog" element={<Changelog />} />
+            <Route path="/ayuda" element={<Ayuda />} />
+            <Route path="/guias" element={<Guias />} />
+            <Route path="/api-docs" element={<ApiDocs />} />
+            <Route path="/privacidad" element={<Privacidad />} />
+            <Route path="/terminos" element={<Terminos />} />
+            <Route path="/cookies" element={<CookiesPage />} />
+            <Route path="/gdpr" element={<GDPR />} />
+            <Route path="/sobre-nosotros" element={<SobreNosotros />} />
+            <Route path="/contacto" element={<Contacto />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
