@@ -353,7 +353,7 @@ const PublicRestaurant = () => {
                       </div>
                       {dish.chefNote && <p className="text-xs text-primary/70 italic mt-1">👨‍🍳 {dish.chefNote}</p>}
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
