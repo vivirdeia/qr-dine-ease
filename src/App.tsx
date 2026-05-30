@@ -19,7 +19,9 @@ const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode;
   if (!isLoggedIn) return <Navigate to="/login" replace />;
   if (requiredRole) {
     const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
-    if (!role || !roles.includes(role)) return <Navigate to="/dashboard" replace />;
+    if (!role || !roles.includes(role)) {
+      return <Navigate to={role === "superadmin" ? "/admin" : "/dashboard"} replace />;
+    }
   }
   return <>{children}</>;
 };
