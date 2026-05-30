@@ -362,10 +362,12 @@ const useCases = [
 const UseCases = () => (
   <section className="py-20 bg-secondary/50">
     <div className="container">
-      <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">Casos de uso</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <FadeIn>
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">Casos de uso</h2>
+      </FadeIn>
+      <FadeInStagger className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {useCases.map((c, i) => (
-          <div
+          <FadeInItem
             key={i}
             className="bg-card rounded-2xl border border-border overflow-hidden hover:shadow-warm transition-shadow"
           >
@@ -381,9 +383,9 @@ const UseCases = () => (
               <h3 className="text-lg font-bold font-sans">{c.title}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{c.desc}</p>
             </div>
-          </div>
+          </FadeInItem>
         ))}
-      </div>
+      </FadeInStagger>
     </div>
   </section>
 );
