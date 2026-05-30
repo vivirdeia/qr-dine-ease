@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useCallback, useMemo } from "react";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import React, { createContext, useContext, useCallback, useMemo, useEffect, useState } from "react";
 import {
   restaurant as defaultRestaurant,
   categories as defaultCategories,
@@ -17,6 +16,28 @@ import {
   type DailyMenu,
 } from "@/data/mockData";
 
+// ─────────── Types ───────────
+export type Role = "superadmin" | "owner" | "staff";
+
+export interface User {
+  id: string;
+  email: string;
+  password: string;
+  name: string;
+  role: Role;
+  tenantId: string | null;
+  createdAt: string;
+}
+
+export interface Tenant {
+  id: string;
+  slug: string;
+  plan: "free" | "pro" | "business";
+  createdAt: string;
+  ownerId: string;
+  suspended?: boolean;
+}
+
 interface NotificationSettings {
   emailOnReservation: boolean;
   emailOnCancellation: boolean;
@@ -33,13 +54,7 @@ export interface AppNotification {
   read: boolean;
 }
 
-const PLAN_LIMITS = {
-  free: { maxDishes: 20, maxCategories: 3 },
-  pro: { maxDishes: Infinity, maxCategories: Infinity },
-  business: { maxDishes: Infinity, maxCategories: Infinity },
-};
-
-interface AppState {
+export interface TenantData {
   restaurant: Restaurant;
   categories: Category[];
   dishes: Dish[];
@@ -47,12 +62,190 @@ interface AppState {
   tables: Table[];
   reservations: Reservation[];
   dailyMenu: DailyMenu;
-  isLoggedIn: boolean;
+  notifications: NotificationSettings;
+  appNotifications: AppNotification[];
+}
+
+interface DBState {
+  users: User[];
+  tenants: Tenant[];
+  data: Record<string, TenantData>;
+  session: { userId: string } | null;
+}
+
+const DB_KEY = "carta_db";
+const PLAN_LIMITS = {
+  free: { maxDishes: 20, maxCategories: 3 },
+  pro: { maxDishes: Infinity, maxCategories: Infinity },
+  business: { maxDishes: Infinity, maxCategories: Infinity },
+};
+
+const defaultNotificationSettings: NotificationSettings = {
+  emailOnReservation: true,
+  emailOnCancellation: true,
+  dailySummary: false,
+  noshowAlert: true,
+};
+
+const emptyTenantData = (name = ""): TenantData => ({
+  restaurant: {
+    ...defaultRestaurant,
+    id: "",
+    name,
+    slug: "",
+    description: "",
+    phone: "",
+    email: "",
+    web: "",
+    instagram: "",
+    address: "",
+    cuisine: [],
+    services: {},
+    plan: "free",
+    hours: defaultRestaurant.hours.map(h => ({ ...h })),
+  },
+  categories: [],
+  dishes: [],
+  wines: [],
+  tables: [],
+  reservations: [],
+  dailyMenu: { ...defaultDailyMenu, visible: false },
+  notifications: { ...defaultNotificationSettings },
+  appNotifications: [],
+});
+
+// ─────────── ID generator ───────────
+let idCounter = Date.now();
+const genId = (prefix: string) => `${prefix}_${++idCounter}_${Math.random().toString(36).slice(2, 6)}`;
+
+const slugify = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `r-${Date.now()}`;
+
+// ─────────── Default DB / Migration ───────────
+function buildDefaultDb(): DBState {
+  const superAdminId = "u_admin";
+  const demoUserId = "u_demo";
+  const demoTenantId = "t_demo";
+  const now = new Date().toISOString();
+  return {
+    users: [
+      { id: superAdminId, email: "admin@carta.app", password: "admin1234", name: "Super Admin", role: "superadmin", tenantId: null, createdAt: now },
+      { id: demoUserId, email: "demo@carta.app", password: "demo1234", name: "Demo Owner", role: "owner", tenantId: demoTenantId, createdAt: now },
+    ],
+    tenants: [
+      { id: demoTenantId, slug: defaultRestaurant.slug, plan: "pro", createdAt: now, ownerId: demoUserId },
+    ],
+    data: {
+      [demoTenantId]: {
+        restaurant: { ...defaultRestaurant, id: demoTenantId },
+        categories: defaultCategories,
+        dishes: defaultDishes,
+        wines: defaultWines,
+        tables: defaultTables,
+        reservations: defaultReservations,
+        dailyMenu: defaultDailyMenu,
+        notifications: { ...defaultNotificationSettings },
+        appNotifications: [],
+      },
+    },
+    session: null,
+  };
+}
+
+function tryMigrateLegacy(): DBState | null {
+  try {
+    const legacyRest = localStorage.getItem("carta_restaurant");
+    const legacyCreds = localStorage.getItem("carta_credentials");
+    if (!legacyRest && !legacyCreds) return null;
+
+    const restaurant = legacyRest ? JSON.parse(legacyRest) : defaultRestaurant;
+    const categories = JSON.parse(localStorage.getItem("carta_categories") || "[]");
+    const dishes = JSON.parse(localStorage.getItem("carta_dishes") || "[]");
+    const wines = JSON.parse(localStorage.getItem("carta_wines") || "[]");
+    const tables = JSON.parse(localStorage.getItem("carta_tables") || "[]");
+    const reservations = JSON.parse(localStorage.getItem("carta_reservations") || "[]");
+    const dailyMenu = JSON.parse(localStorage.getItem("carta_dailyMenu") || JSON.stringify(defaultDailyMenu));
+    const notifications = JSON.parse(localStorage.getItem("carta_notifications") || JSON.stringify(defaultNotificationSettings));
+    const appNotifications = JSON.parse(localStorage.getItem("carta_appNotifications") || "[]");
+    const userEmail = JSON.parse(localStorage.getItem("carta_userEmail") || '""');
+    const userName = JSON.parse(localStorage.getItem("carta_userName") || '""');
+    const userPlan = JSON.parse(localStorage.getItem("carta_userPlan") || '"pro"');
+    const creds = legacyCreds ? JSON.parse(legacyCreds) : null;
+    const wasLoggedIn = JSON.parse(localStorage.getItem("carta_loggedIn") || "false");
+
+    const base = buildDefaultDb();
+    const tenantId = "t_migrated";
+    const userId = "u_migrated";
+    const now = new Date().toISOString();
+    const slug = restaurant.slug || slugify(restaurant.name || userName || "mi-restaurante");
+
+    const user: User = {
+      id: userId,
+      email: creds?.email || userEmail || "owner@carta.app",
+      password: creds?.password || "changeme",
+      name: userName || "Propietario",
+      role: "owner",
+      tenantId,
+      createdAt: now,
+    };
+    const tenant: Tenant = { id: tenantId, slug, plan: userPlan, createdAt: now, ownerId: userId };
+
+    base.users.push(user);
+    base.tenants.push(tenant);
+    base.data[tenantId] = {
+      restaurant: { ...restaurant, id: tenantId, slug, plan: userPlan },
+      categories, dishes, wines, tables, reservations, dailyMenu, notifications, appNotifications,
+    };
+    if (wasLoggedIn) base.session = { userId };
+
+    // Clean legacy keys
+    [
+      "carta_restaurant", "carta_categories", "carta_dishes", "carta_wines",
+      "carta_tables", "carta_reservations", "carta_dailyMenu", "carta_loggedIn",
+      "carta_userPlan", "carta_userEmail", "carta_userName", "carta_credentials",
+      "carta_notifications", "carta_appNotifications",
+    ].forEach(k => localStorage.removeItem(k));
+    return base;
+  } catch {
+    return null;
+  }
+}
+
+function loadInitialDb(): DBState {
+  try {
+    const raw = localStorage.getItem(DB_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch { /* fallthrough */ }
+  const migrated = tryMigrateLegacy();
+  if (migrated) return migrated;
+  return buildDefaultDb();
+}
+
+// ─────────── Context shape ───────────
+interface AppState {
+  // Active tenant convenience (same as before)
+  restaurant: Restaurant;
+  categories: Category[];
+  dishes: Dish[];
+  wines: Wine[];
+  tables: Table[];
+  reservations: Reservation[];
+  dailyMenu: DailyMenu;
   notifications: NotificationSettings;
   appNotifications: AppNotification[];
   userPlan: "free" | "pro" | "business";
   userEmail: string;
   userName: string;
+  isLoggedIn: boolean;
+
+  // Multi-tenant / roles
+  currentUser: User | null;
+  currentTenant: Tenant | null;
+  role: Role | null;
+  users: User[];
+  tenants: Tenant[];
+  allData: Record<string, TenantData>;
 
   // Plan limits
   planLimits: { maxDishes: number; maxCategories: number };
@@ -62,10 +255,10 @@ interface AppState {
   // Auth
   login: (email: string, password: string) => boolean;
   logout: () => void;
-  register: (email: string, password: string, name: string) => void;
+  register: (email: string, password: string, name: string) => boolean;
   setUserPlan: (plan: "free" | "pro" | "business") => void;
 
-  // Restaurant
+  // Restaurant / data
   updateRestaurant: (data: Partial<Restaurant>) => void;
 
   // Dishes
@@ -80,7 +273,6 @@ interface AppState {
   updateCategory: (id: string, data: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
 
-  // Daily menu
   updateDailyMenu: (data: Partial<DailyMenu>) => void;
 
   // Tables
@@ -101,6 +293,20 @@ interface AppState {
   toggleNotification: (key: keyof NotificationSettings) => void;
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
+
+  // Multi-tenant management (superadmin / owner)
+  getTenantBySlug: (slug: string) => { tenant: Tenant; data: TenantData } | null;
+  setTenantPlan: (tenantId: string, plan: "free" | "pro" | "business") => void;
+  suspendTenant: (tenantId: string, suspended: boolean) => void;
+  deleteTenant: (tenantId: string) => void;
+  impersonate: (userId: string) => void;
+
+  inviteTeamMember: (email: string, password: string, name: string, role: Exclude<Role, "superadmin">) => boolean;
+  updateUserRole: (userId: string, role: Exclude<Role, "superadmin">) => void;
+  removeUser: (userId: string) => void;
+
+  // helpers
+  can: (action: "manage" | "edit" | "view") => boolean;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -111,203 +317,354 @@ export const useApp = () => {
   return ctx;
 };
 
-let idCounter = Date.now();
-const genId = (prefix: string) => `${prefix}${++idCounter}`;
-
+// ─────────── Provider ───────────
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [restaurant, setRestaurant] = useLocalStorage<Restaurant>("carta_restaurant", defaultRestaurant);
-  const [categories, setCategories] = useLocalStorage<Category[]>("carta_categories", defaultCategories);
-  const [dishes, setDishes] = useLocalStorage<Dish[]>("carta_dishes", defaultDishes);
-  const [wines, setWines] = useLocalStorage<Wine[]>("carta_wines", defaultWines);
-  const [tables, setTables] = useLocalStorage<Table[]>("carta_tables", defaultTables);
-  const [reservations, setReservations] = useLocalStorage<Reservation[]>("carta_reservations", defaultReservations);
-  const [dailyMenu, setDailyMenu] = useLocalStorage<DailyMenu>("carta_dailyMenu", defaultDailyMenu);
-  const [isLoggedIn, setIsLoggedIn] = useLocalStorage<boolean>("carta_loggedIn", false);
-  const [userPlan, setUserPlanState] = useLocalStorage<"free" | "pro" | "business">("carta_userPlan", "pro");
-  const [userEmail, setUserEmail] = useLocalStorage<string>("carta_userEmail", "");
-  const [userName, setUserName] = useLocalStorage<string>("carta_userName", "");
-  const [registeredCredentials, setRegisteredCredentials] = useLocalStorage<{ email: string; password: string } | null>("carta_credentials", null);
-  const [notifications, setNotifications] = useLocalStorage<NotificationSettings>("carta_notifications", {
-    emailOnReservation: true,
-    emailOnCancellation: true,
-    dailySummary: false,
-    noshowAlert: true,
-  });
-  const [appNotifications, setAppNotifications] = useLocalStorage<AppNotification[]>("carta_appNotifications", []);
+  const [db, setDbState] = useState<DBState>(() => loadInitialDb());
 
+  // Persist
+  useEffect(() => {
+    try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch { /* ignore */ }
+  }, [db]);
+
+  const setDb = useCallback((updater: (prev: DBState) => DBState) => {
+    setDbState(prev => updater(prev));
+  }, []);
+
+  // Derived
+  const currentUser = useMemo(() => {
+    if (!db.session) return null;
+    return db.users.find(u => u.id === db.session!.userId) || null;
+  }, [db.session, db.users]);
+
+  const currentTenant = useMemo(() => {
+    if (!currentUser?.tenantId) return null;
+    return db.tenants.find(t => t.id === currentUser.tenantId) || null;
+  }, [currentUser, db.tenants]);
+
+  const activeData = useMemo<TenantData>(() => {
+    if (currentTenant && db.data[currentTenant.id]) return db.data[currentTenant.id];
+    return emptyTenantData();
+  }, [currentTenant, db.data]);
+
+  const role = currentUser?.role ?? null;
+  const isLoggedIn = !!currentUser;
+  const userPlan = currentTenant?.plan ?? "free";
   const planLimits = PLAN_LIMITS[userPlan];
-  const canAddDish = dishes.length < planLimits.maxDishes;
-  const canAddCategory = categories.filter(c => c.id !== "c0").length < planLimits.maxCategories;
+  const canAddDish = activeData.dishes.length < planLimits.maxDishes;
+  const canAddCategory = activeData.categories.filter(c => c.id !== "c0").length < planLimits.maxCategories;
 
-  const addNotification = useCallback((type: AppNotification["type"], title: string, message: string) => {
-    const notif: AppNotification = {
-      id: genId("n"),
-      type,
-      title,
-      message,
-      date: new Date().toISOString(),
-      read: false,
-    };
-    setAppNotifications(prev => [notif, ...prev].slice(0, 50));
-  }, [setAppNotifications]);
+  // ── Helpers to mutate active tenant data ──
+  const updateActiveData = useCallback((mut: (data: TenantData) => TenantData) => {
+    setDb(prev => {
+      if (!prev.session) return prev;
+      const user = prev.users.find(u => u.id === prev.session!.userId);
+      const tenantId = user?.tenantId;
+      if (!tenantId || !prev.data[tenantId]) return prev;
+      return { ...prev, data: { ...prev.data, [tenantId]: mut(prev.data[tenantId]) } };
+    });
+  }, [setDb]);
 
+  const addAppNotification = useCallback((type: AppNotification["type"], title: string, message: string) => {
+    const notif: AppNotification = { id: genId("n"), type, title, message, date: new Date().toISOString(), read: false };
+    updateActiveData(d => ({ ...d, appNotifications: [notif, ...d.appNotifications].slice(0, 50) }));
+  }, [updateActiveData]);
+
+  // ─────── Auth ───────
   const login = useCallback((email: string, password: string) => {
-    if (registeredCredentials && email === registeredCredentials.email && password === registeredCredentials.password) {
-      setIsLoggedIn(true);
-      return true;
-    }
-    if (email === "demo@carta.app" && password === "demo1234") {
-      setIsLoggedIn(true);
-      return true;
-    }
-    return false;
-  }, [setIsLoggedIn, registeredCredentials]);
+    let success = false;
+    setDb(prev => {
+      const user = prev.users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+      if (!user) return prev;
+      if (user.tenantId) {
+        const tenant = prev.tenants.find(t => t.id === user.tenantId);
+        if (tenant?.suspended) return prev;
+      }
+      success = true;
+      return { ...prev, session: { userId: user.id } };
+    });
+    return success;
+  }, [setDb]);
 
-  const logout = useCallback(() => setIsLoggedIn(false), [setIsLoggedIn]);
+  const logout = useCallback(() => setDb(prev => ({ ...prev, session: null })), [setDb]);
 
-  const registerUser = useCallback((email: string, password: string, name: string) => {
-    setRegisteredCredentials({ email, password });
-    setUserEmail(email);
-    setUserName(name);
-    // Clear mock data so new users start fresh
-    setDishes([]);
-    setCategories([]);
-    setWines([]);
-    setReservations([]);
-    setTables([]);
-    setDailyMenu({ ...defaultDailyMenu, visible: false });
-    setRestaurant({ ...defaultRestaurant, name: "" });
-    setIsLoggedIn(true);
-  }, [setRegisteredCredentials, setUserEmail, setUserName, setIsLoggedIn, setDishes, setCategories, setWines, setReservations, setTables, setDailyMenu, setRestaurant]);
+  const register = useCallback((email: string, password: string, name: string): boolean => {
+    let ok = false;
+    setDb(prev => {
+      if (prev.users.some(u => u.email.toLowerCase() === email.toLowerCase())) return prev;
+      const userId = genId("u");
+      const tenantId = genId("t");
+      const now = new Date().toISOString();
+      const slug = slugify(name);
+      const user: User = { id: userId, email, password, name, role: "owner", tenantId, createdAt: now };
+      const tenant: Tenant = { id: tenantId, slug, plan: "free", createdAt: now, ownerId: userId };
+      const data: TenantData = {
+        ...emptyTenantData(name),
+        restaurant: { ...emptyTenantData(name).restaurant, id: tenantId, slug, name },
+      };
+      ok = true;
+      return {
+        ...prev,
+        users: [...prev.users, user],
+        tenants: [...prev.tenants, tenant],
+        data: { ...prev.data, [tenantId]: data },
+        session: { userId },
+      };
+    });
+    return ok;
+  }, [setDb]);
 
   const setUserPlan = useCallback((plan: "free" | "pro" | "business") => {
-    setUserPlanState(plan);
-  }, [setUserPlanState]);
+    setDb(prev => {
+      if (!prev.session) return prev;
+      const user = prev.users.find(u => u.id === prev.session!.userId);
+      if (!user?.tenantId) return prev;
+      return {
+        ...prev,
+        tenants: prev.tenants.map(t => t.id === user.tenantId ? { ...t, plan } : t),
+        data: prev.data[user.tenantId]
+          ? { ...prev.data, [user.tenantId]: { ...prev.data[user.tenantId], restaurant: { ...prev.data[user.tenantId].restaurant, plan } } }
+          : prev.data,
+      };
+    });
+  }, [setDb]);
 
+  // ─────── Restaurant ───────
   const updateRestaurant = useCallback((data: Partial<Restaurant>) => {
-    setRestaurant(prev => ({ ...prev, ...data }));
-  }, [setRestaurant]);
+    updateActiveData(d => ({ ...d, restaurant: { ...d.restaurant, ...data } }));
+    // keep tenant.slug in sync if slug changed
+    if (data.slug) {
+      setDb(prev => {
+        if (!prev.session) return prev;
+        const u = prev.users.find(x => x.id === prev.session!.userId);
+        if (!u?.tenantId) return prev;
+        return { ...prev, tenants: prev.tenants.map(t => t.id === u.tenantId ? { ...t, slug: data.slug! } : t) };
+      });
+    }
+  }, [updateActiveData, setDb]);
 
+  // ─────── Dishes ───────
   const addDish = useCallback((dish: Omit<Dish, "id">) => {
-    const newDish: Dish = { ...dish, id: genId("d") };
-    setDishes(prev => [...prev, newDish]);
-    setCategories(prev => prev.map(c => c.id === dish.categoryId ? { ...c, dishCount: c.dishCount + 1 } : c));
-  }, [setDishes, setCategories]);
+    updateActiveData(d => {
+      const newDish: Dish = { ...dish, id: genId("d") };
+      return {
+        ...d,
+        dishes: [...d.dishes, newDish],
+        categories: d.categories.map(c => c.id === dish.categoryId ? { ...c, dishCount: c.dishCount + 1 } : c),
+      };
+    });
+  }, [updateActiveData]);
 
   const updateDish = useCallback((id: string, data: Partial<Dish>) => {
-    setDishes(prev => prev.map(d => d.id === id ? { ...d, ...data } : d));
-  }, [setDishes]);
+    updateActiveData(d => ({ ...d, dishes: d.dishes.map(x => x.id === id ? { ...x, ...data } : x) }));
+  }, [updateActiveData]);
 
   const deleteDish = useCallback((id: string) => {
-    setDishes(prev => {
-      const dish = prev.find(d => d.id === id);
-      if (dish) {
-        setCategories(cats => cats.map(c => c.id === dish.categoryId ? { ...c, dishCount: Math.max(0, c.dishCount - 1) } : c));
-      }
-      return prev.filter(d => d.id !== id);
+    updateActiveData(d => {
+      const dish = d.dishes.find(x => x.id === id);
+      return {
+        ...d,
+        dishes: d.dishes.filter(x => x.id !== id),
+        categories: dish
+          ? d.categories.map(c => c.id === dish.categoryId ? { ...c, dishCount: Math.max(0, c.dishCount - 1) } : c)
+          : d.categories,
+      };
     });
-  }, [setDishes, setCategories]);
+  }, [updateActiveData]);
 
   const duplicateDish = useCallback((id: string) => {
-    setDishes(prev => {
-      const original = prev.find(d => d.id === id);
-      if (!original) return prev;
+    updateActiveData(d => {
+      const original = d.dishes.find(x => x.id === id);
+      if (!original) return d;
       const copy: Dish = { ...original, id: genId("d"), name: `${original.name} (copia)`, position: original.position + 1 };
-      setCategories(cats => cats.map(c => c.id === original.categoryId ? { ...c, dishCount: c.dishCount + 1 } : c));
-      return [...prev, copy];
+      return {
+        ...d,
+        dishes: [...d.dishes, copy],
+        categories: d.categories.map(c => c.id === original.categoryId ? { ...c, dishCount: c.dishCount + 1 } : c),
+      };
     });
-  }, [setDishes, setCategories]);
+  }, [updateActiveData]);
 
   const toggleDishAvailability = useCallback((id: string) => {
-    setDishes(prev => prev.map(d => d.id === id ? { ...d, available: !d.available } : d));
-  }, [setDishes]);
+    updateActiveData(d => ({ ...d, dishes: d.dishes.map(x => x.id === id ? { ...x, available: !x.available } : x) }));
+  }, [updateActiveData]);
 
+  // ─────── Categories ───────
   const addCategory = useCallback((name: string, icon: string): string => {
-    const maxPos = Math.max(...categories.map(c => c.position), 0);
     const id = genId("c");
-    setCategories(prev => [...prev, { id, name, icon, position: maxPos + 1, visible: true, dishCount: 0 }]);
+    updateActiveData(d => {
+      const maxPos = Math.max(0, ...d.categories.map(c => c.position));
+      return { ...d, categories: [...d.categories, { id, name, icon, position: maxPos + 1, visible: true, dishCount: 0 }] };
+    });
     return id;
-  }, [categories, setCategories]);
+  }, [updateActiveData]);
 
   const updateCategory = useCallback((id: string, data: Partial<Category>) => {
-    setCategories(prev => prev.map(c => c.id === id ? { ...c, ...data } : c));
-  }, [setCategories]);
+    updateActiveData(d => ({ ...d, categories: d.categories.map(c => c.id === id ? { ...c, ...data } : c) }));
+  }, [updateActiveData]);
 
   const deleteCategory = useCallback((id: string) => {
-    setDishes(prev => prev.filter(d => d.categoryId !== id));
-    setCategories(prev => prev.filter(c => c.id !== id));
-  }, [setDishes, setCategories]);
+    updateActiveData(d => ({
+      ...d,
+      dishes: d.dishes.filter(x => x.categoryId !== id),
+      categories: d.categories.filter(c => c.id !== id),
+    }));
+  }, [updateActiveData]);
 
+  // ─────── Daily menu ───────
   const updateDailyMenu = useCallback((data: Partial<DailyMenu>) => {
-    setDailyMenu(prev => ({ ...prev, ...data }));
-  }, [setDailyMenu]);
+    updateActiveData(d => ({ ...d, dailyMenu: { ...d.dailyMenu, ...data } }));
+  }, [updateActiveData]);
 
+  // ─────── Tables ───────
   const addTable = useCallback((table: Omit<Table, "id">) => {
-    setTables(prev => [...prev, { ...table, id: genId("t") }]);
-  }, [setTables]);
-
+    updateActiveData(d => ({ ...d, tables: [...d.tables, { ...table, id: genId("tb") }] }));
+  }, [updateActiveData]);
   const updateTable = useCallback((id: string, data: Partial<Table>) => {
-    setTables(prev => prev.map(t => t.id === id ? { ...t, ...data } : t));
-  }, [setTables]);
-
+    updateActiveData(d => ({ ...d, tables: d.tables.map(t => t.id === id ? { ...t, ...data } : t) }));
+  }, [updateActiveData]);
   const deleteTable = useCallback((id: string) => {
-    setTables(prev => prev.filter(t => t.id !== id));
-  }, [setTables]);
+    updateActiveData(d => ({ ...d, tables: d.tables.filter(t => t.id !== id) }));
+  }, [updateActiveData]);
 
+  // ─────── Reservations ───────
   const addReservation = useCallback((reservation: Omit<Reservation, "id" | "createdAt">) => {
-    const newRes: Reservation = {
-      ...reservation,
-      id: genId("res"),
-      createdAt: new Date().toISOString().split("T")[0],
-    };
-    setReservations(prev => [...prev, newRes]);
-    addNotification("reservation", "Nueva reserva", `${reservation.name} — ${reservation.guests} pers. el ${reservation.date} a las ${reservation.time}`);
-  }, [setReservations, addNotification]);
+    const newRes: Reservation = { ...reservation, id: genId("res"), createdAt: new Date().toISOString().split("T")[0] };
+    updateActiveData(d => ({ ...d, reservations: [...d.reservations, newRes] }));
+    addAppNotification("reservation", "Nueva reserva", `${reservation.name} — ${reservation.guests} pers. el ${reservation.date} a las ${reservation.time}`);
+  }, [updateActiveData, addAppNotification]);
 
   const updateReservationStatus = useCallback((id: string, status: Reservation["status"]) => {
-    setReservations(prev => {
-      const res = prev.find(r => r.id === id);
+    updateActiveData(d => {
+      const res = d.reservations.find(r => r.id === id);
       if (res) {
-        if (status === "cancelled") {
-          addNotification("cancellation", "Reserva cancelada", `${res.name} canceló su reserva del ${res.date}`);
-        } else if (status === "noshow") {
-          addNotification("noshow", "No-show", `${res.name} no se presentó a su reserva del ${res.date}`);
-        }
+        if (status === "cancelled") addAppNotification("cancellation", "Reserva cancelada", `${res.name} canceló su reserva del ${res.date}`);
+        else if (status === "noshow") addAppNotification("noshow", "No-show", `${res.name} no se presentó a su reserva del ${res.date}`);
       }
-      return prev.map(r => r.id === id ? { ...r, status } : r);
+      return { ...d, reservations: d.reservations.map(r => r.id === id ? { ...r, status } : r) };
     });
-  }, [setReservations, addNotification]);
+  }, [updateActiveData, addAppNotification]);
 
-  // Wine CRUD
+  // ─────── Wines ───────
   const addWine = useCallback((wine: Omit<Wine, "id">) => {
-    setWines(prev => [...prev, { ...wine, id: genId("w") }]);
-  }, [setWines]);
-
+    updateActiveData(d => ({ ...d, wines: [...d.wines, { ...wine, id: genId("w") }] }));
+  }, [updateActiveData]);
   const updateWine = useCallback((id: string, data: Partial<Wine>) => {
-    setWines(prev => prev.map(w => w.id === id ? { ...w, ...data } : w));
-  }, [setWines]);
-
+    updateActiveData(d => ({ ...d, wines: d.wines.map(w => w.id === id ? { ...w, ...data } : w) }));
+  }, [updateActiveData]);
   const deleteWine = useCallback((id: string) => {
-    setWines(prev => prev.filter(w => w.id !== id));
-  }, [setWines]);
+    updateActiveData(d => ({ ...d, wines: d.wines.filter(w => w.id !== id) }));
+  }, [updateActiveData]);
 
+  // ─────── Notification settings ───────
   const toggleNotification = useCallback((key: keyof NotificationSettings) => {
-    setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
-  }, [setNotifications]);
+    updateActiveData(d => ({ ...d, notifications: { ...d.notifications, [key]: !d.notifications[key] } }));
+  }, [updateActiveData]);
 
   const markNotificationRead = useCallback((id: string) => {
-    setAppNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  }, [setAppNotifications]);
+    updateActiveData(d => ({ ...d, appNotifications: d.appNotifications.map(n => n.id === id ? { ...n, read: true } : n) }));
+  }, [updateActiveData]);
 
   const markAllNotificationsRead = useCallback(() => {
-    setAppNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  }, [setAppNotifications]);
+    updateActiveData(d => ({ ...d, appNotifications: d.appNotifications.map(n => ({ ...n, read: true })) }));
+  }, [updateActiveData]);
+
+  // ─────── Multi-tenant management ───────
+  const getTenantBySlug = useCallback((slug: string) => {
+    const tenant = db.tenants.find(t => t.slug === slug);
+    if (!tenant) return null;
+    const data = db.data[tenant.id];
+    if (!data) return null;
+    return { tenant, data };
+  }, [db.tenants, db.data]);
+
+  const setTenantPlan = useCallback((tenantId: string, plan: "free" | "pro" | "business") => {
+    setDb(prev => ({
+      ...prev,
+      tenants: prev.tenants.map(t => t.id === tenantId ? { ...t, plan } : t),
+      data: prev.data[tenantId]
+        ? { ...prev.data, [tenantId]: { ...prev.data[tenantId], restaurant: { ...prev.data[tenantId].restaurant, plan } } }
+        : prev.data,
+    }));
+  }, [setDb]);
+
+  const suspendTenant = useCallback((tenantId: string, suspended: boolean) => {
+    setDb(prev => ({ ...prev, tenants: prev.tenants.map(t => t.id === tenantId ? { ...t, suspended } : t) }));
+  }, [setDb]);
+
+  const deleteTenant = useCallback((tenantId: string) => {
+    setDb(prev => {
+      const { [tenantId]: _removed, ...rest } = prev.data;
+      return {
+        ...prev,
+        tenants: prev.tenants.filter(t => t.id !== tenantId),
+        users: prev.users.filter(u => u.tenantId !== tenantId),
+        data: rest,
+        session: prev.session && prev.users.find(u => u.id === prev.session!.userId)?.tenantId === tenantId ? null : prev.session,
+      };
+    });
+  }, [setDb]);
+
+  const impersonate = useCallback((userId: string) => {
+    setDb(prev => prev.users.some(u => u.id === userId) ? { ...prev, session: { userId } } : prev);
+  }, [setDb]);
+
+  const inviteTeamMember = useCallback((email: string, password: string, name: string, newRole: Exclude<Role, "superadmin">): boolean => {
+    let ok = false;
+    setDb(prev => {
+      if (!prev.session) return prev;
+      const owner = prev.users.find(u => u.id === prev.session!.userId);
+      if (!owner?.tenantId) return prev;
+      if (prev.users.some(u => u.email.toLowerCase() === email.toLowerCase())) return prev;
+      const user: User = {
+        id: genId("u"), email, password, name, role: newRole,
+        tenantId: owner.tenantId, createdAt: new Date().toISOString(),
+      };
+      ok = true;
+      return { ...prev, users: [...prev.users, user] };
+    });
+    return ok;
+  }, [setDb]);
+
+  const updateUserRole = useCallback((userId: string, newRole: Exclude<Role, "superadmin">) => {
+    setDb(prev => ({ ...prev, users: prev.users.map(u => u.id === userId && u.role !== "superadmin" ? { ...u, role: newRole } : u) }));
+  }, [setDb]);
+
+  const removeUser = useCallback((userId: string) => {
+    setDb(prev => {
+      const target = prev.users.find(u => u.id === userId);
+      if (!target || target.role === "superadmin") return prev;
+      // do not delete owner of a tenant via this method
+      const tenant = prev.tenants.find(t => t.ownerId === userId);
+      if (tenant) return prev;
+      return { ...prev, users: prev.users.filter(u => u.id !== userId) };
+    });
+  }, [setDb]);
+
+  const can = useCallback((action: "manage" | "edit" | "view") => {
+    if (!role) return false;
+    if (role === "superadmin" || role === "owner") return true;
+    if (role === "staff") return action !== "manage";
+    return false;
+  }, [role]);
 
   const value: AppState = {
-    restaurant, categories, dishes, wines, tables, reservations, dailyMenu,
-    isLoggedIn, notifications, appNotifications, userPlan, userEmail, userName,
+    restaurant: activeData.restaurant,
+    categories: activeData.categories,
+    dishes: activeData.dishes,
+    wines: activeData.wines,
+    tables: activeData.tables,
+    reservations: activeData.reservations,
+    dailyMenu: activeData.dailyMenu,
+    notifications: activeData.notifications,
+    appNotifications: activeData.appNotifications,
+    userPlan,
+    userEmail: currentUser?.email ?? "",
+    userName: currentUser?.name ?? "",
+    isLoggedIn,
+    currentUser, currentTenant, role,
+    users: db.users, tenants: db.tenants, allData: db.data,
     planLimits, canAddDish, canAddCategory,
-    login, logout, register: registerUser, setUserPlan,
+    login, logout, register, setUserPlan,
     updateRestaurant,
     addDish, updateDish, deleteDish, duplicateDish, toggleDishAvailability,
     addCategory, updateCategory, deleteCategory,
@@ -316,6 +673,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addReservation, updateReservationStatus,
     addWine, updateWine, deleteWine,
     toggleNotification, markNotificationRead, markAllNotificationsRead,
+    getTenantBySlug, setTenantPlan, suspendTenant, deleteTenant, impersonate,
+    inviteTeamMember, updateUserRole, removeUser,
+    can,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
