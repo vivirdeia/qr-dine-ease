@@ -1433,11 +1433,6 @@ const SettingsSection = () => {
           </div>
         </div>
 
-        {/* Tracking */}
-        <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-4 sm:col-span-2">
-          <h3 className="text-base sm:text-lg font-bold font-sans">📊 Tracking y píxeles</h3>
-          <p className="text-xs text-muted-foreground">Los scripts se inyectan solo en la carta pública, nunca en el panel.</p>
-        </div>
 
         {/* Tracking */}
         <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-4 sm:col-span-2">
