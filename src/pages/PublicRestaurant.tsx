@@ -108,10 +108,11 @@ const PublicRestaurant = () => {
     };
   }, [restaurant.brandColors]);
 
-  // Inject tracking scripts
+  // Inject tracking scripts (only if user accepted cookies)
   useEffect(() => {
     const t = restaurant.tracking;
     if (!t) return;
+    if (consent !== "accepted") return;
     const scripts: HTMLScriptElement[] = [];
     if (t.googleAnalyticsId) {
       const s1 = document.createElement('script');
@@ -131,7 +132,7 @@ const PublicRestaurant = () => {
       scripts.push(s);
     }
     return () => { scripts.forEach(s => s.remove()); };
-  }, [restaurant.tracking]);
+  }, [restaurant.tracking, consent]);
 
   const scrollToCategory = (catId: string) => {
     setActiveCategory(catId);
