@@ -100,6 +100,24 @@ const RestaurantSection = () => {
           ))}
         </div>
         <div>
+          <label className="text-xs font-medium text-muted-foreground">Enlace público (slug)</label>
+          {editing ? (
+            <>
+              <div className="mt-1 flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{window.location.origin}/r/</span>
+                <input
+                  className="flex-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm font-mono"
+                  value={form.slug || ""}
+                  onChange={e => setForm(prev => ({ ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") }))}
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">Solo minúsculas, números y guiones. Debe ser único.</p>
+            </>
+          ) : (
+            <div className="mt-1 px-3 py-2 bg-secondary rounded-lg text-sm font-mono break-all">{window.location.origin}/r/{restaurant.slug}</div>
+          )}
+        </div>
+        <div>
           <label className="text-xs font-medium text-muted-foreground">Descripción</label>
           {editing ? (
             <textarea className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" rows={3} value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))} />
