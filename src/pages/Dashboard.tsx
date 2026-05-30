@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
@@ -1455,28 +1455,69 @@ const SettingsSection = () => {
           <Button variant="gradient" size="sm" onClick={saveTracking}>Guardar tracking</Button>
         </div>
 
-        {/* Reservas en la carta pública */}
+        {/* Módulos y reservas */}
         <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-4 sm:col-span-2">
-          <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-base sm:text-lg font-bold font-sans">🧩 Módulos activos</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Activa o desactiva módulos enteros del panel. Si los desactivas, desaparecen del menú lateral.
+            </p>
+          </div>
+
+          {[
+            {
+              key: "reservations" as const,
+              title: "Módulo de Reservas",
+              desc: "Sección de Reservas en el panel para gestionar las reservas recibidas.",
+              value: restaurant.modules?.reservations !== false,
+            },
+            {
+              key: "tables" as const,
+              title: "Módulo de Mesas",
+              desc: "Sección de Mesas en el panel para configurar el plano y la disponibilidad.",
+              value: restaurant.modules?.tables !== false,
+            },
+          ].map(m => (
+            <div key={m.key} className="flex items-start justify-between gap-4 py-3 border-t border-border first:border-t-0">
+              <div>
+                <p className="text-sm font-medium">{m.title}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{m.desc}</p>
+              </div>
+              <button
+                onClick={() => {
+                  const next = !m.value;
+                  updateRestaurant({ modules: { ...restaurant.modules, [m.key]: next } });
+                  toast.success(`${m.title} ${next ? "activado" : "desactivado"}`);
+                }}
+                className={`w-11 h-6 rounded-full relative transition-colors shrink-0 ${m.value ? 'bg-success' : 'bg-muted'}`}
+                aria-label={`Activar o desactivar ${m.title}`}
+              >
+                <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-card shadow transition-transform ${m.value ? 'left-5' : 'left-0.5'}`} />
+              </button>
+            </div>
+          ))}
+
+          <div className="flex items-start justify-between gap-4 py-3 border-t border-border">
             <div>
-              <h3 className="text-base sm:text-lg font-bold font-sans">📅 Botón de reservar mesa</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Controla si los comensales pueden reservar mesa desde tu carta pública. Si lo desactivas, el botón flotante "Reservar" desaparece.
+              <p className="text-sm font-medium">Botón "Reservar" en la carta pública</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Controla si los comensales ven el botón flotante de reservar en <span className="font-mono">/r/{restaurant.slug}</span>.
               </p>
             </div>
             <button
               onClick={() => {
                 const next = restaurant.reservationsEnabled === false;
                 updateRestaurant({ reservationsEnabled: next });
-                toast.success(next ? "Reservas activadas en la carta" : "Reservas desactivadas en la carta");
+                toast.success(next ? "Botón de reservar activado" : "Botón de reservar desactivado");
               }}
               className={`w-11 h-6 rounded-full relative transition-colors shrink-0 ${restaurant.reservationsEnabled !== false ? 'bg-success' : 'bg-muted'}`}
-              aria-label="Activar o desactivar reservas"
+              aria-label="Activar o desactivar botón de reservar en la carta"
             >
               <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-card shadow transition-transform ${restaurant.reservationsEnabled !== false ? 'left-5' : 'left-0.5'}`} />
             </button>
           </div>
         </div>
+
 
 
         <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-4">
@@ -1613,6 +1654,17 @@ const Dashboard = () => {
   const [active, setActive] = useState<Section>("restaurant");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+
+  const visibleSidebarItems = sidebarItems.filter(item => {
+    if (item.id === "reservations" && restaurant.modules?.reservations === false) return false;
+    if (item.id === "tables" && restaurant.modules?.tables === false) return false;
+    return true;
+  });
+
+  useEffect(() => {
+    if (!visibleSidebarItems.find(i => i.id === active)) setActive("restaurant");
+  }, [visibleSidebarItems, active]);
+
   const ActiveSection = sections[active];
 
   const unreadCount = appNotifications.filter(n => !n.read).length;
@@ -1642,7 +1694,7 @@ const Dashboard = () => {
           </button>
         </div>
         <nav className="p-3 space-y-1">
-          {sidebarItems.map(item => (
+          {visibleSidebarItems.map(item => (
             <button key={item.id} onClick={() => { setActive(item.id); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${active === item.id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'}`}>
               <item.icon className="h-4 w-4" />
@@ -1737,7 +1789,7 @@ const Dashboard = () => {
       {/* Mobile bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border md:hidden safe-area-bottom">
         <div className="flex justify-around items-center h-14">
-          {sidebarItems.slice(0, 5).map(item => (
+          {visibleSidebarItems.slice(0, 5).map(item => (
             <button key={item.id} onClick={() => setActive(item.id)}
               className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg transition-colors ${active === item.id ? 'text-primary' : 'text-muted-foreground'}`}>
               <item.icon className="h-5 w-5" />

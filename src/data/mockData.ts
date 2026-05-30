@@ -31,6 +31,7 @@ export interface Restaurant {
   brandColors?: BrandColors;
   tracking?: TrackingConfig;
   reservationsEnabled?: boolean;
+  modules?: { reservations?: boolean; tables?: boolean };
 }
 
 export interface DayHours {
