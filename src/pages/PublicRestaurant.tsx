@@ -17,13 +17,28 @@ import {
 
 const PublicRestaurant = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { getTenantBySlug, restaurant: fallbackRestaurant, categories: fallbackCategories, dishes: fallbackDishes, wines: fallbackWines, dailyMenu: fallbackDailyMenu, addReservation, addReservationToTenant } = useApp();
+  const { getTenantBySlug, restaurant: fallbackRestaurant, categories: fallbackCategories, dishes: fallbackDishes, wines: fallbackWines, dailyMenu: fallbackDailyMenu, addReservation, addReservationToTenant, trackDishView } = useApp();
   const resolved = slug ? getTenantBySlug(slug) : null;
   const restaurant = resolved?.data.restaurant ?? fallbackRestaurant;
   const categories = resolved?.data.categories ?? fallbackCategories;
   const dishes = resolved?.data.dishes ?? fallbackDishes;
   const wines = resolved?.data.wines ?? fallbackWines;
   const dailyMenu = resolved?.data.dailyMenu ?? fallbackDailyMenu;
+  const tenantId = resolved?.tenant.id;
+
+  const [searchParams] = useSearchParams();
+  const { consent } = useCookieConsent();
+
+  // QR origin detection (persisted in sessionStorage so deep-links inside the menu keep the flag)
+  const QR_KEY = "carta_src_qr";
+  const fromQr = useState(() => {
+    if (searchParams.get("src") === "qr") {
+      try { sessionStorage.setItem(QR_KEY, "1"); } catch { /* ignore */ }
+      return true;
+    }
+    try { return sessionStorage.getItem(QR_KEY) === "1"; } catch { return false; }
+  })[0];
+
   const [activeCategory, setActiveCategory] = useState("menu-del-dia");
   const [searchQuery, setSearchQuery] = useState("");
   const [dietaryFilter, setDietaryFilter] = useState<string[]>([]);
@@ -34,6 +49,18 @@ const PublicRestaurant = () => {
   const [resData, setResData] = useState({ guests: 2, date: "", period: "", time: "", name: "", phone: "", email: "", notes: "", zone: "Sin preferencia" });
   const [wineFilter, setWineFilter] = useState("Todos");
   const [customGuests, setCustomGuests] = useState(false);
+  const [activeDish, setActiveDish] = useState<Dish | null>(null);
+
+  const openDish = (d: Dish) => {
+    setActiveDish(d);
+    if (!tenantId) return;
+    const k = `carta_view_${tenantId}_${d.id}`;
+    try {
+      if (sessionStorage.getItem(k)) return;
+      sessionStorage.setItem(k, "1");
+    } catch { /* ignore */ }
+    trackDishView(tenantId, d.id);
+  };
 
   const isOpen = () => {
     const now = new Date();
