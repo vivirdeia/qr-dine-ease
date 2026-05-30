@@ -142,7 +142,7 @@ const SuperAdmin = () => {
         {tab === "tenants" && (
           <div className="border border-border rounded-lg bg-card overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-background-muted text-xs text-muted-foreground">
+              <thead className="bg-muted text-xs text-muted-foreground">
                 <tr>
                   <th className="text-left px-4 py-3 font-medium">Restaurante</th>
                   <th className="text-left px-4 py-3 font-medium">Slug</th>
@@ -157,7 +157,7 @@ const SuperAdmin = () => {
                   const data = allData[t.id];
                   const owner = users.find(u => u.id === t.ownerId);
                   return (
-                    <tr key={t.id} className="border-t border-border-subtle hover:bg-background-muted">
+                    <tr key={t.id} className="border-t border-border hover:bg-muted">
                       <td className="px-4 py-3">
                         <div className="font-medium">{data?.restaurant.name || "—"}</div>
                         <div className="text-xs text-muted-foreground">{owner?.email}</div>
@@ -176,25 +176,25 @@ const SuperAdmin = () => {
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell">
                         {t.suspended
-                          ? <span className="text-xs px-2 py-0.5 rounded-md border border-border bg-background-muted text-foreground-muted">Suspendido</span>
-                          : <span className="text-xs px-2 py-0.5 rounded-md border border-border bg-background-muted text-foreground-muted">Activo</span>}
+                          ? <span className="text-xs px-2 py-0.5 rounded-md border border-border bg-muted text-muted-foreground">Suspendido</span>
+                          : <span className="text-xs px-2 py-0.5 rounded-md border border-border bg-muted text-muted-foreground">Activo</span>}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
                           {owner && (
                             <button onClick={() => handleImpersonate(owner.id)} title="Iniciar sesión como propietario"
-                              className="p-2 hover:bg-background-muted rounded-md">
+                              className="p-2 hover:bg-muted rounded-md">
                               <LogIn className="h-4 w-4" strokeWidth={1.5} />
                             </button>
                           )}
                           <button onClick={() => suspendTenant(t.id, !t.suspended)} title={t.suspended ? "Reactivar" : "Suspender"}
-                            className="p-2 hover:bg-background-muted rounded-md">
+                            className="p-2 hover:bg-muted rounded-md">
                             {t.suspended
                               ? <Play className="h-4 w-4" strokeWidth={1.5} />
                               : <Pause className="h-4 w-4" strokeWidth={1.5} />}
                           </button>
                           <button onClick={() => handleDeleteTenant(t.id, data?.restaurant.name || t.slug)} title="Eliminar"
-                            className="p-2 hover:bg-background-muted rounded-md text-error">
+                            className="p-2 hover:bg-muted rounded-md text-destructive">
                             <Trash2 className="h-4 w-4" strokeWidth={1.5} />
                           </button>
                         </div>
@@ -213,7 +213,7 @@ const SuperAdmin = () => {
         {tab === "users" && (
           <div className="border border-border rounded-lg bg-card overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-background-muted text-xs text-muted-foreground">
+              <thead className="bg-muted text-xs text-muted-foreground">
                 <tr>
                   <th className="text-left px-4 py-3 font-medium">Usuario</th>
                   <th className="text-left px-4 py-3 font-medium">Rol</th>
@@ -227,13 +227,13 @@ const SuperAdmin = () => {
                   const tenant = u.tenantId ? tenants.find(t => t.id === u.tenantId) : null;
                   const data = tenant ? allData[tenant.id] : null;
                   return (
-                    <tr key={u.id} className="border-t border-border-subtle hover:bg-background-muted">
+                    <tr key={u.id} className="border-t border-border hover:bg-muted">
                       <td className="px-4 py-3">
                         <div className="font-medium">{u.name}</div>
                         <div className="text-xs text-muted-foreground">{u.email}</div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-xs px-2 py-0.5 rounded-md border border-border bg-background-muted text-foreground-muted">
+                        <span className="text-xs px-2 py-0.5 rounded-md border border-border bg-muted text-muted-foreground">
                           {roleLabel[u.role]}
                         </span>
                       </td>
