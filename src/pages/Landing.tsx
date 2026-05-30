@@ -183,22 +183,6 @@ const Hero = () => (
   </section>
 );
 
-const InteractiveDemo = () => (
-  <section id="demo" className="py-20 bg-secondary/50">
-    <div className="container text-center space-y-8">
-      <h2 className="text-3xl md:text-4xl font-bold">Escanea y prueba</h2>
-      <div className="w-40 h-40 mx-auto rounded-2xl bg-card border-2 border-border shadow-warm flex items-center justify-center">
-        <QrCode className="h-24 w-24 text-primary/60" />
-      </div>
-      <p className="text-muted-foreground text-lg max-w-md mx-auto">Esto es exactamente lo que verán tus clientes</p>
-      <Button variant="gradient" size="lg" asChild>
-        <Link to="/r/casa-martin">
-          Explorar la demo <ChevronRight className="ml-1" />
-        </Link>
-      </Button>
-    </div>
-  </section>
-);
 
 const steps = [
   { icon: Store, title: "Configura tu restaurante", desc: "Nombre, horarios, mesas, fotos. 10 minutos." },
