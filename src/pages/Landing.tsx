@@ -697,14 +697,18 @@ const Landing = () => (
   <div className="min-h-screen">
     <Navbar />
     <Hero />
+    <TrustBar />
     <InteractiveDemo />
     <HowItWorks />
     <Features />
+    <Integrations />
+    <PressLogos />
     <Comparison />
     <UseCases />
     <Pricing />
     <Testimonials />
     <FAQ />
+    <MigrationHelp />
     <CTAFinal />
     <Footer />
   </div>
