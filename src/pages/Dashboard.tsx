@@ -434,6 +434,11 @@ const MenuSection = () => {
                 </div>
                 <div className="text-right shrink-0">
                   <div className="font-bold text-primary text-sm">€{dish.price.toFixed(2)}</div>
+                  {(dishViews[dish.id] || 0) > 0 && (
+                    <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center justify-end gap-0.5">
+                      <Eye className="h-3 w-3" /> {dishViews[dish.id]}
+                    </div>
+                  )}
                 </div>
               </div>
               {/* Actions row */}
