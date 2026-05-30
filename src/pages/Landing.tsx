@@ -297,12 +297,12 @@ const comparisonRows = [
 const Comparison = () => (
   <section className="py-20">
     <div className="container max-w-3xl">
-      <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">¿Por qué Carta y no TheFork?</h2>
+      <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">¿Por qué Carta y no PDF + WhatsApp?</h2>
       <div className="bg-card rounded-2xl border border-border overflow-hidden">
         <div className="grid grid-cols-3 text-center font-bold border-b border-border">
           <div className="p-4" />
           <div className="p-4 bg-primary/5 text-primary">Carta</div>
-          <div className="p-4 text-muted-foreground">TheFork</div>
+          <div className="p-4 text-muted-foreground">PDF + WhatsApp</div>
         </div>
         {comparisonRows.map((r, i) => (
           <div key={i} className="grid grid-cols-3 text-center border-b border-border last:border-0 text-sm">
@@ -319,14 +319,14 @@ const Comparison = () => (
               )}
             </div>
             <div className="p-4">
-              {typeof r.fork === "boolean" ? (
-                r.fork ? (
+              {typeof r.other === "boolean" ? (
+                r.other ? (
                   <Check className="h-5 w-5 text-success mx-auto" />
                 ) : (
                   <X className="h-5 w-5 text-muted-foreground mx-auto" />
                 )
               ) : (
-                <span className="text-muted-foreground">{r.fork}</span>
+                <span className="text-muted-foreground">{r.other}</span>
               )}
             </div>
           </div>
