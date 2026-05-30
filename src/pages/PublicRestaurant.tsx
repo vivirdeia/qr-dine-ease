@@ -304,7 +304,12 @@ const PublicRestaurant = () => {
               <h2 className="text-xl font-bold mb-4">{cat.icon} {cat.name}</h2>
               <div className="space-y-3">
                 {(searchQuery || dietaryFilter.length || excludedAllergens.length ? catDishes : dishes.filter(d => d.categoryId === cat.id)).map(dish => (
-                  <div key={dish.id} className={`flex gap-3 ${!dish.available ? 'opacity-50' : ''}`}>
+                  <button
+                    key={dish.id}
+                    type="button"
+                    onClick={() => openDish(dish)}
+                    className={`w-full text-left flex gap-3 rounded-xl p-1 -m-1 transition-colors hover:bg-secondary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${!dish.available ? 'opacity-50' : ''}`}
+                  >
                     {(dish.photoUrl || dishImages[dish.id]) ? (
                       <img src={dish.photoUrl || dishImages[dish.id]} alt={dish.name} className="w-20 h-20 rounded-xl object-cover shrink-0" loading="lazy" />
                     ) : (
