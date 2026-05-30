@@ -644,43 +644,68 @@ const CTAFinal = () => (
   </section>
 );
 
-const Footer = () => (
-  <footer className="py-16 border-t border-border">
-    <div className="container">
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
-        <div className="col-span-2 md:col-span-1">
-          <div className="flex items-center gap-2 mb-4">
-            <UtensilsCrossed className="h-5 w-5 text-primary" />
-            <span className="font-serif text-lg font-bold">CARTA</span>
+const Footer = () => {
+  const cols: { title: string; links: { label: string; to: string; external?: boolean }[] }[] = [
+    { title: "Producto", links: [
+      { label: "Características", to: "/caracteristicas" },
+      { label: "Pricing", to: "/pricing" },
+      { label: "Demo", to: "/demo" },
+      { label: "Changelog", to: "/changelog" },
+    ]},
+    { title: "Recursos", links: [
+      { label: "Centro de ayuda", to: "/ayuda" },
+      { label: "Guías", to: "/guias" },
+      { label: "API Docs", to: "/api-docs" },
+    ]},
+    { title: "Legal", links: [
+      { label: "Privacidad", to: "/privacidad" },
+      { label: "Términos", to: "/terminos" },
+      { label: "Cookies", to: "/cookies" },
+      { label: "GDPR", to: "/gdpr" },
+    ]},
+    { title: "Compañía", links: [
+      { label: "Sobre nosotros", to: "/sobre-nosotros" },
+      { label: "Contacto", to: "/contacto" },
+      { label: "Twitter", to: "https://twitter.com", external: true },
+      { label: "Instagram", to: "https://instagram.com", external: true },
+    ]},
+  ];
+  return (
+    <footer className="py-16 border-t border-border">
+      <div className="container">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+          <div className="col-span-2 md:col-span-1">
+            <div className="flex items-center gap-2 mb-4">
+              <UtensilsCrossed className="h-5 w-5 text-primary" />
+              <span className="font-serif text-lg font-bold">CARTA</span>
+            </div>
+            <p className="text-sm text-muted-foreground">Tu carta digital y reservas con un solo QR.</p>
           </div>
-          <p className="text-sm text-muted-foreground">Tu carta digital y reservas con un solo QR.</p>
+          {cols.map((col, i) => (
+            <div key={i}>
+              <h4 className="font-bold text-sm mb-3 font-sans">{col.title}</h4>
+              <ul className="space-y-2">
+                {col.links.map((link, j) => (
+                  <li key={j}>
+                    {link.external ? (
+                      <a href={link.to} target="_blank" rel="noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{link.label}</a>
+                    ) : (
+                      <Link to={link.to} className="text-sm text-muted-foreground hover:text-foreground transition-colors">{link.label}</Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
-        {[
-          { title: "Producto", links: ["Características", "Pricing", "Demo", "Changelog"] },
-          { title: "Recursos", links: ["Centro de ayuda", "Guías", "API Docs"] },
-          { title: "Legal", links: ["Privacidad", "Términos", "Cookies", "GDPR"] },
-          { title: "Compañía", links: ["Sobre nosotros", "Contacto", "Twitter", "Instagram"] },
-        ].map((col, i) => (
-          <div key={i}>
-            <h4 className="font-bold text-sm mb-3 font-sans">{col.title}</h4>
-            <ul className="space-y-2">
-              {col.links.map((link, j) => (
-                <li key={j}>
-                  <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    {link}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground space-y-1">
+          <p>© {new Date().getFullYear()} RETLAW SLU · CIF L721974L · Todos los derechos reservados.</p>
+          <p className="text-xs">Camí del Pont del Tarter, s/n, Apartament 108, Edifici Arbres del Tarter, El Tarter, Canillo (Andorra)</p>
+        </div>
       </div>
-      <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} Carta. Todos los derechos reservados.
-      </div>
-    </div>
-  </footer>
-);
+    </footer>
+  );
+};
 
 const Landing = () => (
   <div className="min-h-screen">
