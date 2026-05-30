@@ -34,12 +34,20 @@ const sidebarItems: { id: Section; label: string; icon: React.ElementType }[] = 
 // LoginScreen removed — now handled by /login route
 // ── Restaurant Section ──
 const RestaurantSection = () => {
-  const { restaurant, updateRestaurant } = useApp();
+  const { restaurant, updateRestaurant, isSlugAvailable, currentTenant, suggestSlug } = useApp();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ ...restaurant });
 
   const handleSave = () => {
-    updateRestaurant(form);
+    const nextSlug = (form.slug || "").trim().toLowerCase();
+    if (!nextSlug) { toast.error("El slug no puede estar vacío"); return; }
+    if (!/^[a-z0-9-]+$/.test(nextSlug)) { toast.error("Solo letras minúsculas, números y guiones"); return; }
+    if (nextSlug !== restaurant.slug && !isSlugAvailable(nextSlug, currentTenant?.id)) {
+      const sug = suggestSlug(nextSlug);
+      toast.error(`Ese enlace ya está en uso. Sugerencia: ${sug}`);
+      return;
+    }
+    updateRestaurant({ ...form, slug: nextSlug });
     setEditing(false);
     toast.success("Restaurante actualizado");
   };
