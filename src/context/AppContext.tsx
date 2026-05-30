@@ -397,7 +397,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const userId = genId("u");
       const tenantId = genId("t");
       const now = new Date().toISOString();
-      const slug = slugify(name);
+      const baseSlug = slugify(name);
+      let slug = baseSlug;
+      let i = 2;
+      while (prev.tenants.some(t => t.slug === slug)) { slug = `${baseSlug}-${i++}`; }
       const user: User = { id: userId, email, password, name, role: "owner", tenantId, createdAt: now };
       const tenant: Tenant = { id: tenantId, slug, plan: "free", createdAt: now, ownerId: userId };
       const data: TenantData = {
