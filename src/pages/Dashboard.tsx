@@ -1097,8 +1097,14 @@ const MetricsSection = () => {
       { source: "Teléfono", value: total > 0 ? Math.round((phone / total) * 100) : 0, fill: "hsl(var(--muted-foreground))" },
     ];
 
-    return { total, confirmed, completed, cancelled, noshows, totalGuests, avgParty, noshowRate, occupancy, byDay, sourceData };
-  }, [reservations, tables]);
+    const topDishes = dishes
+      .map(d => ({ id: d.id, name: d.name, views: dishViews[d.id] || 0 }))
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 10);
+    const totalDishViews = topDishes.reduce((s, x) => s + x.views, 0);
+
+    return { total, confirmed, completed, cancelled, noshows, totalGuests, avgParty, noshowRate, occupancy, byDay, sourceData, topDishes, totalDishViews };
+  }, [reservations, tables, dishes, dishViews]);
 
   const exportCSV = () => {
     const header = "ID,Nombre,Teléfono,Email,Fecha,Hora,Personas,Estado,Fuente,Notas\n";
