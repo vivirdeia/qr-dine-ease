@@ -705,8 +705,6 @@ const Landing = () => (
     <InteractiveDemo />
     <HowItWorks />
     <Features />
-    <Integrations />
-    <PressLogos />
     <Comparison />
     <UseCases />
     <Pricing />
