@@ -1,47 +1,69 @@
-# Branding personalizable + mapa en la carta pública
+## 1. Ocultar botón "Reservar" cuando se entra desde un QR
 
-## Contexto
+**Cómo distinguir el origen:** la carta pública añade un parámetro a la URL cuando se genera desde el panel.
 
-Hoy `Dashboard.tsx` ya tiene un panel "Personalización de marca" donde el dueño puede elegir 3 colores (primary, accent, background) y se guardan en `restaurant.brandColors`. **Pero esos colores no se aplican en `/r/:slug`** (la carta pública), por lo que el usuario no ve ningún cambio. Además, la ficha del restaurante muestra la dirección como enlace a Google Maps pero no hay un mapa embebido.
+- Sección **QR** del Dashboard: añadir un segundo QR llamado **"QR de mesa / en sala"** que apunta a `/r/{slug}?src=qr` (el QR general sigue apuntando a `/r/{slug}` limpio). Botón para descargar PNG/SVG e imprimir, igual que el actual.
+- En la sección **Ajustes → Módulos** añadir un toggle:
+  *"Ocultar el botón Reservar cuando el cliente entra escaneando un QR"* (por defecto **desactivado**, es decir, siempre se muestra).
+- En `PublicRestaurant.tsx`, leer `?src=qr` con `useSearchParams`. El botón flotante se oculta solo si:
+  `restaurant.reservationsEnabled !== false` AND NOT (`hideReserveOnQr === true` AND `src === "qr"`).
+- Persistimos `src=qr` en `sessionStorage` para que se mantenga aunque el usuario navegue dentro de la carta.
 
-## Cambios
+> Así el dueño decide: si nunca pone el QR de mesa, todo el mundo ve "Reservar". Si imprime el QR de mesa, los comensales que ya están sentados no lo ven, pero quien comparta el enlace o entre desde Google/Instagram sí.
 
-### 1. Aplicar branding en la carta pública (`src/pages/PublicRestaurant.tsx`)
+## 2. Banner de cookies en la home (y en toda la app)
 
-- Leer `restaurant.brandColors` y, si existe, inyectar variables CSS scoped al contenedor raíz de la página:
-  - `--brand-primary`, `--brand-accent`, `--brand-bg` convertidas a HSL.
-- Sustituir en los puntos clave de la carta (no en toda la app) el uso de `text-primary` / `bg-primary` por clases que usen estas variables: header del restaurante, badges activos de categorías, botón flotante "Reservar", precios destacados, fondo general de la página.
-- Si no hay `brandColors`, se mantiene exactamente el diseño actual.
-- Añadir un pequeño helper `hexToHsl()` en `src/lib/utils.ts`.
+Componente nuevo `src/components/CookieBanner.tsx`, montado a nivel `App.tsx` para que aparezca en cualquier ruta pública (Landing, /r/:slug, info, legal).
 
-### 2. Mejorar el panel de branding en el Dashboard
+- Aparece abajo, ancho completo en móvil, tarjeta centrada en desktop. Estilo minimal acorde al design system (border, rounded-lg, bg-card).
+- Texto breve: *"Usamos cookies propias y de terceros para analítica y mejorar tu experiencia."* + enlace a `/cookies`.
+- Botones **Aceptar** / **Rechazar** + cierre con X (equivale a rechazar).
+- Guarda la elección en `localStorage` (`cookieConsent: "accepted" | "rejected"` + fecha). No vuelve a aparecer.
+- **Integración con tracking existente** (`restaurant.tracking` ya inyecta GA/Meta Pixel en `PublicRestaurant.tsx`): los scripts solo se inyectan si el consentimiento es `accepted`. Si se rechaza, se omiten.
+- Nuevo hook `useCookieConsent()` que expone `{ consent, accept, reject, reset }` por si más adelante quieren un botón "gestionar cookies" en el footer (lo añadimos en el footer de Landing).
 
-- Añadir un botón **"Restaurar por defecto"** que limpia `brandColors`.
-- Añadir **preview en vivo** (mini-mockup de la carta) usando los 3 colores antes de guardar.
-- Mantener los 3 inputs de color actuales (no se cambia la UX existente).
+## 3. Modal de plato + tracking de "más vistos"
 
-### 3. Nueva sección "Cómo llegar" con Google Maps en la carta pública
+### Modal en la carta pública
+- Al hacer click en cualquier plato de la lista en `PublicRestaurant.tsx`, abrir un nuevo componente `DishModal.tsx`:
+  - Foto grande (16/9) arriba — placeholder si no hay imagen.
+  - Nombre, precio, badges (destacado, nuevo, agotado).
+  - Descripción completa.
+  - Lista de alérgenos con iconos (los datos ya están en `dish.allergens`).
+  - Etiquetas dietéticas (vegetariano/vegano/sin gluten…).
+  - Variantes/precios si existen.
+  - Botón "Cerrar".
+- Mobile: bottom-sheet `Drawer` de shadcn. Desktop: `Dialog`.
 
-- Nuevo componente `src/components/public/LocationMap.tsx`.
-- Insertado en `PublicRestaurant.tsx` justo después del bloque de información del restaurante / antes del footer.
-- Implementación: `<iframe>` de Google Maps embed sin API key, usando la URL pública:
-  ```
-  https://www.google.com/maps?q={lat},{lng}&hl=es&z=16&output=embed
-  ```
-- Estilo según el design system:
-  - Contenedor `rounded-2xl overflow-hidden border border-border`
-  - Aspect ratio 16/9 en desktop, 4/3 en móvil
-  - Título "Cómo llegar" + dirección + botones "Abrir en Google Maps" y "Cómo llegar" (deeplink a `https://www.google.com/maps/dir/?api=1&destination=...`)
-- Lazy load (`loading="lazy"`) para no afectar al rendimiento.
+### Tracking de vistas
+- Nuevo estado en `AppContext`: `dishViews: Record<string, number>` (clave = `dishId`) por tenant, persistido en localStorage.
+- Nueva acción `trackDishView(dishId)` que incrementa el contador. Se llama al abrir el modal.
+- Para evitar inflar números, debounce: una vista por sesión y plato (`sessionStorage` flag).
+- Se exponen los datos en **Métricas**:
+  - Reemplazar el array hardcoded `metricsData.topDishes` por un cálculo real: `dishes.map(d => ({ name: d.name, views: dishViews[d.id] ?? 0 })).sort(...)` y mostrar los 10 primeros.
+  - Mantener el mock como fallback si no hay datos reales todavía (para que la demo no se vea vacía).
 
-> Nota: usamos el embed público de Google Maps (no requiere conectar Google Maps Platform). Si más adelante quieres el mapa interactivo con marker custom y estilo monocromo, podemos cambiar a la JS API conectando el conector de Google Maps.
+### Bonus (gratis, mismo cambio)
+- Mostrar también un pequeño indicador "👁 N" al lado del nombre del plato en el **Dashboard → Carta** para que el dueño vea de un vistazo qué platos llaman más la atención.
+
+---
+
+## Archivos que se tocan
+
+- `src/data/mockData.ts` — añadir campo `hideReserveOnQr?: boolean` a `Restaurant`.
+- `src/context/AppContext.tsx` — `dishViews`, `trackDishView`, persistencia, consentimiento de cookies.
+- `src/pages/PublicRestaurant.tsx` — lectura de `?src=qr`, lógica del botón Reservar, abrir `DishModal` al click, gate de scripts de tracking por consentimiento.
+- `src/pages/Dashboard.tsx` — sección QR con dos QRs (general + mesa), toggle nuevo en Ajustes → Módulos, contador 👁 en la carta, top platos reales en Métricas.
+- `src/components/DishModal.tsx` — nuevo.
+- `src/components/CookieBanner.tsx` + `src/hooks/useCookieConsent.ts` — nuevos.
+- `src/App.tsx` — montar `<CookieBanner />` global.
 
 ## Lo que NO se toca
 
-- Lógica de reservas, datos, rutas, auth, dashboard salvo el panel de branding.
-- Landing page.
-- Estilo global del dashboard ni del resto de la app.
+- Backend / base de datos (todo sigue en estado local + localStorage).
+- Auth, planes, pricing, landing fuera de añadir el banner.
+- Estructura del menú lateral del dashboard.
 
 ## Pregunta abierta
 
-¿El branding debe afectar **solo** a la carta pública (`/r/:slug`) o también al panel del dueño? Por defecto lo aplico solo a la carta pública, que es lo que ven los comensales.
+¿El conteo de vistas debe resetearse mensualmente o ser acumulado desde siempre? Por defecto lo dejo acumulado y, si quieres, en una segunda iteración añadimos selector "últimos 7 / 30 días".
