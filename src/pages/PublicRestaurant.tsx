@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
 import { ALLERGENS } from "@/data/mockData";
@@ -13,7 +13,14 @@ import {
 } from "lucide-react";
 
 const PublicRestaurant = () => {
-  const { restaurant, categories, dishes, wines, dailyMenu, addReservation } = useApp();
+  const { slug } = useParams<{ slug: string }>();
+  const { getTenantBySlug, restaurant: fallbackRestaurant, categories: fallbackCategories, dishes: fallbackDishes, wines: fallbackWines, dailyMenu: fallbackDailyMenu, addReservation, addReservationToTenant } = useApp();
+  const resolved = slug ? getTenantBySlug(slug) : null;
+  const restaurant = resolved?.data.restaurant ?? fallbackRestaurant;
+  const categories = resolved?.data.categories ?? fallbackCategories;
+  const dishes = resolved?.data.dishes ?? fallbackDishes;
+  const wines = resolved?.data.wines ?? fallbackWines;
+  const dailyMenu = resolved?.data.dailyMenu ?? fallbackDailyMenu;
   const [activeCategory, setActiveCategory] = useState("menu-del-dia");
   const [searchQuery, setSearchQuery] = useState("");
   const [dietaryFilter, setDietaryFilter] = useState<string[]>([]);
@@ -457,7 +464,7 @@ const PublicRestaurant = () => {
                 <div className="flex gap-3 pt-2">
                   <Button variant="outline-primary" onClick={() => setReservationStep(1)}><ArrowLeft className="h-4 w-4" /></Button>
                     <Button variant="gradient" size="lg" className="flex-1" disabled={!resData.name || !resData.phone} onClick={() => {
-                      addReservation({
+                      const payload = {
                         name: resData.name,
                         phone: resData.phone,
                         email: resData.email || undefined,
@@ -466,9 +473,11 @@ const PublicRestaurant = () => {
                         guests: resData.guests,
                         zonePreference: resData.zone,
                         notes: resData.notes || undefined,
-                        status: "pending",
-                        source: "digital",
-                      });
+                        status: "pending" as const,
+                        source: "digital" as const,
+                      };
+                      if (resolved) addReservationToTenant(resolved.tenant.id, payload);
+                      else addReservation(payload);
                       toast.success("¡Reserva enviada!");
                       setReservationStep(3);
                     }}>

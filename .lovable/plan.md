@@ -1,52 +1,110 @@
+# Multi-tenant + roles con localStorage
 
+Mantenemos todo en `localStorage`, pero reestructuramos los datos para soportar **varios restaurantes (tenants) y varios usuarios con roles**.
 
-# Análisis: ¿Qué falta para que funcione de punta a punta?
+## Modelo de datos nuevo
 
-## Bugs críticos que rompen el flujo
+Hoy hay una clave por entidad (`carta_dishes`, `carta_restaurant`, etc.) compartida. La cambiamos a un único árbol indexado por `tenantId`:
 
-### 1. ProtectedRoute redirige al sitio equivocado
-En `App.tsx` línea 17, `ProtectedRoute` redirige a `/dashboard` en vez de a `/register`:
+```text
+carta_db = {
+  users: [
+    { id, email, passwordHash, name, role: "superadmin" | "owner" | "staff", tenantId | null }
+  ],
+  tenants: [
+    { id, slug, plan: "free"|"pro"|"business", createdAt, ownerId }
+  ],
+  data: {
+    [tenantId]: {
+      restaurant, categories[], dishes[], wines[],
+      tables[], reservations[], dailyMenu,
+      notifications, appNotifications[]
+    }
+  },
+  session: { userId } | null
+}
 ```
-if (!isLoggedIn) return <Navigate to="/dashboard" replace />; // ← BUCLE INFINITO
+
+Clave única en localStorage: `carta_db`. Todo lo demás se deriva.
+
+## Roles
+
+| Rol | Qué puede hacer |
+|-----|----------------|
+| **superadmin** | Ver panel global: lista de todos los tenants, usuarios, métricas agregadas, cambiar planes, suspender cuentas, impersonar |
+| **owner** | Dueño del restaurante. CRUD completo de su tenant, invitar staff, gestionar plan |
+| **staff** | Empleado. Ver carta, gestionar reservas del día, marcar platos no disponibles. No puede borrar, no ve facturación, no invita |
+
+Helpers: `hasRole(role)`, `canEdit()`, `isSuperadmin()`.
+
+## Cambios concretos
+
+### `src/context/AppContext.tsx` — refactor mayor
+- Una sola clave `carta_db` con el árbol completo
+- `currentUser` y `currentTenant` derivados de `session.userId`
+- Todos los CRUD escriben en `data[currentTenant.id]`
+- `login` busca en `users[]` (hash simple tipo btoa, no es seguridad real pero evita texto plano)
+- `register` crea `user` + `tenant` + `data[tenantId]` vacío y asigna `role: "owner"`
+- Hook `useAuth()` expone `user`, `tenant`, `role`, `can(action)`
+
+### `src/pages/SuperAdmin.tsx` — nuevo
+- Lista de tenants con plan, nº de platos, nº de reservas, fecha de alta
+- Lista de usuarios con su rol y tenant
+- Acciones: cambiar plan, suspender tenant, impersonar (login como ese owner para depurar), borrar
+- Métricas globales: MRR simulado, total restaurantes, total reservas
+
+### `src/pages/Dashboard.tsx`
+- Sección "Equipo" nueva (solo owner): invitar staff por email, ver miembros, cambiar rol, eliminar
+- Ocultar/deshabilitar acciones según rol (staff no ve "Ajustes" ni "Eliminar restaurante")
+- Mostrar badge del rol en header
+
+### `src/App.tsx`
+- `ProtectedRoute` acepta `requiredRole`
+- Ruta nueva `/admin` protegida con `requiredRole="superadmin"`
+- Redirección post-login: superadmin → `/admin`, resto → `/dashboard`
+
+### `src/pages/PublicRestaurant.tsx`
+- En vez de leer del tenant actual, lee `data[tenantId]` resolviendo por `slug`
+- Así diferentes URLs `/r/casa-martin` y `/r/la-tasca` muestran datos distintos del mismo localStorage
+
+### `src/pages/Login.tsx` + `Register.tsx`
+- Login funciona contra `users[]` global
+- Register crea owner+tenant en una transacción
+
+## Cuenta superadmin
+
+Sembrada al primer arranque si no existe:
+```text
+email: admin@carta.app
+password: admin1234
+role: superadmin
+tenantId: null
 ```
-Debería ser `/register`. Además, `/dashboard` **no está envuelto** en `<ProtectedRoute>` (línea 39), así que cualquiera puede acceder sin login.
 
-### 2. "Iniciar sesión" en la Landing apunta a `/dashboard` directamente
-Línea 33 de Landing.tsx: `<Link to="/dashboard">Iniciar sesión</Link>`. No hay página de login independiente — el login está dentro del Dashboard. Si se protege la ruta, el usuario no podrá hacer login porque le redirige a `/register` en un bucle.
+Visible solo como nota en `/login` cuando estés en modo dev (no en la UI pública).
 
-### 3. El onboarding no asigna categoría al primer plato
-Línea 138: `categoryId: ""` — el plato se crea sin categoría, así que no aparece en la carta.
+## Migración de datos existentes
 
-### 4. Tras registro, los datos mock siguen cargados
-Al registrarse un usuario nuevo y completar el onboarding, los platos, categorías y vinos de "Casa Martín" siguen ahí. El usuario nuevo ve datos de otro restaurante.
+Al cargar la app, si encuentra las claves viejas (`carta_dishes`, etc.) y no existe `carta_db`, las migra automáticamente: crea un tenant "demo" con el usuario actual como owner y mueve todo dentro. Luego borra las claves viejas.
 
-## Plan de corrección
+## Limitaciones que asumimos (al seguir con localStorage)
 
-### Cambio 1: Arreglar protección de rutas + crear página de Login
-- Corregir `ProtectedRoute` para redirigir a `/login`
-- Crear ruta `/login` con formulario de email/password (extraer el login actual del Dashboard a su propia página)
-- Envolver `/dashboard` en `<ProtectedRoute>`
-- Landing: "Iniciar sesión" → `/login`
+- Cada navegador tiene su propio "universo" — no se comparte entre dispositivos
+- "Multi-tenant" significa que **en un mismo navegador** puede haber varios restaurantes y usuarios, útil para demo/superadmin
+- Staff invitado solo puede entrar desde el mismo navegador donde fue creado (o reintroduciendo sus credenciales manualmente)
+- No hay seguridad real: cualquiera con devtools ve todo. Es un prototipo funcional, no producción
 
-### Cambio 2: Limpiar datos al registrar usuario nuevo
-- En `register()`, resetear `dishes`, `categories`, `wines`, `reservations`, `tables` a arrays vacíos (o un set mínimo según el onboarding)
-- Solo cargar datos mock para el usuario `demo@carta.app`
+## Archivos afectados
 
-### Cambio 3: Asignar categoría al primer plato del onboarding
-- Guardar el ID de la categoría recién creada y pasarlo al `addDish`
-- Cambiar el `setTimeout` por un flujo síncrono correcto
-
-### Cambio 4: Flujo de login desde Landing
-- Crear `src/pages/Login.tsx` con formulario simple + link a "Crear cuenta" (`/register`)
-- Botón "¿Olvidaste tu contraseña?" (placeholder sin funcionalidad real)
-
-### Archivos afectados
 | Archivo | Cambio |
-|---------|--------|
-| `src/pages/Login.tsx` | **Nuevo** — página de login independiente |
-| `src/App.tsx` | Arreglar ProtectedRoute, añadir ruta `/login`, proteger `/dashboard` |
-| `src/pages/Landing.tsx` | "Iniciar sesión" → `/login` |
-| `src/context/AppContext.tsx` | `register()` limpia datos mock, `addCategory` retorna ID |
-| `src/pages/Register.tsx` | Usar ID de categoría al crear primer plato |
-| `src/pages/Dashboard.tsx` | Quitar el formulario de login embebido (ya no hace falta) |
+|---|---|
+| `src/context/AppContext.tsx` | Refactor completo al modelo `carta_db` + roles + multi-tenant |
+| `src/pages/SuperAdmin.tsx` | **Nuevo** panel global |
+| `src/pages/Dashboard.tsx` | Sección Equipo, guards por rol, badge rol |
+| `src/pages/Login.tsx` | Login contra `users[]` |
+| `src/pages/Register.tsx` | Crear tenant + owner |
+| `src/pages/PublicRestaurant.tsx` | Resolver tenant por slug |
+| `src/App.tsx` | Ruta `/admin`, `requiredRole`, redirect por rol |
+| `src/data/mockData.ts` | Tipos `User`, `Tenant`, `Role` |
 
+¿Procedo?

@@ -1206,7 +1206,19 @@ const hslToHex = (hsl: string): string => {
 };
 
 const SettingsSection = () => {
-  const { notifications, toggleNotification, restaurant, updateRestaurant, userPlan, setUserPlan } = useApp();
+  const { notifications, toggleNotification, restaurant, updateRestaurant, userPlan, setUserPlan, role, users, currentTenant, currentUser, inviteTeamMember, updateUserRole, removeUser } = useApp();
+  const [inviteForm, setInviteForm] = useState({ email: "", password: "", name: "", role: "staff" as "staff" | "owner" });
+  const teamMembers = useMemo(() => users.filter(u => u.tenantId === currentTenant?.id), [users, currentTenant]);
+  const handleInvite = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteForm.email || !inviteForm.password || !inviteForm.name) {
+      toast.error("Completa todos los campos"); return;
+    }
+    const ok = inviteTeamMember(inviteForm.email, inviteForm.password, inviteForm.name, inviteForm.role);
+    if (!ok) { toast.error("Email ya registrado"); return; }
+    toast.success("Miembro añadido");
+    setInviteForm({ email: "", password: "", name: "", role: "staff" });
+  };
   const [brandColors, setBrandColors] = useState({
     primary: restaurant.brandColors?.primary || "#c4704e",
     accent: restaurant.brandColors?.accent || "#d4a574",
@@ -1366,6 +1378,56 @@ const SettingsSection = () => {
             </div>
           ))}
         </div>
+        {role === "owner" && (
+          <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-4 sm:col-span-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base sm:text-lg font-bold font-sans">👥 Equipo</h3>
+              <span className="text-xs text-muted-foreground">{teamMembers.length} miembro{teamMembers.length === 1 ? "" : "s"}</span>
+            </div>
+            <div className="space-y-2">
+              {teamMembers.map(m => (
+                <div key={m.id} className="flex items-center justify-between gap-3 py-2 border-b border-border last:border-0">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">{m.name} {m.id === currentUser?.id && <span className="text-xs text-muted-foreground">(tú)</span>}</div>
+                    <div className="text-xs text-muted-foreground truncate">{m.email}</div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {m.id === currentTenant?.ownerId ? (
+                      <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">Propietario</span>
+                    ) : (
+                      <>
+                        <select value={m.role} onChange={e => updateUserRole(m.id, e.target.value as any)}
+                          className="text-xs px-2 py-1 rounded-md border border-border bg-secondary">
+                          <option value="staff">Empleado</option>
+                          <option value="owner">Co-propietario</option>
+                        </select>
+                        <button onClick={() => { if (confirm(`¿Eliminar a ${m.name}?`)) { removeUser(m.id); toast.success("Miembro eliminado"); } }}
+                          className="p-1.5 hover:bg-secondary rounded-md text-destructive">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <form onSubmit={handleInvite} className="grid grid-cols-1 sm:grid-cols-5 gap-2 pt-2 border-t border-border">
+              <input className="px-3 py-2 bg-secondary border border-border rounded-lg text-sm sm:col-span-1" placeholder="Nombre"
+                value={inviteForm.name} onChange={e => setInviteForm(p => ({ ...p, name: e.target.value }))} />
+              <input className="px-3 py-2 bg-secondary border border-border rounded-lg text-sm sm:col-span-1" placeholder="Email" type="email"
+                value={inviteForm.email} onChange={e => setInviteForm(p => ({ ...p, email: e.target.value }))} />
+              <input className="px-3 py-2 bg-secondary border border-border rounded-lg text-sm sm:col-span-1" placeholder="Contraseña" type="text"
+                value={inviteForm.password} onChange={e => setInviteForm(p => ({ ...p, password: e.target.value }))} />
+              <select className="px-3 py-2 bg-secondary border border-border rounded-lg text-sm sm:col-span-1"
+                value={inviteForm.role} onChange={e => setInviteForm(p => ({ ...p, role: e.target.value as any }))}>
+                <option value="staff">Empleado</option>
+                <option value="owner">Co-propietario</option>
+              </select>
+              <Button type="submit" variant="gradient" size="sm" className="sm:col-span-1">Añadir</Button>
+            </form>
+            <p className="text-xs text-muted-foreground">Los miembros podrán iniciar sesión con el email y contraseña que les asignes.</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1383,7 +1445,7 @@ const sections: Record<Section, React.FC> = {
 };
 
 const Dashboard = () => {
-  const { isLoggedIn, logout, restaurant, userPlan, setUserPlan, appNotifications, markNotificationRead, markAllNotificationsRead, canAddDish, canAddCategory } = useApp();
+  const { isLoggedIn, logout, restaurant, userPlan, setUserPlan, appNotifications, markNotificationRead, markAllNotificationsRead, canAddDish, canAddCategory, role, currentUser } = useApp();
   const [active, setActive] = useState<Section>("restaurant");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -1424,8 +1486,13 @@ const Dashboard = () => {
             </button>
           ))}
         </nav>
-        <div className="absolute bottom-4 left-3 right-3 px-3">
+        <div className="absolute bottom-4 left-3 right-3 px-3 flex items-center gap-2 flex-wrap">
           <span className="bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full uppercase">{userPlan}</span>
+          {role && (
+            <span className="bg-secondary text-muted-foreground text-xs font-medium px-2 py-1 rounded-full">
+              {role === "owner" ? "Propietario" : role === "staff" ? "Empleado" : "Admin"}
+            </span>
+          )}
         </div>
       </aside>
 

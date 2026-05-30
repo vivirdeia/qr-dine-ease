@@ -15,11 +15,11 @@ const Login = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (login(email, password)) {
-      toast.success("¡Bienvenido al panel de Carta!");
-      navigate("/dashboard");
+      toast.success("¡Bienvenido!");
+      navigate("/dashboard", { replace: true });
     } else {
       setError(true);
-      toast.error("Credenciales incorrectas");
+      toast.error("Credenciales incorrectas o cuenta suspendida");
     }
   };
 
@@ -67,7 +67,7 @@ const Login = () => {
           </div>
         </form>
         <p className="text-xs text-muted-foreground text-center">
-          Demo: demo@carta.app / demo1234
+          Demo: demo@carta.app / demo1234 · Admin: admin@carta.app / admin1234
         </p>
       </div>
     </div>

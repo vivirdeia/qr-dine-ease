@@ -80,7 +80,11 @@ const Register = () => {
       toast.error("La contraseña debe tener al menos 6 caracteres");
       return;
     }
-    register(signupForm.email, signupForm.password, signupForm.name);
+    const ok = register(signupForm.email, signupForm.password, signupForm.name);
+    if (!ok) {
+      toast.error("Ya existe una cuenta con ese email");
+      return;
+    }
     setRestaurantForm(prev => ({ ...prev, name: signupForm.name }));
     setStep("plan");
   };
