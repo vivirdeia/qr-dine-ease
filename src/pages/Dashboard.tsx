@@ -1338,9 +1338,15 @@ const SettingsSection = () => {
     customHeadScript: restaurant.tracking?.customHeadScript || "",
   });
 
+  const defaultBrand = { primary: "#c4704e", accent: "#d4a574", background: "#faf6f1" };
   const saveBrandColors = () => {
     updateRestaurant({ brandColors });
     toast.success("Paleta de colores guardada. Se aplicará en la carta pública.");
+  };
+  const resetBrandColors = () => {
+    setBrandColors(defaultBrand);
+    updateRestaurant({ brandColors: undefined });
+    toast.success("Colores restaurados por defecto.");
   };
 
   const saveTracking = () => {
@@ -1392,15 +1398,41 @@ const SettingsSection = () => {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="flex gap-1">
               <div className="w-8 h-8 rounded-full border border-border" style={{ backgroundColor: brandColors.primary }} />
               <div className="w-8 h-8 rounded-full border border-border" style={{ backgroundColor: brandColors.accent }} />
               <div className="w-8 h-8 rounded-full border border-border" style={{ backgroundColor: brandColors.background }} />
             </div>
             <Button variant="gradient" size="sm" onClick={saveBrandColors}>Guardar colores</Button>
+            <Button variant="outline" size="sm" onClick={resetBrandColors}>Restaurar por defecto</Button>
+          </div>
+
+          {/* Live preview */}
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-2">Vista previa</p>
+            <div className="rounded-2xl border border-border overflow-hidden max-w-sm" style={{ backgroundColor: brandColors.background }}>
+              <div className="h-16" style={{ backgroundColor: brandColors.primary }} />
+              <div className="p-4 space-y-3">
+                <div className="space-y-1">
+                  <div className="h-3 w-2/3 rounded" style={{ backgroundColor: brandColors.primary, opacity: 0.85 }} />
+                  <div className="h-2 w-1/2 rounded bg-black/15" />
+                </div>
+                <div className="flex items-center justify-between rounded-xl p-3" style={{ backgroundColor: "rgba(255,255,255,0.6)" }}>
+                  <div className="space-y-1">
+                    <div className="h-2 w-20 rounded bg-black/30" />
+                    <div className="h-2 w-28 rounded bg-black/15" />
+                  </div>
+                  <div className="text-xs font-semibold px-2 py-1 rounded-md" style={{ backgroundColor: brandColors.accent, color: "#1a1a1a" }}>14€</div>
+                </div>
+                <div className="h-9 rounded-xl flex items-center justify-center text-xs font-medium text-white" style={{ backgroundColor: brandColors.primary }}>
+                  Reservar mesa
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+
 
         {/* Tracking */}
         <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-4 sm:col-span-2">

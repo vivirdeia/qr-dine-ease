@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
 import { ALLERGENS } from "@/data/mockData";
 import { heroRestaurant, dishImages } from "@/data/dishImages";
+import LocationMap from "@/components/public/LocationMap";
 import { getWineImage } from "@/data/wineImages";
 import { t, type Lang } from "@/data/translations";
 import { toast } from "sonner";
@@ -358,6 +359,9 @@ const PublicRestaurant = () => {
           <p className="text-xs text-muted-foreground mt-3 italic">{t(lang, "menu.pairing")}</p>
         </div>
       </div>
+
+      {/* Location map */}
+      <LocationMap name={restaurant.name} address={restaurant.address} lat={restaurant.lat} lng={restaurant.lng} />
 
       {/* Footer */}
       <div className="mt-12 px-4 pb-8 border-t border-border pt-6 space-y-3">
