@@ -390,8 +390,10 @@ const MenuSection = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-sm">{dish.name}</span>
+                    {dish.featured && <span className="bg-primary/15 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold">Destacado</span>}
                     {dish.isNew && <span className="bg-gold text-gold-foreground text-[10px] px-2 py-0.5 rounded-full font-bold">Nuevo</span>}
                     {!dish.available && <span className="bg-muted text-muted-foreground text-[10px] px-2 py-0.5 rounded-full font-bold">Agotado</span>}
+                    {dish.variants && dish.variants.length > 0 && <span className="bg-secondary text-muted-foreground text-[10px] px-2 py-0.5 rounded-full">{dish.variants.length} variantes</span>}
                   </div>
                   <p className="text-xs text-muted-foreground line-clamp-1">{dish.description}</p>
                   <div className="flex items-center gap-2 mt-1">
@@ -537,24 +539,70 @@ const MenuSection = () => {
                 <p className="text-[10px] text-muted-foreground mt-1">Pega una URL o sube una foto (máx 5MB, se comprime)</p>
               </div>
               <div>
+                <label className="text-xs font-medium text-muted-foreground">Etiquetas</label>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {[
+                    { id: "vegetarian", label: "🌿 Vegetariano" },
+                    { id: "vegan", label: "🌱 Vegano" },
+                    { id: "gluten-free", label: "🚫🌾 Sin gluten" },
+                    { id: "spicy", label: "🔥 Picante" },
+                  ].map(tag => {
+                    const active = dishForm.dietary?.includes(tag.id);
+                    return (
+                      <button key={tag.id} type="button" onClick={() => setDishForm(prev => ({
+                        ...prev,
+                        dietary: active ? (prev.dietary || []).filter(x => x !== tag.id) : [...(prev.dietary || []), tag.id],
+                      }))}
+                        className={`text-xs px-2 py-1 rounded-full transition-colors ${active ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted-foreground'}`}>
+                        {tag.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
                 <label className="text-xs font-medium text-muted-foreground">Alérgenos</label>
                 <div className="flex flex-wrap gap-1.5 mt-1">
                   {ALLERGENS.map(a => (
-                    <button key={a.id} onClick={() => setDishForm(prev => ({ ...prev, allergens: prev.allergens?.includes(a.id) ? prev.allergens.filter(x => x !== a.id) : [...(prev.allergens || []), a.id] }))}
+                    <button key={a.id} type="button" onClick={() => setDishForm(prev => ({ ...prev, allergens: prev.allergens?.includes(a.id) ? prev.allergens.filter(x => x !== a.id) : [...(prev.allergens || []), a.id] }))}
                       className={`text-xs px-2 py-1 rounded-full transition-colors ${dishForm.allergens?.includes(a.id) ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted-foreground'}`}>
                       {a.emoji} {a.name}
                     </button>
                   ))}
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-muted-foreground">Variantes (opcional)</label>
+                  <button type="button" className="text-xs text-primary font-medium" onClick={() => setDishForm(prev => ({ ...prev, variants: [...(prev.variants || []), { name: "", price: 0 }] }))}>+ Añadir variante</button>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Útil para medias raciones o tamaños. Si está vacío se usa solo el precio principal.</p>
+                <div className="space-y-2 mt-2">
+                  {(dishForm.variants || []).map((v, i) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <input className="flex-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" placeholder="Ej: Media ración" value={v.name}
+                        onChange={e => setDishForm(prev => ({ ...prev, variants: (prev.variants || []).map((x, idx) => idx === i ? { ...x, name: e.target.value } : x) }))} />
+                      <input type="number" step="0.01" className="w-24 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" placeholder="€" value={v.price || ""}
+                        onChange={e => setDishForm(prev => ({ ...prev, variants: (prev.variants || []).map((x, idx) => idx === i ? { ...x, price: parseFloat(e.target.value) || 0 } : x) }))} />
+                      <button type="button" className="p-1.5 hover:bg-secondary rounded" onClick={() => setDishForm(prev => ({ ...prev, variants: (prev.variants || []).filter((_, idx) => idx !== i) }))}>
+                        <Trash2 className="h-3.5 w-3.5 text-destructive/60" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-4 flex-wrap">
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={dishForm.available ?? true} onChange={e => setDishForm(prev => ({ ...prev, available: e.target.checked }))} />
                   Disponible
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={dishForm.isNew ?? false} onChange={e => setDishForm(prev => ({ ...prev, isNew: e.target.checked }))} />
-                  Nuevo
+                  Novedad
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={dishForm.featured ?? false} onChange={e => setDishForm(prev => ({ ...prev, featured: e.target.checked }))} />
+                  Destacado
                 </label>
               </div>
             </div>
