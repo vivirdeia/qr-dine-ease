@@ -1455,6 +1455,30 @@ const SettingsSection = () => {
           <Button variant="gradient" size="sm" onClick={saveTracking}>Guardar tracking</Button>
         </div>
 
+        {/* Reservas en la carta pública */}
+        <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-4 sm:col-span-2">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-base sm:text-lg font-bold font-sans">📅 Botón de reservar mesa</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Controla si los comensales pueden reservar mesa desde tu carta pública. Si lo desactivas, el botón flotante "Reservar" desaparece.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                const next = restaurant.reservationsEnabled === false;
+                updateRestaurant({ reservationsEnabled: next });
+                toast.success(next ? "Reservas activadas en la carta" : "Reservas desactivadas en la carta");
+              }}
+              className={`w-11 h-6 rounded-full relative transition-colors shrink-0 ${restaurant.reservationsEnabled !== false ? 'bg-success' : 'bg-muted'}`}
+              aria-label="Activar o desactivar reservas"
+            >
+              <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-card shadow transition-transform ${restaurant.reservationsEnabled !== false ? 'left-5' : 'left-0.5'}`} />
+            </button>
+          </div>
+        </div>
+
+
         <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-4">
           <h3 className="text-base sm:text-lg font-bold font-sans">General</h3>
           {[
