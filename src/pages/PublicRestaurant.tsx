@@ -464,7 +464,7 @@ const PublicRestaurant = () => {
                 <div className="flex gap-3 pt-2">
                   <Button variant="outline-primary" onClick={() => setReservationStep(1)}><ArrowLeft className="h-4 w-4" /></Button>
                     <Button variant="gradient" size="lg" className="flex-1" disabled={!resData.name || !resData.phone} onClick={() => {
-                      addReservation({
+                      const payload = {
                         name: resData.name,
                         phone: resData.phone,
                         email: resData.email || undefined,
@@ -473,9 +473,11 @@ const PublicRestaurant = () => {
                         guests: resData.guests,
                         zonePreference: resData.zone,
                         notes: resData.notes || undefined,
-                        status: "pending",
-                        source: "digital",
-                      });
+                        status: "pending" as const,
+                        source: "digital" as const,
+                      };
+                      if (resolved) addReservationToTenant(resolved.tenant.id, payload);
+                      else addReservation(payload);
                       toast.success("¡Reserva enviada!");
                       setReservationStep(3);
                     }}>
