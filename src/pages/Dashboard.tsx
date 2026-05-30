@@ -1486,8 +1486,13 @@ const Dashboard = () => {
             </button>
           ))}
         </nav>
-        <div className="absolute bottom-4 left-3 right-3 px-3">
+        <div className="absolute bottom-4 left-3 right-3 px-3 flex items-center gap-2 flex-wrap">
           <span className="bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full uppercase">{userPlan}</span>
+          {role && (
+            <span className="bg-secondary text-muted-foreground text-xs font-medium px-2 py-1 rounded-full">
+              {role === "owner" ? "Propietario" : role === "staff" ? "Empleado" : "Admin"}
+            </span>
+          )}
         </div>
       </aside>
 
