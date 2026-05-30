@@ -149,34 +149,8 @@ const Hero = () => (
           </div>
           <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-12 h-1 rounded-full bg-foreground/20" />
         </div>
-        <div className="hidden md:block relative w-72 h-96 rounded-2xl shadow-warm-lg overflow-hidden border border-border">
-          <img
-            src={heroRestaurant}
-            alt="Panel de administración"
-            className="absolute inset-0 w-full h-full object-cover opacity-20"
-          />
-          <div className="absolute inset-0 bg-card/90 p-3 space-y-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-2 w-2 rounded-full bg-destructive/50" />
-              <div className="h-2 w-2 rounded-full bg-warning/50" />
-              <div className="h-2 w-2 rounded-full bg-success/50" />
-            </div>
-            <div className="flex gap-2">
-              <div className="w-16 space-y-2">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="h-6 bg-secondary rounded" />
-                ))}
-              </div>
-              <div className="flex-1 space-y-2">
-                <div className="h-4 w-24 bg-primary/15 rounded" />
-                <div className="grid grid-cols-2 gap-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="h-16 bg-secondary rounded-lg" />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="hidden md:block">
+          <DashboardMockup />
         </div>
       </div>
     </div>
