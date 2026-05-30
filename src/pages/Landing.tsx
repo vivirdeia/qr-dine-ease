@@ -278,19 +278,20 @@ const Features = () => (
 );
 
 const comparisonRows = [
-  { label: "Comisión por comensal", carta: "€0", fork: "€2-5", cartaGood: true, forkGood: false },
+  { label: "Comisión por comensal", carta: "€0", other: "€0", cartaGood: true, otherGood: true },
   {
     label: "El cliente es tuyo",
     carta: "Datos en tu panel",
-    fork: "Datos de TheFork",
+    other: "Dispersos por chats",
     cartaGood: true,
-    forkGood: false,
+    otherGood: false,
   },
-  { label: "Carta digital integrada", carta: true, fork: false },
-  { label: "Tu marca, tu diseño", carta: true, fork: false },
-  { label: "Menú del día editable", carta: true, fork: false },
-  { label: "QR para mesas", carta: true, fork: false },
-  { label: "Precio mensual", carta: "Desde €0", fork: "Comisión variable", cartaGood: true, forkGood: false },
+  { label: "Carta digital con fotos", carta: true, other: false },
+  { label: "Actualiza precios en 2 min", carta: true, other: false },
+  { label: "Menú del día editable", carta: true, other: false },
+  { label: "Reservas organizadas", carta: true, other: false },
+  { label: "Recordatorios automáticos", carta: true, other: false },
+  { label: "Coste mensual fijo", carta: "Desde €0", other: "Gratis pero caótico", cartaGood: true, otherGood: false },
 ];
 
 const Comparison = () => (
