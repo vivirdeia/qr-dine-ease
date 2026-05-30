@@ -30,6 +30,7 @@ export interface Restaurant {
   plan: "free" | "pro" | "business";
   brandColors?: BrandColors;
   tracking?: TrackingConfig;
+  reservationsEnabled?: boolean;
 }
 
 export interface DayHours {
