@@ -1613,6 +1613,17 @@ const Dashboard = () => {
   const [active, setActive] = useState<Section>("restaurant");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+
+  const visibleSidebarItems = sidebarItems.filter(item => {
+    if (item.id === "reservations" && restaurant.modules?.reservations === false) return false;
+    if (item.id === "tables" && restaurant.modules?.tables === false) return false;
+    return true;
+  });
+
+  useEffect(() => {
+    if (!visibleSidebarItems.find(i => i.id === active)) setActive("restaurant");
+  }, [visibleSidebarItems, active]);
+
   const ActiveSection = sections[active];
 
   const unreadCount = appNotifications.filter(n => !n.read).length;
