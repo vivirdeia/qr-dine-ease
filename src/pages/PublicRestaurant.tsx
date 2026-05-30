@@ -24,6 +24,7 @@ const PublicRestaurant = () => {
   const [activeCategory, setActiveCategory] = useState("menu-del-dia");
   const [searchQuery, setSearchQuery] = useState("");
   const [dietaryFilter, setDietaryFilter] = useState<string[]>([]);
+  const [excludedAllergens, setExcludedAllergens] = useState<string[]>([]);
   const [showReservation, setShowReservation] = useState(false);
   const [lang, setLang] = useState<Lang>("ES");
   const [reservationStep, setReservationStep] = useState(0);
@@ -111,15 +112,17 @@ const PublicRestaurant = () => {
   const filteredDishes = dishes.filter(d => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      return d.name.toLowerCase().includes(q) || d.description.toLowerCase().includes(q);
+      if (!(d.name.toLowerCase().includes(q) || d.description.toLowerCase().includes(q))) return false;
     }
     if (dietaryFilter.includes("vegetarian") && !d.dietary.includes("vegetarian")) return false;
     if (dietaryFilter.includes("vegan") && !d.dietary.includes("vegan")) return false;
-    if (dietaryFilter.includes("gluten-free") && d.allergens.includes("gluten")) return false;
+    if (dietaryFilter.includes("gluten-free") && d.allergens.includes("gluten") && !d.dietary.includes("gluten-free")) return false;
+    if (excludedAllergens.some(a => d.allergens.includes(a))) return false;
     return true;
   });
 
   const toggleDietary = (f: string) => setDietaryFilter(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f]);
+  const toggleExcludedAllergen = (a: string) => setExcludedAllergens(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]);
 
   return (
     <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto relative">
