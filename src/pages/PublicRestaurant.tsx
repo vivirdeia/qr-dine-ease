@@ -593,6 +593,8 @@ const PublicRestaurant = () => {
           </div>
         </div>
       )}
+
+      <DishModal dish={activeDish} onClose={() => setActiveDish(null)} />
     </div>
   );
 };
