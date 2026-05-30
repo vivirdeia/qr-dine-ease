@@ -534,6 +534,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addAppNotification("reservation", "Nueva reserva", `${reservation.name} — ${reservation.guests} pers. el ${reservation.date} a las ${reservation.time}`);
   }, [updateActiveData, addAppNotification]);
 
+  const addReservationToTenant = useCallback((tenantId: string, reservation: Omit<Reservation, "id" | "createdAt">) => {
+    const newRes: Reservation = { ...reservation, id: genId("res"), createdAt: new Date().toISOString().split("T")[0] };
+    const notif: AppNotification = {
+      id: genId("n"), type: "reservation", title: "Nueva reserva",
+      message: `${reservation.name} — ${reservation.guests} pers. el ${reservation.date} a las ${reservation.time}`,
+      date: new Date().toISOString(), read: false,
+    };
+    setDb(prev => {
+      const data = prev.data[tenantId];
+      if (!data) return prev;
+      return {
+        ...prev,
+        data: {
+          ...prev.data,
+          [tenantId]: {
+            ...data,
+            reservations: [...data.reservations, newRes],
+            appNotifications: [notif, ...data.appNotifications].slice(0, 50),
+          },
+        },
+      };
+    });
+  }, [setDb]);
+
   const updateReservationStatus = useCallback((id: string, status: Reservation["status"]) => {
     updateActiveData(d => {
       const res = d.reservations.find(r => r.id === id);
