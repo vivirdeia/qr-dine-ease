@@ -1122,46 +1122,80 @@ const MetricsSection = () => {
 const QRSection = () => {
   const { restaurant } = useApp();
   const url = `${window.location.origin}/r/${restaurant.slug}`;
+  const shareText = `Mira la carta de ${restaurant.name}: ${url}`;
+
+  const downloadPng = () => {
+    const svg = document.getElementById("dashboard-qr-svg") as unknown as SVGSVGElement | null;
+    if (!svg) return;
+    const xml = new XMLSerializer().serializeToString(svg);
+    const img = new Image();
+    img.onload = () => {
+      const size = 1024;
+      const canvas = document.createElement("canvas");
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(img, 0, 0, size, size);
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png");
+      a.download = `qr-${restaurant.slug || "carta"}.png`;
+      a.click();
+    };
+    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(xml)));
+  };
+
+  const openPublic = () => window.open(url, "_blank", "noopener");
+  const shareWhatsapp = () => window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank", "noopener");
+  const shareEmail = () => { window.location.href = `mailto:?subject=${encodeURIComponent(restaurant.name)}&body=${encodeURIComponent(shareText)}`; };
+  const nativeShare = async () => {
+    if (navigator.share) { try { await navigator.share({ title: restaurant.name, text: shareText, url }); } catch { /* cancelled */ } }
+    else { navigator.clipboard.writeText(url); toast.success("Enlace copiado"); }
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl sm:text-2xl font-bold mb-1">QR y compartir</h2>
-        <p className="text-muted-foreground text-sm">Tu QR listo para imprimir y compartir</p>
+        <h2 className="text-xl sm:text-2xl font-bold mb-1">QR y enlace público</h2>
+        <p className="text-muted-foreground text-sm">Comparte tu carta en segundos</p>
       </div>
       <div className="flex flex-col md:flex-row gap-6 items-stretch md:items-start">
         <div className="bg-card rounded-2xl border border-border p-6 sm:p-8 flex flex-col items-center gap-4 sm:gap-6">
-          <QRCodeSVG value={url} size={160} bgColor="transparent" fgColor="hsl(15, 25%, 9%)" level="M" className="sm:w-[200px] sm:h-[200px]" />
+          <QRCodeSVG id="dashboard-qr-svg" value={url} size={200} bgColor="#ffffff" fgColor="hsl(15, 25%, 9%)" level="M" includeMargin />
           <p className="text-sm text-muted-foreground text-center max-w-xs">Escanea para ver la carta y reservar mesa</p>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-            <Button variant="gradient" size="sm"><Download className="h-4 w-4 mr-1" /> PNG</Button>
-            <Button variant="outline-primary" size="sm"><Download className="h-4 w-4 mr-1" /> PDF</Button>
+            <Button variant="gradient" size="sm" onClick={downloadPng}><Download className="h-4 w-4 mr-1" /> Descargar PNG</Button>
+            <Button variant="outline-primary" size="sm" onClick={openPublic}><ExternalLink className="h-4 w-4 mr-1" /> Abrir</Button>
           </div>
         </div>
         <div className="flex-1 space-y-4 sm:space-y-6">
           <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-3">
-            <h3 className="text-sm font-bold font-sans">Link directo</h3>
+            <h3 className="text-sm font-bold font-sans">Enlace directo</h3>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <code className="flex-1 bg-secondary px-3 py-2 rounded-lg text-xs sm:text-sm truncate block">{url}</code>
-              <Button size="sm" variant="outline-primary" className="shrink-0" onClick={() => { navigator.clipboard.writeText(url); toast.success("Link copiado"); }}>Copiar</Button>
+              <Button size="sm" variant="outline-primary" className="shrink-0" onClick={() => { navigator.clipboard.writeText(url); toast.success("Enlace copiado"); }}>Copiar</Button>
             </div>
+            <p className="text-xs text-muted-foreground">Cambia el slug desde Ajustes → Mi restaurante.</p>
           </div>
           <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-3">
             <h3 className="text-sm font-bold font-sans">Compartir</h3>
             <div className="flex gap-2 flex-wrap">
-              {["WhatsApp", "Instagram", "Facebook", "Email"].map(s => (
-                <Button key={s} size="sm" variant="secondary">{s}</Button>
-              ))}
+              <Button size="sm" variant="secondary" onClick={shareWhatsapp}>WhatsApp</Button>
+              <Button size="sm" variant="secondary" onClick={shareEmail}>Email</Button>
+              <Button size="sm" variant="secondary" onClick={nativeShare}>Más…</Button>
             </div>
           </div>
-          <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-3">
-            <h3 className="text-sm font-bold font-sans">Widget embebible</h3>
-            <code className="block bg-secondary px-3 py-2 rounded-lg text-xs overflow-x-auto">{`<script src="${window.location.origin}/widget/${restaurant.slug}.js"></script>`}</code>
+          <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-2">
+            <h3 className="text-sm font-bold font-sans">Consejo</h3>
+            <p className="text-xs text-muted-foreground">Imprime el QR en tarjetas, mesas o escaparate. Los clientes verán tu carta sin instalar nada.</p>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
 
 // ── Settings Section ──
 const hexToHsl = (hex: string): string => {
