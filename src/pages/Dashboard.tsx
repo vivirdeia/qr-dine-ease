@@ -1445,7 +1445,7 @@ const sections: Record<Section, React.FC> = {
 };
 
 const Dashboard = () => {
-  const { isLoggedIn, logout, restaurant, userPlan, setUserPlan, appNotifications, markNotificationRead, markAllNotificationsRead, canAddDish, canAddCategory } = useApp();
+  const { isLoggedIn, logout, restaurant, userPlan, setUserPlan, appNotifications, markNotificationRead, markAllNotificationsRead, canAddDish, canAddCategory, role, currentUser } = useApp();
   const [active, setActive] = useState<Section>("restaurant");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
