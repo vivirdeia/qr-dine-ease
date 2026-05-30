@@ -1181,6 +1181,36 @@ const MetricsSection = () => {
           </div>
         ))}
       </div>
+
+      <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-bold font-sans">Platos más vistos</h3>
+          <span className="text-xs text-muted-foreground">{metrics.totalDishViews} vistas totales</span>
+        </div>
+        {metrics.totalDishViews === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-6">
+            Todavía no hay vistas. Cuando los comensales abran un plato en la carta, aparecerá aquí.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {metrics.topDishes.filter(d => d.views > 0).map((d, i) => {
+              const max = metrics.topDishes[0]?.views || 1;
+              const pct = Math.max(4, Math.round((d.views / max) * 100));
+              return (
+                <div key={d.id} className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground w-5 shrink-0">{i + 1}</span>
+                  <span className="text-sm flex-1 min-w-0 truncate">{d.name}</span>
+                  <div className="hidden sm:block flex-1 bg-secondary rounded-full h-1.5 overflow-hidden">
+                    <div className="bg-primary h-full rounded-full" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="text-sm font-bold w-12 text-right tabular-nums">{d.views}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       <div className="bg-primary/5 rounded-2xl border border-primary/20 p-4 sm:p-6">
         <div className="flex items-start gap-3">
           <TrendingUp className="h-5 w-5 text-primary mt-0.5 shrink-0" />
