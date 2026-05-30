@@ -311,6 +311,10 @@ interface AppState {
   can: (action: "manage" | "edit" | "view") => boolean;
   isSlugAvailable: (slug: string, excludeTenantId?: string) => boolean;
   suggestSlug: (base: string) => string;
+
+  // Dish views tracking
+  dishViews: Record<string, number>;
+  trackDishView: (tenantId: string, dishId: string) => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
