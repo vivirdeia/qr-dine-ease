@@ -14,7 +14,7 @@ import {
 
 const PublicRestaurant = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { getTenantBySlug, restaurant: fallbackRestaurant, categories: fallbackCategories, dishes: fallbackDishes, wines: fallbackWines, dailyMenu: fallbackDailyMenu, addReservation } = useApp();
+  const { getTenantBySlug, restaurant: fallbackRestaurant, categories: fallbackCategories, dishes: fallbackDishes, wines: fallbackWines, dailyMenu: fallbackDailyMenu, addReservation, addReservationToTenant } = useApp();
   const resolved = slug ? getTenantBySlug(slug) : null;
   const restaurant = resolved?.data.restaurant ?? fallbackRestaurant;
   const categories = resolved?.data.categories ?? fallbackCategories;
