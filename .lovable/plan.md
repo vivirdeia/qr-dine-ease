@@ -1,62 +1,47 @@
-# Enriquecer la landing
+# Branding personalizable + mapa en la carta pública
 
-Mantengo el estilo actual (warm/serif, ya existente). Foco: rellenar bloques vacíos, añadir secciones que faltan y meter animaciones de entrada al hacer scroll.
+## Contexto
 
-## 1. Arreglar bloques vacíos detectados
+Hoy `Dashboard.tsx` ya tiene un panel "Personalización de marca" donde el dueño puede elegir 3 colores (primary, accent, background) y se guardan en `restaurant.brandColors`. **Pero esos colores no se aplican en `/r/:slug`** (la carta pública), por lo que el usuario no ve ningún cambio. Además, la ficha del restaurante muestra la dirección como enlace a Google Maps pero no hay un mapa embebido.
 
-**a) Sección "Escanea y prueba"** (captura 1)  
-Hoy es un cuadro con un icono `QrCode` gigante centrado. Lo convierto en algo real y útil:
+## Cambios
 
-- QR real generado en cliente con `qrcode` (apuntando a `/r/casa-martin`).
-- A la derecha (desktop), mockup de móvil mostrando preview de la carta cargando.
-- Mini badges: "Sin app", "<2s en cargar", "Funciona en cualquier móvil".
-- Botón "Explorar la demo" se mantiene.
+### 1. Aplicar branding en la carta pública (`src/pages/PublicRestaurant.tsx`)
 
-**b) Mockup dashboard vacío** (captura 2)  
-El bloque del Hero del "panel de admin" son cajas grises sin contenido. Lo relleno con un mockup más creíble:
+- Leer `restaurant.brandColors` y, si existe, inyectar variables CSS scoped al contenedor raíz de la página:
+  - `--brand-primary`, `--brand-accent`, `--brand-bg` convertidas a HSL.
+- Sustituir en los puntos clave de la carta (no en toda la app) el uso de `text-primary` / `bg-primary` por clases que usen estas variables: header del restaurante, badges activos de categorías, botón flotante "Reservar", precios destacados, fondo general de la página.
+- Si no hay `brandColors`, se mantiene exactamente el diseño actual.
+- Añadir un pequeño helper `hexToHsl()` en `src/lib/utils.ts`.
 
-- Sidebar con items reconocibles (Carta, Reservas, Mesas, Métricas, Ajustes) con iconitos.
-- Header con avatar + nombre del restaurante.
-- Grid de "platos" con miniaturas (usando `dishImages` ya existentes) y precios.
-- Una tarjeta de "reserva entrante" animada (pulse sutil).
+### 2. Mejorar el panel de branding en el Dashboard
 
-## 2. Nuevas secciones que aportan valor
+- Añadir un botón **"Restaurar por defecto"** que limpia `brandColors`.
+- Añadir **preview en vivo** (mini-mockup de la carta) usando los 3 colores antes de guardar.
+- Mantener los 3 inputs de color actuales (no se cambia la UX existente).
 
-**c) Métricas / Trust bar** justo bajo el Hero  
-Banda con 4 cifras grandes: "+800 restaurantes", "1.2M comensales/año", "35% menos no-shows", "0€ comisiones". Tipografía grande, separadores verticales.
+### 3. Nueva sección "Cómo llegar" con Google Maps en la carta pública
 
-**f) Sección "Integraciones"** después de Features  
-Grid pequeño de logos: Stripe (pagos futuros), Google Maps, WhatsApp, TheFork export, Mailchimp, Instagram. Comunica ecosistema.
+- Nuevo componente `src/components/public/LocationMap.tsx`.
+- Insertado en `PublicRestaurant.tsx` justo después del bloque de información del restaurante / antes del footer.
+- Implementación: `<iframe>` de Google Maps embed sin API key, usando la URL pública:
+  ```
+  https://www.google.com/maps?q={lat},{lng}&hl=es&z=16&output=embed
+  ```
+- Estilo según el design system:
+  - Contenedor `rounded-2xl overflow-hidden border border-border`
+  - Aspect ratio 16/9 en desktop, 4/3 en móvil
+  - Título "Cómo llegar" + dirección + botones "Abrir en Google Maps" y "Cómo llegar" (deeplink a `https://www.google.com/maps/dir/?api=1&destination=...`)
+- Lazy load (`loading="lazy"`) para no afectar al rendimiento.
 
-**g) Bloque "Migración fácil"** antes del CTA final  
-"¿Ya tienes carta en PDF / TheFork / Glovo? La importamos por ti gratis." Con tres pasos visuales: Envíanos tu carta → la digitalizamos → la revisas.
+> Nota: usamos el embed público de Google Maps (no requiere conectar Google Maps Platform). Si más adelante quieres el mapa interactivo con marker custom y estilo monocromo, podemos cambiar a la JS API conectando el conector de Google Maps.
 
-## 3. Animaciones
+## Lo que NO se toca
 
-Instalo `framer-motion` (si no está) y añado un componente `FadeIn` reutilizable:
+- Lógica de reservas, datos, rutas, auth, dashboard salvo el panel de branding.
+- Landing page.
+- Estilo global del dashboard ni del resto de la app.
 
-- Fade + translateY de 16px a 0, `duration 0.5`, trigger al entrar en viewport (`whileInView` con `once: true`).
-- Aplicado a títulos de sección y a cada item de grid con `staggerChildren` de 0.08s.
-- Hero: animación de entrada secuenciada (badge → título → subtítulo → CTAs → mockups).
-- QR de la sección demo: animación de "dibujado" suave (scale + opacity).
-- Tarjeta de reserva entrante en el mockup del Hero: pulse infinito muy sutil.
-- Carrusel de logos de prensa: marquee CSS continuo.
+## Pregunta abierta
 
-Sin rebotes ni rotaciones decorativas, respetando lo que pediste de mantener el estilo actual.
-
-## Detalles técnicos
-
-- Nueva dependencia: `framer-motion` y `qrcode` (+ `@types/qrcode`).
-- Nuevo componente `src/components/landing/FadeIn.tsx` para animar al hacer scroll.
-- Refactor de `Landing.tsx`: separo secciones nuevas en `src/components/landing/` (TrustBar, ProductInAction, PressLogos, Integrations, MigrationHelp) para no inflar el archivo.
-- Reescribo `InteractiveDemo` y el mockup del dashboard del Hero.
-- Sin tocar pricing, FAQ, testimonios, comparativa, footer (ya están bien).
-- Sin cambios de routing ni de datos.
-
-## Qué NO entra
-
-- Cambiar la identidad visual (sigue siendo warm/serif, como pediste).
-- Tocar Dashboard, PublicRestaurant, ni el resto del producto.
-- Vídeos reales: serán mockups animados, no archivos `.mp4`.
-
-¿Le doy?
+¿El branding debe afectar **solo** a la carta pública (`/r/:slug`) o también al panel del dueño? Por defecto lo aplico solo a la carta pública, que es lo que ven los comensales.
