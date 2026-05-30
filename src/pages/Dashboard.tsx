@@ -1063,7 +1063,7 @@ const TablesSection = () => {
 
 // ── Metrics Section ──
 const MetricsSection = () => {
-  const { reservations, tables, dishes } = useApp();
+  const { reservations, tables, dishes, dishViews } = useApp();
 
   const metrics = useMemo(() => {
     const total = reservations.length;
