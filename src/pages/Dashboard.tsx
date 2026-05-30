@@ -1338,9 +1338,15 @@ const SettingsSection = () => {
     customHeadScript: restaurant.tracking?.customHeadScript || "",
   });
 
+  const defaultBrand = { primary: "#c4704e", accent: "#d4a574", background: "#faf6f1" };
   const saveBrandColors = () => {
     updateRestaurant({ brandColors });
     toast.success("Paleta de colores guardada. Se aplicará en la carta pública.");
+  };
+  const resetBrandColors = () => {
+    setBrandColors(defaultBrand);
+    updateRestaurant({ brandColors: undefined });
+    toast.success("Colores restaurados por defecto.");
   };
 
   const saveTracking = () => {
