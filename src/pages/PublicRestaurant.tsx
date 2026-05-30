@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
 import { ALLERGENS } from "@/data/mockData";
@@ -13,7 +13,14 @@ import {
 } from "lucide-react";
 
 const PublicRestaurant = () => {
-  const { restaurant, categories, dishes, wines, dailyMenu, addReservation } = useApp();
+  const { slug } = useParams<{ slug: string }>();
+  const { getTenantBySlug, restaurant: fallbackRestaurant, categories: fallbackCategories, dishes: fallbackDishes, wines: fallbackWines, dailyMenu: fallbackDailyMenu, addReservation } = useApp();
+  const resolved = slug ? getTenantBySlug(slug) : null;
+  const restaurant = resolved?.data.restaurant ?? fallbackRestaurant;
+  const categories = resolved?.data.categories ?? fallbackCategories;
+  const dishes = resolved?.data.dishes ?? fallbackDishes;
+  const wines = resolved?.data.wines ?? fallbackWines;
+  const dailyMenu = resolved?.data.dailyMenu ?? fallbackDailyMenu;
   const [activeCategory, setActiveCategory] = useState("menu-del-dia");
   const [searchQuery, setSearchQuery] = useState("");
   const [dietaryFilter, setDietaryFilter] = useState<string[]>([]);
