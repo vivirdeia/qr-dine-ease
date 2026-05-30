@@ -1537,7 +1537,28 @@ const SettingsSection = () => {
               <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-card shadow transition-transform ${restaurant.reservationsEnabled !== false ? 'left-5' : 'left-0.5'}`} />
             </button>
           </div>
+
+          <div className="flex items-start justify-between gap-4 py-3 border-t border-border">
+            <div>
+              <p className="text-sm font-medium">Ocultar "Reservar" cuando entran desde un QR</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Si está activo, los clientes que escaneen el <span className="font-medium">QR de mesa</span> (URL con <code className="text-[10px]">?src=qr</code>) no verán el botón de reservar. Quien entre desde redes, Google o un enlace compartido sí lo verá.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                const next = !restaurant.hideReserveOnQr;
+                updateRestaurant({ hideReserveOnQr: next });
+                toast.success(next ? "Botón oculto al entrar por QR" : "Botón visible siempre");
+              }}
+              className={`w-11 h-6 rounded-full relative transition-colors shrink-0 ${restaurant.hideReserveOnQr ? 'bg-success' : 'bg-muted'}`}
+              aria-label="Ocultar botón Reservar al entrar desde QR"
+            >
+              <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-card shadow transition-transform ${restaurant.hideReserveOnQr ? 'left-5' : 'left-0.5'}`} />
+            </button>
+          </div>
         </div>
+
 
 
 
