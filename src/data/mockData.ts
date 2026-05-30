@@ -31,6 +31,7 @@ export interface Restaurant {
   brandColors?: BrandColors;
   tracking?: TrackingConfig;
   reservationsEnabled?: boolean;
+  hideReserveOnQr?: boolean;
   modules?: { reservations?: boolean; tables?: boolean };
 }
 

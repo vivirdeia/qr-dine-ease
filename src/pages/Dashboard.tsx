@@ -221,7 +221,7 @@ const RestaurantSection = () => {
 
 // ── Menu Section ──
 const MenuSection = () => {
-  const { categories, dishes, wines, dailyMenu, addDish, updateDish, deleteDish, duplicateDish, toggleDishAvailability, addCategory, updateCategory, deleteCategory, updateDailyMenu, addWine, updateWine, deleteWine, canAddDish, canAddCategory, userPlan, planLimits } = useApp();
+  const { categories, dishes, wines, dailyMenu, addDish, updateDish, deleteDish, duplicateDish, toggleDishAvailability, addCategory, updateCategory, deleteCategory, updateDailyMenu, addWine, updateWine, deleteWine, canAddDish, canAddCategory, userPlan, planLimits, dishViews } = useApp();
   const [activeCategory, setActiveCategory] = useState("c1");
   const [showDishModal, setShowDishModal] = useState(false);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
@@ -434,6 +434,11 @@ const MenuSection = () => {
                 </div>
                 <div className="text-right shrink-0">
                   <div className="font-bold text-primary text-sm">€{dish.price.toFixed(2)}</div>
+                  {(dishViews[dish.id] || 0) > 0 && (
+                    <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center justify-end gap-0.5">
+                      <Eye className="h-3 w-3" /> {dishViews[dish.id]}
+                    </div>
+                  )}
                 </div>
               </div>
               {/* Actions row */}
@@ -1063,7 +1068,7 @@ const TablesSection = () => {
 
 // ── Metrics Section ──
 const MetricsSection = () => {
-  const { reservations, tables, dishes } = useApp();
+  const { reservations, tables, dishes, dishViews } = useApp();
 
   const metrics = useMemo(() => {
     const total = reservations.length;
@@ -1097,8 +1102,14 @@ const MetricsSection = () => {
       { source: "Teléfono", value: total > 0 ? Math.round((phone / total) * 100) : 0, fill: "hsl(var(--muted-foreground))" },
     ];
 
-    return { total, confirmed, completed, cancelled, noshows, totalGuests, avgParty, noshowRate, occupancy, byDay, sourceData };
-  }, [reservations, tables]);
+    const topDishes = dishes
+      .map(d => ({ id: d.id, name: d.name, views: dishViews[d.id] || 0 }))
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 10);
+    const totalDishViews = topDishes.reduce((s, x) => s + x.views, 0);
+
+    return { total, confirmed, completed, cancelled, noshows, totalGuests, avgParty, noshowRate, occupancy, byDay, sourceData, topDishes, totalDishViews };
+  }, [reservations, tables, dishes, dishViews]);
 
   const exportCSV = () => {
     const header = "ID,Nombre,Teléfono,Email,Fecha,Hora,Personas,Estado,Fuente,Notas\n";
@@ -1175,6 +1186,36 @@ const MetricsSection = () => {
           </div>
         ))}
       </div>
+
+      <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-bold font-sans">Platos más vistos</h3>
+          <span className="text-xs text-muted-foreground">{metrics.totalDishViews} vistas totales</span>
+        </div>
+        {metrics.totalDishViews === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-6">
+            Todavía no hay vistas. Cuando los comensales abran un plato en la carta, aparecerá aquí.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {metrics.topDishes.filter(d => d.views > 0).map((d, i) => {
+              const max = metrics.topDishes[0]?.views || 1;
+              const pct = Math.max(4, Math.round((d.views / max) * 100));
+              return (
+                <div key={d.id} className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground w-5 shrink-0">{i + 1}</span>
+                  <span className="text-sm flex-1 min-w-0 truncate">{d.name}</span>
+                  <div className="hidden sm:block flex-1 bg-secondary rounded-full h-1.5 overflow-hidden">
+                    <div className="bg-primary h-full rounded-full" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="text-sm font-bold w-12 text-right tabular-nums">{d.views}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       <div className="bg-primary/5 rounded-2xl border border-primary/20 p-4 sm:p-6">
         <div className="flex items-start gap-3">
           <TrendingUp className="h-5 w-5 text-primary mt-0.5 shrink-0" />
@@ -1195,11 +1236,12 @@ const MetricsSection = () => {
 // ── QR Section ──
 const QRSection = () => {
   const { restaurant } = useApp();
-  const url = `${window.location.origin}/r/${restaurant.slug}`;
-  const shareText = `Mira la carta de ${restaurant.name}: ${url}`;
+  const baseUrl = `${window.location.origin}/r/${restaurant.slug}`;
+  const tableUrl = `${baseUrl}?src=qr`;
+  const shareText = `Mira la carta de ${restaurant.name}: ${baseUrl}`;
 
-  const downloadPng = () => {
-    const svg = document.getElementById("dashboard-qr-svg") as unknown as SVGSVGElement | null;
+  const downloadPng = (svgId: string, suffix: string) => {
+    const svg = document.getElementById(svgId) as unknown as SVGSVGElement | null;
     if (!svg) return;
     const xml = new XMLSerializer().serializeToString(svg);
     const img = new Image();
@@ -1214,56 +1256,76 @@ const QRSection = () => {
       ctx.drawImage(img, 0, 0, size, size);
       const a = document.createElement("a");
       a.href = canvas.toDataURL("image/png");
-      a.download = `qr-${restaurant.slug || "carta"}.png`;
+      a.download = `qr-${restaurant.slug || "carta"}-${suffix}.png`;
       a.click();
     };
     img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(xml)));
   };
 
-  const openPublic = () => window.open(url, "_blank", "noopener");
+  const openPublic = (url: string) => window.open(url, "_blank", "noopener");
   const shareWhatsapp = () => window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank", "noopener");
   const shareEmail = () => { window.location.href = `mailto:?subject=${encodeURIComponent(restaurant.name)}&body=${encodeURIComponent(shareText)}`; };
   const nativeShare = async () => {
-    if (navigator.share) { try { await navigator.share({ title: restaurant.name, text: shareText, url }); } catch { /* cancelled */ } }
-    else { navigator.clipboard.writeText(url); toast.success("Enlace copiado"); }
+    if (navigator.share) { try { await navigator.share({ title: restaurant.name, text: shareText, url: baseUrl }); } catch { /* cancelled */ } }
+    else { navigator.clipboard.writeText(baseUrl); toast.success("Enlace copiado"); }
   };
+
+  const qrs = [
+    {
+      id: "dashboard-qr-svg",
+      title: "QR general",
+      desc: "Para tarjetas, redes, escaparate o cualquier sitio fuera del local.",
+      url: baseUrl,
+      suffix: "general",
+    },
+    {
+      id: "dashboard-qr-table-svg",
+      title: "QR de mesa / en sala",
+      desc: "Pegatinas para mesas. Si activas la opción correspondiente en Ajustes, oculta el botón de reservar.",
+      url: tableUrl,
+      suffix: "mesa",
+    },
+  ];
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl sm:text-2xl font-bold mb-1">QR y enlace público</h2>
-        <p className="text-muted-foreground text-sm">Comparte tu carta en segundos</p>
+        <p className="text-muted-foreground text-sm">Dos QR: uno para difusión externa y otro para imprimir en las mesas.</p>
       </div>
-      <div className="flex flex-col md:flex-row gap-6 items-stretch md:items-start">
-        <div className="bg-card rounded-2xl border border-border p-6 sm:p-8 flex flex-col items-center gap-4 sm:gap-6">
-          <QRCodeSVG id="dashboard-qr-svg" value={url} size={200} bgColor="#ffffff" fgColor="hsl(15, 25%, 9%)" level="M" includeMargin />
-          <p className="text-sm text-muted-foreground text-center max-w-xs">Escanea para ver la carta y reservar mesa</p>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-            <Button variant="gradient" size="sm" onClick={downloadPng}><Download className="h-4 w-4 mr-1" /> Descargar PNG</Button>
-            <Button variant="outline-primary" size="sm" onClick={openPublic}><ExternalLink className="h-4 w-4 mr-1" /> Abrir</Button>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {qrs.map(qr => (
+          <div key={qr.id} className="bg-card rounded-2xl border border-border p-5 sm:p-6 flex flex-col gap-4">
+            <div>
+              <h3 className="text-base font-bold font-sans">{qr.title}</h3>
+              <p className="text-xs text-muted-foreground mt-1">{qr.desc}</p>
+            </div>
+            <div className="flex items-center justify-center bg-secondary/40 rounded-xl p-4">
+              <QRCodeSVG id={qr.id} value={qr.url} size={180} bgColor="#ffffff" fgColor="hsl(15, 25%, 9%)" level="M" includeMargin />
+            </div>
+            <code className="bg-secondary px-3 py-2 rounded-lg text-[11px] break-all">{qr.url}</code>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="gradient" size="sm" onClick={() => downloadPng(qr.id, qr.suffix)}><Download className="h-4 w-4 mr-1" /> Descargar PNG</Button>
+              <Button variant="outline-primary" size="sm" onClick={() => openPublic(qr.url)}><ExternalLink className="h-4 w-4 mr-1" /> Abrir</Button>
+              <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(qr.url); toast.success("Enlace copiado"); }}>Copiar</Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-3">
+          <h3 className="text-sm font-bold font-sans">Compartir</h3>
+          <div className="flex gap-2 flex-wrap">
+            <Button size="sm" variant="secondary" onClick={shareWhatsapp}>WhatsApp</Button>
+            <Button size="sm" variant="secondary" onClick={shareEmail}>Email</Button>
+            <Button size="sm" variant="secondary" onClick={nativeShare}>Más…</Button>
           </div>
         </div>
-        <div className="flex-1 space-y-4 sm:space-y-6">
-          <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-3">
-            <h3 className="text-sm font-bold font-sans">Enlace directo</h3>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <code className="flex-1 bg-secondary px-3 py-2 rounded-lg text-xs sm:text-sm truncate block">{url}</code>
-              <Button size="sm" variant="outline-primary" className="shrink-0" onClick={() => { navigator.clipboard.writeText(url); toast.success("Enlace copiado"); }}>Copiar</Button>
-            </div>
-            <p className="text-xs text-muted-foreground">Cambia el slug desde Ajustes → Mi restaurante.</p>
-          </div>
-          <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-3">
-            <h3 className="text-sm font-bold font-sans">Compartir</h3>
-            <div className="flex gap-2 flex-wrap">
-              <Button size="sm" variant="secondary" onClick={shareWhatsapp}>WhatsApp</Button>
-              <Button size="sm" variant="secondary" onClick={shareEmail}>Email</Button>
-              <Button size="sm" variant="secondary" onClick={nativeShare}>Más…</Button>
-            </div>
-          </div>
-          <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-2">
-            <h3 className="text-sm font-bold font-sans">Consejo</h3>
-            <p className="text-xs text-muted-foreground">Imprime el QR en tarjetas, mesas o escaparate. Los clientes verán tu carta sin instalar nada.</p>
-          </div>
+        <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-2">
+          <h3 className="text-sm font-bold font-sans">Consejo</h3>
+          <p className="text-xs text-muted-foreground">Imprime el QR de mesa con la pegatina pequeña en cada mesa. Usa el QR general en tarjetas o redes para que la gente reserve.</p>
         </div>
       </div>
     </div>
@@ -1516,7 +1578,28 @@ const SettingsSection = () => {
               <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-card shadow transition-transform ${restaurant.reservationsEnabled !== false ? 'left-5' : 'left-0.5'}`} />
             </button>
           </div>
+
+          <div className="flex items-start justify-between gap-4 py-3 border-t border-border">
+            <div>
+              <p className="text-sm font-medium">Ocultar "Reservar" cuando entran desde un QR</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Si está activo, los clientes que escaneen el <span className="font-medium">QR de mesa</span> (URL con <code className="text-[10px]">?src=qr</code>) no verán el botón de reservar. Quien entre desde redes, Google o un enlace compartido sí lo verá.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                const next = !restaurant.hideReserveOnQr;
+                updateRestaurant({ hideReserveOnQr: next });
+                toast.success(next ? "Botón oculto al entrar por QR" : "Botón visible siempre");
+              }}
+              className={`w-11 h-6 rounded-full relative transition-colors shrink-0 ${restaurant.hideReserveOnQr ? 'bg-success' : 'bg-muted'}`}
+              aria-label="Ocultar botón Reservar al entrar desde QR"
+            >
+              <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-card shadow transition-transform ${restaurant.hideReserveOnQr ? 'left-5' : 'left-0.5'}`} />
+            </button>
+          </div>
         </div>
+
 
 
 

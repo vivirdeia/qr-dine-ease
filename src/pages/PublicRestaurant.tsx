@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
-import { ALLERGENS } from "@/data/mockData";
+import { ALLERGENS, type Dish } from "@/data/mockData";
 import { heroRestaurant, dishImages } from "@/data/dishImages";
 import LocationMap from "@/components/public/LocationMap";
+import DishModal from "@/components/public/DishModal";
+import { useCookieConsent } from "@/hooks/useCookieConsent";
 import { getWineImage } from "@/data/wineImages";
 import { t, type Lang } from "@/data/translations";
 import { toast } from "sonner";
@@ -15,13 +17,28 @@ import {
 
 const PublicRestaurant = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { getTenantBySlug, restaurant: fallbackRestaurant, categories: fallbackCategories, dishes: fallbackDishes, wines: fallbackWines, dailyMenu: fallbackDailyMenu, addReservation, addReservationToTenant } = useApp();
+  const { getTenantBySlug, restaurant: fallbackRestaurant, categories: fallbackCategories, dishes: fallbackDishes, wines: fallbackWines, dailyMenu: fallbackDailyMenu, addReservation, addReservationToTenant, trackDishView } = useApp();
   const resolved = slug ? getTenantBySlug(slug) : null;
   const restaurant = resolved?.data.restaurant ?? fallbackRestaurant;
   const categories = resolved?.data.categories ?? fallbackCategories;
   const dishes = resolved?.data.dishes ?? fallbackDishes;
   const wines = resolved?.data.wines ?? fallbackWines;
   const dailyMenu = resolved?.data.dailyMenu ?? fallbackDailyMenu;
+  const tenantId = resolved?.tenant.id;
+
+  const [searchParams] = useSearchParams();
+  const { consent } = useCookieConsent();
+
+  // QR origin detection (persisted in sessionStorage so deep-links inside the menu keep the flag)
+  const QR_KEY = "carta_src_qr";
+  const fromQr = useState(() => {
+    if (searchParams.get("src") === "qr") {
+      try { sessionStorage.setItem(QR_KEY, "1"); } catch { /* ignore */ }
+      return true;
+    }
+    try { return sessionStorage.getItem(QR_KEY) === "1"; } catch { return false; }
+  })[0];
+
   const [activeCategory, setActiveCategory] = useState("menu-del-dia");
   const [searchQuery, setSearchQuery] = useState("");
   const [dietaryFilter, setDietaryFilter] = useState<string[]>([]);
@@ -32,6 +49,18 @@ const PublicRestaurant = () => {
   const [resData, setResData] = useState({ guests: 2, date: "", period: "", time: "", name: "", phone: "", email: "", notes: "", zone: "Sin preferencia" });
   const [wineFilter, setWineFilter] = useState("Todos");
   const [customGuests, setCustomGuests] = useState(false);
+  const [activeDish, setActiveDish] = useState<Dish | null>(null);
+
+  const openDish = (d: Dish) => {
+    setActiveDish(d);
+    if (!tenantId) return;
+    const k = `carta_view_${tenantId}_${d.id}`;
+    try {
+      if (sessionStorage.getItem(k)) return;
+      sessionStorage.setItem(k, "1");
+    } catch { /* ignore */ }
+    trackDishView(tenantId, d.id);
+  };
 
   const isOpen = () => {
     const now = new Date();
@@ -79,10 +108,11 @@ const PublicRestaurant = () => {
     };
   }, [restaurant.brandColors]);
 
-  // Inject tracking scripts
+  // Inject tracking scripts (only if user accepted cookies)
   useEffect(() => {
     const t = restaurant.tracking;
     if (!t) return;
+    if (consent !== "accepted") return;
     const scripts: HTMLScriptElement[] = [];
     if (t.googleAnalyticsId) {
       const s1 = document.createElement('script');
@@ -102,7 +132,7 @@ const PublicRestaurant = () => {
       scripts.push(s);
     }
     return () => { scripts.forEach(s => s.remove()); };
-  }, [restaurant.tracking]);
+  }, [restaurant.tracking, consent]);
 
   const scrollToCategory = (catId: string) => {
     setActiveCategory(catId);
@@ -274,7 +304,12 @@ const PublicRestaurant = () => {
               <h2 className="text-xl font-bold mb-4">{cat.icon} {cat.name}</h2>
               <div className="space-y-3">
                 {(searchQuery || dietaryFilter.length || excludedAllergens.length ? catDishes : dishes.filter(d => d.categoryId === cat.id)).map(dish => (
-                  <div key={dish.id} className={`flex gap-3 ${!dish.available ? 'opacity-50' : ''}`}>
+                  <button
+                    key={dish.id}
+                    type="button"
+                    onClick={() => openDish(dish)}
+                    className={`w-full text-left flex gap-3 rounded-xl p-1 -m-1 transition-colors hover:bg-secondary/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${!dish.available ? 'opacity-50' : ''}`}
+                  >
                     {(dish.photoUrl || dishImages[dish.id]) ? (
                       <img src={dish.photoUrl || dishImages[dish.id]} alt={dish.name} className="w-20 h-20 rounded-xl object-cover shrink-0" loading="lazy" />
                     ) : (
@@ -318,7 +353,7 @@ const PublicRestaurant = () => {
                       </div>
                       {dish.chefNote && <p className="text-xs text-primary/70 italic mt-1">👨‍🍳 {dish.chefNote}</p>}
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -383,7 +418,7 @@ const PublicRestaurant = () => {
       </div>
 
       {/* Floating reserve button */}
-      {restaurant.reservationsEnabled !== false && !showReservation && (
+      {restaurant.reservationsEnabled !== false && !(restaurant.hideReserveOnQr && fromQr) && !showReservation && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-lg w-full px-4">
           <Button variant="gradient" size="xl" className="w-full shadow-warm-lg" onClick={() => { setShowReservation(true); setReservationStep(0); }}>
             <CalendarCheck className="mr-2 h-5 w-5" /> {t(lang, "reserve.title")}
@@ -558,6 +593,8 @@ const PublicRestaurant = () => {
           </div>
         </div>
       )}
+
+      <DishModal dish={activeDish} onClose={() => setActiveDish(null)} />
     </div>
   );
 };

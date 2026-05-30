@@ -24,6 +24,7 @@ import Changelog from "./pages/info/Changelog";
 import Ayuda from "./pages/info/Ayuda";
 import Guias from "./pages/info/Guias";
 import ApiDocs from "./pages/info/ApiDocs";
+import CookieBanner from "./components/CookieBanner";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +79,7 @@ const App = () => (
             <Route path="/contacto" element={<Contacto />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <CookieBanner />
         </BrowserRouter>
       </AppProvider>
     </TooltipProvider>
