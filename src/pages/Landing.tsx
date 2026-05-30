@@ -1,8 +1,16 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { heroRestaurant } from "@/data/dishImages";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { FadeIn, FadeInStagger, FadeInItem } from "@/components/landing/FadeIn";
+import { TrustBar } from "@/components/landing/TrustBar";
+import { PressLogos } from "@/components/landing/PressLogos";
+import { Integrations } from "@/components/landing/Integrations";
+import { MigrationHelp } from "@/components/landing/MigrationHelp";
+import { InteractiveDemo } from "@/components/landing/InteractiveDemo";
+import { DashboardMockup } from "@/components/landing/DashboardMockup";
 import {
   UtensilsCrossed,
   Store,
