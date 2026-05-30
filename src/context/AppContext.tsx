@@ -282,6 +282,7 @@ interface AppState {
 
   // Reservations
   addReservation: (reservation: Omit<Reservation, "id" | "createdAt">) => void;
+  addReservationToTenant: (tenantId: string, reservation: Omit<Reservation, "id" | "createdAt">) => void;
   updateReservationStatus: (id: string, status: Reservation["status"]) => void;
 
   // Wines
