@@ -1653,7 +1653,7 @@ const Dashboard = () => {
           </button>
         </div>
         <nav className="p-3 space-y-1">
-          {sidebarItems.map(item => (
+          {visibleSidebarItems.map(item => (
             <button key={item.id} onClick={() => { setActive(item.id); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${active === item.id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'}`}>
               <item.icon className="h-4 w-4" />
