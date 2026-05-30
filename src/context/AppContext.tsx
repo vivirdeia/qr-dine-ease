@@ -64,6 +64,7 @@ export interface TenantData {
   dailyMenu: DailyMenu;
   notifications: NotificationSettings;
   appNotifications: AppNotification[];
+  dishViews?: Record<string, number>;
 }
 
 interface DBState {
