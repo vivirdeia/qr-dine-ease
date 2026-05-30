@@ -200,19 +200,21 @@ const steps = [
 const HowItWorks = () => (
   <section className="py-20">
     <div className="container">
-      <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">Cómo funciona</h2>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <FadeIn>
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">Cómo funciona</h2>
+      </FadeIn>
+      <FadeInStagger className="grid grid-cols-1 md:grid-cols-4 gap-8">
         {steps.map((s, i) => (
-          <div key={i} className="text-center space-y-4">
+          <FadeInItem key={i} className="text-center space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-gradient-primary mx-auto flex items-center justify-center shadow-warm">
               <s.icon className="h-7 w-7 text-primary-foreground" />
             </div>
             <div className="text-sm font-bold text-primary">Paso {i + 1}</div>
             <h3 className="text-lg font-bold font-sans">{s.title}</h3>
             <p className="text-sm text-muted-foreground">{s.desc}</p>
-          </div>
+          </FadeInItem>
         ))}
-      </div>
+      </FadeInStagger>
     </div>
   </section>
 );
