@@ -79,6 +79,7 @@ const App = () => (
             <Route path="/contacto" element={<Contacto />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <CookieBanner />
         </BrowserRouter>
       </AppProvider>
     </TooltipProvider>
