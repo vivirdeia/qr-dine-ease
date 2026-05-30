@@ -360,6 +360,9 @@ const PublicRestaurant = () => {
         </div>
       </div>
 
+      {/* Location map */}
+      <LocationMap name={restaurant.name} address={restaurant.address} lat={restaurant.lat} lng={restaurant.lng} />
+
       {/* Footer */}
       <div className="mt-12 px-4 pb-8 border-t border-border pt-6 space-y-3">
         <div className="flex items-center gap-2 text-sm"><MapPin className="h-4 w-4 text-muted-foreground" />{restaurant.address}</div>
