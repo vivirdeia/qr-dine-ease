@@ -255,13 +255,15 @@ const features = [
 const Features = () => (
   <section id="features" className="py-20 bg-secondary/50">
     <div className="container">
-      <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Características</h2>
-      <p className="text-muted-foreground text-center mb-16 max-w-xl mx-auto">
-        Todo lo que necesita tu restaurante para digitalizar carta y reservas
-      </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <FadeIn className="text-center">
+        <h2 className="text-3xl md:text-4xl font-bold mb-4">Características</h2>
+        <p className="text-muted-foreground mb-16 max-w-xl mx-auto">
+          Todo lo que necesita tu restaurante para digitalizar carta y reservas
+        </p>
+      </FadeIn>
+      <FadeInStagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {features.map((f, i) => (
-          <div
+          <FadeInItem
             key={i}
             className="bg-card rounded-2xl p-6 border border-border hover:shadow-warm transition-shadow space-y-4"
           >
@@ -270,9 +272,9 @@ const Features = () => (
             </div>
             <h3 className="text-lg font-bold font-sans">{f.title}</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-          </div>
+          </FadeInItem>
         ))}
-      </div>
+      </FadeInStagger>
     </div>
   </section>
 );
