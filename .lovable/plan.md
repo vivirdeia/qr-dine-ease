@@ -1,110 +1,81 @@
-# Multi-tenant + roles con localStorage
+## Estado actual
 
-Mantenemos todo en `localStorage`, pero reestructuramos los datos para soportar **varios restaurantes (tenants) y varios usuarios con roles**.
+La app ya tiene: multi-tenant, roles (superadmin/owner/staff), auth básica, CRUD de carta/mesas/reservas, panel global, página pública por slug, planes y límites. Todo en `localStorage` bajo `carta_db`.
 
-## Modelo de datos nuevo
+## Qué falta para que sea "completamente funcional" en localStorage
 
-Hoy hay una clave por entidad (`carta_dishes`, `carta_restaurant`, etc.) compartida. La cambiamos a un único árbol indexado por `tenantId`:
+Asumiendo que el techo sigue siendo localStorage (un navegador = un universo, sin servidor, sin emails reales), estas son las piezas que faltan para cerrar el flujo de uso real:
 
-```text
-carta_db = {
-  users: [
-    { id, email, passwordHash, name, role: "superadmin" | "owner" | "staff", tenantId | null }
-  ],
-  tenants: [
-    { id, slug, plan: "free"|"pro"|"business", createdAt, ownerId }
-  ],
-  data: {
-    [tenantId]: {
-      restaurant, categories[], dishes[], wines[],
-      tables[], reservations[], dailyMenu,
-      notifications, appNotifications[]
-    }
-  },
-  session: { userId } | null
-}
-```
+### 1. Onboarding y configuración inicial
+- Asistente de bienvenida tras registro: nombre del restaurante, slug, horario, primera categoría y primer plato.
+- Validación de slug único (ahora puede chocar entre tenants) con sugerencia automática.
+- Vista previa del enlace público y QR descargable (PNG/SVG) en el dashboard.
 
-Clave única en localStorage: `carta_db`. Todo lo demás se deriva.
+### 2. Gestión de carta más completa
+- Reordenar platos y categorías por drag & drop (posición ya existe en el modelo).
+- Subir imágenes de platos/logo/portada como base64 en localStorage, con aviso de tamaño y compresión automática.
+- Alérgenos, etiquetas (vegano, sin gluten, picante) y variantes (medias raciones, tamaños) con precios.
+- Marcar platos como "destacado" / "novedad".
+- Importar/exportar carta como JSON o CSV.
 
-## Roles
+### 3. Reservas usables de verdad
+- Configurar duración media, aforo por franja y antelación mínima/máxima.
+- Bloquear días/horas (vacaciones, días cerrados).
+- Vista calendario semanal y vista de sala (qué mesa a qué hora).
+- Cambiar estado de reserva (confirmada, sentada, no-show, cancelada) y asignar/mover mesa.
+- Buzón de notificaciones in-app cuando llega una reserva nueva (ya hay `appNotifications`, falta engancharlo en todos los flujos y un indicador en el header).
 
-| Rol | Qué puede hacer |
-|-----|----------------|
-| **superadmin** | Ver panel global: lista de todos los tenants, usuarios, métricas agregadas, cambiar planes, suspender cuentas, impersonar |
-| **owner** | Dueño del restaurante. CRUD completo de su tenant, invitar staff, gestionar plan |
-| **staff** | Empleado. Ver carta, gestionar reservas del día, marcar platos no disponibles. No puede borrar, no ve facturación, no invita |
+### 4. Menú del día y promos
+- Editor del menú del día con platos seleccionados de la carta, precio y disponibilidad por día de la semana.
+- Banner configurable en la página pública (promoción, evento, cerrado por vacaciones).
 
-Helpers: `hasRole(role)`, `canEdit()`, `isSuperadmin()`.
+### 5. Equipo y permisos finos
+- Página de gestión de equipo con login real del staff (ya están las APIs, falta UI dedicada y filtrado de menú lateral por rol).
+- Registro de auditoría: quién creó/editó/borró qué, visible para el owner.
 
-## Cambios concretos
+### 6. Cuenta y datos del usuario
+- Cambiar contraseña y email desde Ajustes.
+- Cerrar sesión en todos los sitios (limpia `session`).
+- Exportar todos los datos del tenant a JSON y reimportar.
+- Borrar restaurante (con confirmación escribiendo el nombre).
+- "Olvidé mi contraseña" simulado: como no hay email, pedir respuesta a una pregunta de seguridad definida al registrarse, o reset manual desde el panel superadmin.
 
-### `src/context/AppContext.tsx` — refactor mayor
-- Una sola clave `carta_db` con el árbol completo
-- `currentUser` y `currentTenant` derivados de `session.userId`
-- Todos los CRUD escriben en `data[currentTenant.id]`
-- `login` busca en `users[]` (hash simple tipo btoa, no es seguridad real pero evita texto plano)
-- `register` crea `user` + `tenant` + `data[tenantId]` vacío y asigna `role: "owner"`
-- Hook `useAuth()` expone `user`, `tenant`, `role`, `can(action)`
+### 7. Panel superadmin más útil
+- Buscar tenants/usuarios, filtros por plan y estado.
+- Métricas reales calculadas sobre los datos (nº platos, reservas últimos 30 días, último login).
+- Crear/editar/borrar usuarios manualmente, resetear contraseña, asignar plan masivo.
+- Exportar backup global e importarlo.
 
-### `src/pages/SuperAdmin.tsx` — nuevo
-- Lista de tenants con plan, nº de platos, nº de reservas, fecha de alta
-- Lista de usuarios con su rol y tenant
-- Acciones: cambiar plan, suspender tenant, impersonar (login como ese owner para depurar), borrar
-- Métricas globales: MRR simulado, total restaurantes, total reservas
+### 8. UX y robustez
+- Estado vacío con CTA en cada sección (cuando no hay platos, mesas, reservas).
+- Confirmaciones destructivas consistentes (AlertDialog) en borrados.
+- Toasts de éxito/error en todas las mutaciones.
+- Manejo de cuota de localStorage llena (try/catch al guardar + aviso al usuario).
+- Versionado del esquema `carta_db` (`schemaVersion`) y migraciones futuras seguras.
+- Modo oscuro respetando guía de diseño (ya hay tokens, falta el toggle).
+- Página 404 con enlace a inicio (ya existe, revisar).
 
-### `src/pages/Dashboard.tsx`
-- Sección "Equipo" nueva (solo owner): invitar staff por email, ver miembros, cambiar rol, eliminar
-- Ocultar/deshabilitar acciones según rol (staff no ve "Ajustes" ni "Eliminar restaurante")
-- Mostrar badge del rol en header
+### 9. Página pública del restaurante
+- Filtros por categoría, búsqueda y alérgenos.
+- Formulario de reserva con validaciones (teléfono, capacidad vs aforo).
+- Compartir por WhatsApp y enlace directo a Maps.
+- SEO básico por restaurante: `<title>`, meta description, OpenGraph con logo.
 
-### `src/App.tsx`
-- `ProtectedRoute` acepta `requiredRole`
-- Ruta nueva `/admin` protegida con `requiredRole="superadmin"`
-- Redirección post-login: superadmin → `/admin`, resto → `/dashboard`
+### 10. Limitaciones honestas que conviene comunicar en la UI
+- "Los datos se guardan solo en este navegador. Usa Exportar para hacer backup."
+- Avisos cuando el staff invitado intenta entrar desde otro navegador (no funcionará hasta que haya backend).
 
-### `src/pages/PublicRestaurant.tsx`
-- En vez de leer del tenant actual, lee `data[tenantId]` resolviendo por `slug`
-- Así diferentes URLs `/r/casa-martin` y `/r/la-tasca` muestran datos distintos del mismo localStorage
+---
 
-### `src/pages/Login.tsx` + `Register.tsx`
-- Login funciona contra `users[]` global
-- Register crea owner+tenant en una transacción
+## Propuesta de orden
 
-## Cuenta superadmin
+No tiene sentido hacerlo todo en un golpe. Sugiero priorizar así y elegir por dónde empezar:
 
-Sembrada al primer arranque si no existe:
-```text
-email: admin@carta.app
-password: admin1234
-role: superadmin
-tenantId: null
-```
+1. **Crítico para usar la app a diario**: QR + enlace público bien visible, subida de imágenes, reservas con estados y vista calendario, notificaciones in-app enganchadas.
+2. **Crítico para que el dueño confíe**: exportar/importar JSON, cambiar contraseña, borrar cuenta, manejo de cuota llena, versionado de esquema.
+3. **Pulido**: drag & drop, alérgenos/etiquetas, menú del día avanzado, filtros en la pública, SEO.
+4. **Admin global**: búsqueda, métricas reales, backup global.
 
-Visible solo como nota en `/login` cuando estés en modo dev (no en la UI pública).
+## Pregunta
 
-## Migración de datos existentes
-
-Al cargar la app, si encuentra las claves viejas (`carta_dishes`, etc.) y no existe `carta_db`, las migra automáticamente: crea un tenant "demo" con el usuario actual como owner y mueve todo dentro. Luego borra las claves viejas.
-
-## Limitaciones que asumimos (al seguir con localStorage)
-
-- Cada navegador tiene su propio "universo" — no se comparte entre dispositivos
-- "Multi-tenant" significa que **en un mismo navegador** puede haber varios restaurantes y usuarios, útil para demo/superadmin
-- Staff invitado solo puede entrar desde el mismo navegador donde fue creado (o reintroduciendo sus credenciales manualmente)
-- No hay seguridad real: cualquiera con devtools ve todo. Es un prototipo funcional, no producción
-
-## Archivos afectados
-
-| Archivo | Cambio |
-|---|---|
-| `src/context/AppContext.tsx` | Refactor completo al modelo `carta_db` + roles + multi-tenant |
-| `src/pages/SuperAdmin.tsx` | **Nuevo** panel global |
-| `src/pages/Dashboard.tsx` | Sección Equipo, guards por rol, badge rol |
-| `src/pages/Login.tsx` | Login contra `users[]` |
-| `src/pages/Register.tsx` | Crear tenant + owner |
-| `src/pages/PublicRestaurant.tsx` | Resolver tenant por slug |
-| `src/App.tsx` | Ruta `/admin`, `requiredRole`, redirect por rol |
-| `src/data/mockData.ts` | Tipos `User`, `Tenant`, `Role` |
-
-¿Procedo?
+¿Por dónde quieres que empiece? Puedo arrancar por el bloque 1 completo, o elegir piezas sueltas (por ejemplo solo "QR + imágenes" o solo "reservas con estados y calendario").
