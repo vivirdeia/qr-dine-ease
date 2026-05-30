@@ -92,18 +92,35 @@ const Hero = () => (
   <section className="relative overflow-hidden py-20 md:py-32">
     <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
     <div className="container relative">
-      <div className="max-w-3xl mx-auto text-center space-y-6">
-        <span className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium">
-          🍽️ +800 restaurantes ya usan Carta
-        </span>
-        <h1 className="text-2xl md:text-2xl font-bold leading-tight tracking-tight">
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1 } } }}
+        className="max-w-3xl mx-auto text-center space-y-6"
+      >
+        <motion.span
+          variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
+          className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium"
+        >
+          +800 restaurantes ya usan Carta
+        </motion.span>
+        <motion.h1
+          variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
+          className="text-4xl md:text-6xl font-bold leading-tight tracking-tight"
+        >
           Tu carta digital. <span className="text-gradient-primary">Un solo QR.</span>
-        </h1>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+        </motion.h1>
+        <motion.p
+          variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
+          className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
+        >
           Crea la carta digital de tu restaurante en 10 minutos. Tus clientes escanean el QR, ven los platos, y reservan
           mesa. Sin apps, sin comisiones, sin complicaciones.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
+        </motion.p>
+        <motion.div
+          variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
+          className="flex flex-col sm:flex-row gap-4 justify-center pt-2"
+        >
           <Button variant="gradient" size="xl" asChild>
             <Link to="/register">
               Crear mi carta gratis <ArrowRight className="ml-1 h-5 w-5" />
@@ -112,16 +129,19 @@ const Hero = () => (
           <Button variant="outline-primary" size="xl" asChild>
             <Link to="/r/casa-martin">Ver demo en vivo</Link>
           </Button>
-        </div>
-        <div className="flex items-center justify-center gap-3 pt-4">
+        </motion.div>
+        <motion.div
+          variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
+          className="flex items-center justify-center gap-3 pt-4"
+        >
           <div className="flex -space-x-2">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="w-8 h-8 rounded-full border-2 border-background bg-gradient-primary" />
             ))}
           </div>
           <span className="text-sm text-muted-foreground">Más de 800 restaurantes</span>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
       <div className="mt-16 flex justify-center gap-6 px-4">
         <div className="relative w-48 md:w-56 h-80 md:h-96 rounded-2xl shadow-warm-lg overflow-hidden border border-border">
           <img
