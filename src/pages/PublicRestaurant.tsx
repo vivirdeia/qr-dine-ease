@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
-import { ALLERGENS } from "@/data/mockData";
+import { ALLERGENS, type Dish } from "@/data/mockData";
 import { heroRestaurant, dishImages } from "@/data/dishImages";
 import LocationMap from "@/components/public/LocationMap";
+import DishModal from "@/components/public/DishModal";
+import { useCookieConsent } from "@/hooks/useCookieConsent";
 import { getWineImage } from "@/data/wineImages";
 import { t, type Lang } from "@/data/translations";
 import { toast } from "sonner";
