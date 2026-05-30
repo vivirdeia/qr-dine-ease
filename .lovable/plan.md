@@ -1,81 +1,37 @@
-## Estado actual
+# Qué voy a implementar ahora
 
-La app ya tiene: multi-tenant, roles (superadmin/owner/staff), auth básica, CRUD de carta/mesas/reservas, panel global, página pública por slug, planes y límites. Todo en `localStorage` bajo `carta_db`.
+Bloque 1 del plan, **omitiendo la subida de imágenes**. Todo sigue en `localStorage`.
 
-## Qué falta para que sea "completamente funcional" en localStorage
+## 1. Enlace público y QR visibles en el Dashboard
+- Tarjeta destacada en el Dashboard del owner con:
+  - URL pública del restaurante (`/r/{slug}`) con botón "Copiar".
+  - QR generado en cliente (librería `qrcode`) descargable como PNG.
+  - Botón "Abrir página pública" en nueva pestaña.
+  - Botón "Compartir por WhatsApp" con texto prellenado.
+- Validación de slug único entre tenants al registrarse y al editarlo desde Ajustes, con sugerencia automática si choca.
 
-Asumiendo que el techo sigue siendo localStorage (un navegador = un universo, sin servidor, sin emails reales), estas son las piezas que faltan para cerrar el flujo de uso real:
+## 2. Carta más rica (sin imágenes)
+- **Alérgenos** por plato: selector múltiple con los 14 oficiales UE (gluten, lácteos, frutos secos, etc.) mostrados como iconos/badges en la página pública.
+- **Etiquetas**: vegano, vegetariano, sin gluten, picante, novedad, destacado. Filtrables en la pública.
+- **Variantes** con precio propio: ej. "media ración / ración", "pequeña / mediana / grande". El precio principal sigue funcionando si no hay variantes.
+- **Marcar destacado / novedad** y mostrarlos con badge en la pública.
 
-### 1. Onboarding y configuración inicial
-- Asistente de bienvenida tras registro: nombre del restaurante, slug, horario, primera categoría y primer plato.
-- Validación de slug único (ahora puede chocar entre tenants) con sugerencia automática.
-- Vista previa del enlace público y QR descargable (PNG/SVG) en el dashboard.
+## 3. Página pública mejorada
+- Filtros por categoría (chips), búsqueda por nombre y filtro por alérgenos ("ocultar platos con gluten…").
+- Mostrar badges de etiquetas y alérgenos en cada plato.
+- Mostrar variantes con sus precios.
 
-### 2. Gestión de carta más completa
-- Reordenar platos y categorías por drag & drop (posición ya existe en el modelo).
-- Subir imágenes de platos/logo/portada como base64 en localStorage, con aviso de tamaño y compresión automática.
-- Alérgenos, etiquetas (vegano, sin gluten, picante) y variantes (medias raciones, tamaños) con precios.
-- Marcar platos como "destacado" / "novedad".
-- Importar/exportar carta como JSON o CSV.
+## Detalles técnicos
 
-### 3. Reservas usables de verdad
-- Configurar duración media, aforo por franja y antelación mínima/máxima.
-- Bloquear días/horas (vacaciones, días cerrados).
-- Vista calendario semanal y vista de sala (qué mesa a qué hora).
-- Cambiar estado de reserva (confirmada, sentada, no-show, cancelada) y asignar/mover mesa.
-- Buzón de notificaciones in-app cuando llega una reserva nueva (ya hay `appNotifications`, falta engancharlo en todos los flujos y un indicador en el header).
+- Nueva dependencia: `qrcode` (genera QR en canvas/SVG, sin red).
+- Modelo `Dish` extendido con `allergens: string[]`, `labels: string[]`, `variants: { name: string; price: number }[]`, `featured: boolean`, `isNew: boolean`. Migración suave: si faltan campos, se asumen vacíos/false.
+- Helper `getPublicUrl(slug)` que arma la URL absoluta con `window.location.origin`.
+- Validación de slug: comprobar contra todos los tenants en `carta_db`.
+- Sin cambios en autenticación ni en el modelo de tenants/roles.
 
-### 4. Menú del día y promos
-- Editor del menú del día con platos seleccionados de la carta, precio y disponibilidad por día de la semana.
-- Banner configurable en la página pública (promoción, evento, cerrado por vacaciones).
+## Qué NO entra en este bloque (queda para después)
+- Subida de imágenes de platos/logo/portada (omitido a petición tuya).
+- Reservas con estados y vista calendario.
+- Menú del día, equipo, export/import, superadmin avanzado.
 
-### 5. Equipo y permisos finos
-- Página de gestión de equipo con login real del staff (ya están las APIs, falta UI dedicada y filtrado de menú lateral por rol).
-- Registro de auditoría: quién creó/editó/borró qué, visible para el owner.
-
-### 6. Cuenta y datos del usuario
-- Cambiar contraseña y email desde Ajustes.
-- Cerrar sesión en todos los sitios (limpia `session`).
-- Exportar todos los datos del tenant a JSON y reimportar.
-- Borrar restaurante (con confirmación escribiendo el nombre).
-- "Olvidé mi contraseña" simulado: como no hay email, pedir respuesta a una pregunta de seguridad definida al registrarse, o reset manual desde el panel superadmin.
-
-### 7. Panel superadmin más útil
-- Buscar tenants/usuarios, filtros por plan y estado.
-- Métricas reales calculadas sobre los datos (nº platos, reservas últimos 30 días, último login).
-- Crear/editar/borrar usuarios manualmente, resetear contraseña, asignar plan masivo.
-- Exportar backup global e importarlo.
-
-### 8. UX y robustez
-- Estado vacío con CTA en cada sección (cuando no hay platos, mesas, reservas).
-- Confirmaciones destructivas consistentes (AlertDialog) en borrados.
-- Toasts de éxito/error en todas las mutaciones.
-- Manejo de cuota de localStorage llena (try/catch al guardar + aviso al usuario).
-- Versionado del esquema `carta_db` (`schemaVersion`) y migraciones futuras seguras.
-- Modo oscuro respetando guía de diseño (ya hay tokens, falta el toggle).
-- Página 404 con enlace a inicio (ya existe, revisar).
-
-### 9. Página pública del restaurante
-- Filtros por categoría, búsqueda y alérgenos.
-- Formulario de reserva con validaciones (teléfono, capacidad vs aforo).
-- Compartir por WhatsApp y enlace directo a Maps.
-- SEO básico por restaurante: `<title>`, meta description, OpenGraph con logo.
-
-### 10. Limitaciones honestas que conviene comunicar en la UI
-- "Los datos se guardan solo en este navegador. Usa Exportar para hacer backup."
-- Avisos cuando el staff invitado intenta entrar desde otro navegador (no funcionará hasta que haya backend).
-
----
-
-## Propuesta de orden
-
-No tiene sentido hacerlo todo en un golpe. Sugiero priorizar así y elegir por dónde empezar:
-
-1. **Crítico para usar la app a diario**: QR + enlace público bien visible, subida de imágenes, reservas con estados y vista calendario, notificaciones in-app enganchadas.
-2. **Crítico para que el dueño confíe**: exportar/importar JSON, cambiar contraseña, borrar cuenta, manejo de cuota llena, versionado de esquema.
-3. **Pulido**: drag & drop, alérgenos/etiquetas, menú del día avanzado, filtros en la pública, SEO.
-4. **Admin global**: búsqueda, métricas reales, backup global.
-
-## Pregunta
-
-¿Por dónde quieres que empiece? Puedo arrancar por el bloque 1 completo, o elegir piezas sueltas (por ejemplo solo "QR + imágenes" o solo "reservas con estados y calendario").
+¿Le doy?

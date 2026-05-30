@@ -308,6 +308,8 @@ interface AppState {
 
   // helpers
   can: (action: "manage" | "edit" | "view") => boolean;
+  isSlugAvailable: (slug: string, excludeTenantId?: string) => boolean;
+  suggestSlug: (base: string) => string;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -395,7 +397,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const userId = genId("u");
       const tenantId = genId("t");
       const now = new Date().toISOString();
-      const slug = slugify(name);
+      const baseSlug = slugify(name);
+      let slug = baseSlug;
+      let i = 2;
+      while (prev.tenants.some(t => t.slug === slug)) { slug = `${baseSlug}-${i++}`; }
       const user: User = { id: userId, email, password, name, role: "owner", tenantId, createdAt: now };
       const tenant: Tenant = { id: tenantId, slug, plan: "free", createdAt: now, ownerId: userId };
       const data: TenantData = {
@@ -672,6 +677,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return false;
   }, [role]);
 
+  const isSlugAvailable = useCallback((slug: string, excludeTenantId?: string) => {
+    const s = slugify(slug);
+    if (!s) return false;
+    return !db.tenants.some(t => t.slug === s && t.id !== excludeTenantId);
+  }, [db.tenants]);
+
+  const suggestSlug = useCallback((base: string) => {
+    const s = slugify(base);
+    if (isSlugAvailable(s)) return s;
+    for (let i = 2; i < 1000; i++) {
+      const candidate = `${s}-${i}`;
+      if (isSlugAvailable(candidate)) return candidate;
+    }
+    return `${s}-${Date.now()}`;
+  }, [isSlugAvailable]);
+
   const value: AppState = {
     restaurant: activeData.restaurant,
     categories: activeData.categories,
@@ -700,7 +721,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     toggleNotification, markNotificationRead, markAllNotificationsRead,
     getTenantBySlug, setTenantPlan, suspendTenant, deleteTenant, impersonate,
     inviteTeamMember, updateUserRole, removeUser,
-    can,
+    can, isSlugAvailable, suggestSlug,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

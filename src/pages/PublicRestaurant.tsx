@@ -24,6 +24,7 @@ const PublicRestaurant = () => {
   const [activeCategory, setActiveCategory] = useState("menu-del-dia");
   const [searchQuery, setSearchQuery] = useState("");
   const [dietaryFilter, setDietaryFilter] = useState<string[]>([]);
+  const [excludedAllergens, setExcludedAllergens] = useState<string[]>([]);
   const [showReservation, setShowReservation] = useState(false);
   const [lang, setLang] = useState<Lang>("ES");
   const [reservationStep, setReservationStep] = useState(0);
@@ -111,15 +112,17 @@ const PublicRestaurant = () => {
   const filteredDishes = dishes.filter(d => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      return d.name.toLowerCase().includes(q) || d.description.toLowerCase().includes(q);
+      if (!(d.name.toLowerCase().includes(q) || d.description.toLowerCase().includes(q))) return false;
     }
     if (dietaryFilter.includes("vegetarian") && !d.dietary.includes("vegetarian")) return false;
     if (dietaryFilter.includes("vegan") && !d.dietary.includes("vegan")) return false;
-    if (dietaryFilter.includes("gluten-free") && d.allergens.includes("gluten")) return false;
+    if (dietaryFilter.includes("gluten-free") && d.allergens.includes("gluten") && !d.dietary.includes("gluten-free")) return false;
+    if (excludedAllergens.some(a => d.allergens.includes(a))) return false;
     return true;
   });
 
   const toggleDietary = (f: string) => setDietaryFilter(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f]);
+  const toggleExcludedAllergen = (a: string) => setExcludedAllergens(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]);
 
   return (
     <div className="min-h-screen bg-background pb-24 max-w-lg mx-auto relative">
@@ -211,7 +214,7 @@ const PublicRestaurant = () => {
               🍷 {t(lang, "menu.wines")}
             </button>
           </div>
-          <div className="flex gap-2 pb-1">
+          <div className="flex gap-2 pb-1 flex-wrap">
             {[
               { id: "vegetarian", label: t(lang, "filter.vegetarian") },
               { id: "vegan", label: t(lang, "filter.vegan") },
@@ -226,6 +229,17 @@ const PublicRestaurant = () => {
               </button>
             ))}
           </div>
+          <details className="mt-1">
+            <summary className="text-[11px] text-muted-foreground cursor-pointer select-none">Ocultar platos con alérgenos…</summary>
+            <div className="flex gap-1.5 flex-wrap mt-2 pb-1">
+              {ALLERGENS.map(a => (
+                <button key={a.id} onClick={() => toggleExcludedAllergen(a.id)}
+                  className={`shrink-0 px-2 py-1 rounded-full text-[11px] transition-colors ${excludedAllergens.includes(a.id) ? 'bg-destructive/10 text-destructive border border-destructive/30' : 'bg-secondary/50 text-muted-foreground border border-border'}`}>
+                  {a.emoji} {a.name}
+                </button>
+              ))}
+            </div>
+          </details>
         </div>
       </div>
 
@@ -258,7 +272,7 @@ const PublicRestaurant = () => {
             <div key={cat.id} ref={el => { categoryRefs.current[cat.id] = el; }}>
               <h2 className="text-xl font-bold mb-4">{cat.icon} {cat.name}</h2>
               <div className="space-y-3">
-                {(searchQuery ? catDishes : dishes.filter(d => d.categoryId === cat.id)).map(dish => (
+                {(searchQuery || dietaryFilter.length || excludedAllergens.length ? catDishes : dishes.filter(d => d.categoryId === cat.id)).map(dish => (
                   <div key={dish.id} className={`flex gap-3 ${!dish.available ? 'opacity-50' : ''}`}>
                     {(dish.photoUrl || dishImages[dish.id]) ? (
                       <img src={dish.photoUrl || dishImages[dish.id]} alt={dish.name} className="w-20 h-20 rounded-xl object-cover shrink-0" loading="lazy" />
@@ -269,7 +283,8 @@ const PublicRestaurant = () => {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-medium text-sm">{dish.name}</span>
+                            <span className="font-medium text-sm">{dish.name}</span>
+                            {dish.featured && <span className="bg-primary/15 text-primary text-[10px] px-1.5 py-0.5 rounded-full font-bold">★ Destacado</span>}
                             {dish.isNew && <span className="bg-gold text-gold-foreground text-[10px] px-1.5 py-0.5 rounded-full font-bold">{t(lang, "menu.new")}</span>}
                             {!dish.available && <span className="bg-muted text-muted-foreground text-[10px] px-1.5 py-0.5 rounded-full font-bold">{t(lang, "menu.soldout")}</span>}
                           </div>
@@ -280,11 +295,22 @@ const PublicRestaurant = () => {
                           {dish.oldPrice && <span className="block text-xs text-muted-foreground line-through">€{dish.oldPrice.toFixed(2)}</span>}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        {dish.dietary.includes("vegetarian") && <span className="text-xs">🌿</span>}
-                        {dish.dietary.includes("vegan") && <span className="text-xs">🌱</span>}
-                        {dish.dietary.includes("spicy") && <span className="text-xs">🔥</span>}
-                        {dish.allergens.slice(0, 3).map(a => {
+                      {dish.variants && dish.variants.length > 0 && (
+                        <div className="mt-1.5 space-y-0.5">
+                          {dish.variants.map((v, i) => (
+                            <div key={i} className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground">{v.name}</span>
+                              <span className="font-medium text-primary">€{v.price.toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        {dish.dietary.includes("vegetarian") && <span className="text-xs" title="Vegetariano">🌿</span>}
+                        {dish.dietary.includes("vegan") && <span className="text-xs" title="Vegano">🌱</span>}
+                        {dish.dietary.includes("gluten-free") && <span className="text-xs" title="Sin gluten">🚫🌾</span>}
+                        {dish.dietary.includes("spicy") && <span className="text-xs" title="Picante">🔥</span>}
+                        {dish.allergens.slice(0, 5).map(a => {
                           const al = ALLERGENS.find(x => x.id === a);
                           return al ? <span key={a} className="text-[10px]" title={al.name}>{al.emoji}</span> : null;
                         })}

@@ -34,12 +34,20 @@ const sidebarItems: { id: Section; label: string; icon: React.ElementType }[] = 
 // LoginScreen removed — now handled by /login route
 // ── Restaurant Section ──
 const RestaurantSection = () => {
-  const { restaurant, updateRestaurant } = useApp();
+  const { restaurant, updateRestaurant, isSlugAvailable, currentTenant, suggestSlug } = useApp();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ ...restaurant });
 
   const handleSave = () => {
-    updateRestaurant(form);
+    const nextSlug = (form.slug || "").trim().toLowerCase();
+    if (!nextSlug) { toast.error("El slug no puede estar vacío"); return; }
+    if (!/^[a-z0-9-]+$/.test(nextSlug)) { toast.error("Solo letras minúsculas, números y guiones"); return; }
+    if (nextSlug !== restaurant.slug && !isSlugAvailable(nextSlug, currentTenant?.id)) {
+      const sug = suggestSlug(nextSlug);
+      toast.error(`Ese enlace ya está en uso. Sugerencia: ${sug}`);
+      return;
+    }
+    updateRestaurant({ ...form, slug: nextSlug });
     setEditing(false);
     toast.success("Restaurante actualizado");
   };
@@ -90,6 +98,24 @@ const RestaurantSection = () => {
               )}
             </div>
           ))}
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">Enlace público (slug)</label>
+          {editing ? (
+            <>
+              <div className="mt-1 flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{window.location.origin}/r/</span>
+                <input
+                  className="flex-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm font-mono"
+                  value={form.slug || ""}
+                  onChange={e => setForm(prev => ({ ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") }))}
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">Solo minúsculas, números y guiones. Debe ser único.</p>
+            </>
+          ) : (
+            <div className="mt-1 px-3 py-2 bg-secondary rounded-lg text-sm font-mono break-all">{window.location.origin}/r/{restaurant.slug}</div>
+          )}
         </div>
         <div>
           <label className="text-xs font-medium text-muted-foreground">Descripción</label>
@@ -390,8 +416,10 @@ const MenuSection = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-sm">{dish.name}</span>
+                    {dish.featured && <span className="bg-primary/15 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold">Destacado</span>}
                     {dish.isNew && <span className="bg-gold text-gold-foreground text-[10px] px-2 py-0.5 rounded-full font-bold">Nuevo</span>}
                     {!dish.available && <span className="bg-muted text-muted-foreground text-[10px] px-2 py-0.5 rounded-full font-bold">Agotado</span>}
+                    {dish.variants && dish.variants.length > 0 && <span className="bg-secondary text-muted-foreground text-[10px] px-2 py-0.5 rounded-full">{dish.variants.length} variantes</span>}
                   </div>
                   <p className="text-xs text-muted-foreground line-clamp-1">{dish.description}</p>
                   <div className="flex items-center gap-2 mt-1">
@@ -537,24 +565,70 @@ const MenuSection = () => {
                 <p className="text-[10px] text-muted-foreground mt-1">Pega una URL o sube una foto (máx 5MB, se comprime)</p>
               </div>
               <div>
+                <label className="text-xs font-medium text-muted-foreground">Etiquetas</label>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {[
+                    { id: "vegetarian", label: "🌿 Vegetariano" },
+                    { id: "vegan", label: "🌱 Vegano" },
+                    { id: "gluten-free", label: "🚫🌾 Sin gluten" },
+                    { id: "spicy", label: "🔥 Picante" },
+                  ].map(tag => {
+                    const active = dishForm.dietary?.includes(tag.id);
+                    return (
+                      <button key={tag.id} type="button" onClick={() => setDishForm(prev => ({
+                        ...prev,
+                        dietary: active ? (prev.dietary || []).filter(x => x !== tag.id) : [...(prev.dietary || []), tag.id],
+                      }))}
+                        className={`text-xs px-2 py-1 rounded-full transition-colors ${active ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted-foreground'}`}>
+                        {tag.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
                 <label className="text-xs font-medium text-muted-foreground">Alérgenos</label>
                 <div className="flex flex-wrap gap-1.5 mt-1">
                   {ALLERGENS.map(a => (
-                    <button key={a.id} onClick={() => setDishForm(prev => ({ ...prev, allergens: prev.allergens?.includes(a.id) ? prev.allergens.filter(x => x !== a.id) : [...(prev.allergens || []), a.id] }))}
+                    <button key={a.id} type="button" onClick={() => setDishForm(prev => ({ ...prev, allergens: prev.allergens?.includes(a.id) ? prev.allergens.filter(x => x !== a.id) : [...(prev.allergens || []), a.id] }))}
                       className={`text-xs px-2 py-1 rounded-full transition-colors ${dishForm.allergens?.includes(a.id) ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted-foreground'}`}>
                       {a.emoji} {a.name}
                     </button>
                   ))}
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-muted-foreground">Variantes (opcional)</label>
+                  <button type="button" className="text-xs text-primary font-medium" onClick={() => setDishForm(prev => ({ ...prev, variants: [...(prev.variants || []), { name: "", price: 0 }] }))}>+ Añadir variante</button>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Útil para medias raciones o tamaños. Si está vacío se usa solo el precio principal.</p>
+                <div className="space-y-2 mt-2">
+                  {(dishForm.variants || []).map((v, i) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <input className="flex-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" placeholder="Ej: Media ración" value={v.name}
+                        onChange={e => setDishForm(prev => ({ ...prev, variants: (prev.variants || []).map((x, idx) => idx === i ? { ...x, name: e.target.value } : x) }))} />
+                      <input type="number" step="0.01" className="w-24 px-3 py-2 bg-secondary border border-border rounded-lg text-sm" placeholder="€" value={v.price || ""}
+                        onChange={e => setDishForm(prev => ({ ...prev, variants: (prev.variants || []).map((x, idx) => idx === i ? { ...x, price: parseFloat(e.target.value) || 0 } : x) }))} />
+                      <button type="button" className="p-1.5 hover:bg-secondary rounded" onClick={() => setDishForm(prev => ({ ...prev, variants: (prev.variants || []).filter((_, idx) => idx !== i) }))}>
+                        <Trash2 className="h-3.5 w-3.5 text-destructive/60" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-4 flex-wrap">
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={dishForm.available ?? true} onChange={e => setDishForm(prev => ({ ...prev, available: e.target.checked }))} />
                   Disponible
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={dishForm.isNew ?? false} onChange={e => setDishForm(prev => ({ ...prev, isNew: e.target.checked }))} />
-                  Nuevo
+                  Novedad
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={dishForm.featured ?? false} onChange={e => setDishForm(prev => ({ ...prev, featured: e.target.checked }))} />
+                  Destacado
                 </label>
               </div>
             </div>
@@ -1122,46 +1196,80 @@ const MetricsSection = () => {
 const QRSection = () => {
   const { restaurant } = useApp();
   const url = `${window.location.origin}/r/${restaurant.slug}`;
+  const shareText = `Mira la carta de ${restaurant.name}: ${url}`;
+
+  const downloadPng = () => {
+    const svg = document.getElementById("dashboard-qr-svg") as unknown as SVGSVGElement | null;
+    if (!svg) return;
+    const xml = new XMLSerializer().serializeToString(svg);
+    const img = new Image();
+    img.onload = () => {
+      const size = 1024;
+      const canvas = document.createElement("canvas");
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(img, 0, 0, size, size);
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png");
+      a.download = `qr-${restaurant.slug || "carta"}.png`;
+      a.click();
+    };
+    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(xml)));
+  };
+
+  const openPublic = () => window.open(url, "_blank", "noopener");
+  const shareWhatsapp = () => window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank", "noopener");
+  const shareEmail = () => { window.location.href = `mailto:?subject=${encodeURIComponent(restaurant.name)}&body=${encodeURIComponent(shareText)}`; };
+  const nativeShare = async () => {
+    if (navigator.share) { try { await navigator.share({ title: restaurant.name, text: shareText, url }); } catch { /* cancelled */ } }
+    else { navigator.clipboard.writeText(url); toast.success("Enlace copiado"); }
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl sm:text-2xl font-bold mb-1">QR y compartir</h2>
-        <p className="text-muted-foreground text-sm">Tu QR listo para imprimir y compartir</p>
+        <h2 className="text-xl sm:text-2xl font-bold mb-1">QR y enlace público</h2>
+        <p className="text-muted-foreground text-sm">Comparte tu carta en segundos</p>
       </div>
       <div className="flex flex-col md:flex-row gap-6 items-stretch md:items-start">
         <div className="bg-card rounded-2xl border border-border p-6 sm:p-8 flex flex-col items-center gap-4 sm:gap-6">
-          <QRCodeSVG value={url} size={160} bgColor="transparent" fgColor="hsl(15, 25%, 9%)" level="M" className="sm:w-[200px] sm:h-[200px]" />
+          <QRCodeSVG id="dashboard-qr-svg" value={url} size={200} bgColor="#ffffff" fgColor="hsl(15, 25%, 9%)" level="M" includeMargin />
           <p className="text-sm text-muted-foreground text-center max-w-xs">Escanea para ver la carta y reservar mesa</p>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-            <Button variant="gradient" size="sm"><Download className="h-4 w-4 mr-1" /> PNG</Button>
-            <Button variant="outline-primary" size="sm"><Download className="h-4 w-4 mr-1" /> PDF</Button>
+            <Button variant="gradient" size="sm" onClick={downloadPng}><Download className="h-4 w-4 mr-1" /> Descargar PNG</Button>
+            <Button variant="outline-primary" size="sm" onClick={openPublic}><ExternalLink className="h-4 w-4 mr-1" /> Abrir</Button>
           </div>
         </div>
         <div className="flex-1 space-y-4 sm:space-y-6">
           <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-3">
-            <h3 className="text-sm font-bold font-sans">Link directo</h3>
+            <h3 className="text-sm font-bold font-sans">Enlace directo</h3>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <code className="flex-1 bg-secondary px-3 py-2 rounded-lg text-xs sm:text-sm truncate block">{url}</code>
-              <Button size="sm" variant="outline-primary" className="shrink-0" onClick={() => { navigator.clipboard.writeText(url); toast.success("Link copiado"); }}>Copiar</Button>
+              <Button size="sm" variant="outline-primary" className="shrink-0" onClick={() => { navigator.clipboard.writeText(url); toast.success("Enlace copiado"); }}>Copiar</Button>
             </div>
+            <p className="text-xs text-muted-foreground">Cambia el slug desde Ajustes → Mi restaurante.</p>
           </div>
           <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-3">
             <h3 className="text-sm font-bold font-sans">Compartir</h3>
             <div className="flex gap-2 flex-wrap">
-              {["WhatsApp", "Instagram", "Facebook", "Email"].map(s => (
-                <Button key={s} size="sm" variant="secondary">{s}</Button>
-              ))}
+              <Button size="sm" variant="secondary" onClick={shareWhatsapp}>WhatsApp</Button>
+              <Button size="sm" variant="secondary" onClick={shareEmail}>Email</Button>
+              <Button size="sm" variant="secondary" onClick={nativeShare}>Más…</Button>
             </div>
           </div>
-          <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-3">
-            <h3 className="text-sm font-bold font-sans">Widget embebible</h3>
-            <code className="block bg-secondary px-3 py-2 rounded-lg text-xs overflow-x-auto">{`<script src="${window.location.origin}/widget/${restaurant.slug}.js"></script>`}</code>
+          <div className="bg-card rounded-2xl border border-border p-4 sm:p-6 space-y-2">
+            <h3 className="text-sm font-bold font-sans">Consejo</h3>
+            <p className="text-xs text-muted-foreground">Imprime el QR en tarjetas, mesas o escaparate. Los clientes verán tu carta sin instalar nada.</p>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
 
 // ── Settings Section ──
 const hexToHsl = (hex: string): string => {

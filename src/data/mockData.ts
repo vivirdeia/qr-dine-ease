@@ -50,6 +50,11 @@ export interface Category {
   dishCount: number;
 }
 
+export interface DishVariant {
+  name: string;
+  price: number;
+}
+
 export interface Dish {
   id: string;
   categoryId: string;
@@ -63,6 +68,8 @@ export interface Dish {
   chefNote?: string;
   available: boolean;
   isNew: boolean;
+  featured?: boolean;
+  variants?: DishVariant[];
   position: number;
 }
 
