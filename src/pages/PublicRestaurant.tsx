@@ -383,7 +383,7 @@ const PublicRestaurant = () => {
       </div>
 
       {/* Floating reserve button */}
-      {!showReservation && (
+      {restaurant.reservationsEnabled !== false && !showReservation && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-lg w-full px-4">
           <Button variant="gradient" size="xl" className="w-full shadow-warm-lg" onClick={() => { setShowReservation(true); setReservationStep(0); }}>
             <CalendarCheck className="mr-2 h-5 w-5" /> {t(lang, "reserve.title")}
