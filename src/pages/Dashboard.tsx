@@ -1748,7 +1748,7 @@ const Dashboard = () => {
       {/* Mobile bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border md:hidden safe-area-bottom">
         <div className="flex justify-around items-center h-14">
-          {sidebarItems.slice(0, 5).map(item => (
+          {visibleSidebarItems.slice(0, 5).map(item => (
             <button key={item.id} onClick={() => setActive(item.id)}
               className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg transition-colors ${active === item.id ? 'text-primary' : 'text-muted-foreground'}`}>
               <item.icon className="h-5 w-5" />
