@@ -698,6 +698,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return `${s}-${Date.now()}`;
   }, [isSlugAvailable]);
 
+  const trackDishView = useCallback((tenantId: string, dishId: string) => {
+    if (!tenantId || !dishId) return;
+    setDb(prev => {
+      const td = prev.data[tenantId];
+      if (!td) return prev;
+      const current = td.dishViews || {};
+      return {
+        ...prev,
+        data: { ...prev.data, [tenantId]: { ...td, dishViews: { ...current, [dishId]: (current[dishId] || 0) + 1 } } },
+      };
+    });
+  }, [setDb]);
+
   const value: AppState = {
     restaurant: activeData.restaurant,
     categories: activeData.categories,
@@ -727,6 +740,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     getTenantBySlug, setTenantPlan, suspendTenant, deleteTenant, impersonate,
     inviteTeamMember, updateUserRole, removeUser,
     can, isSlugAvailable, suggestSlug,
+    dishViews: activeData.dishViews || {},
+    trackDishView,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
