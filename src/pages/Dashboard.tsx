@@ -1206,7 +1206,19 @@ const hslToHex = (hsl: string): string => {
 };
 
 const SettingsSection = () => {
-  const { notifications, toggleNotification, restaurant, updateRestaurant, userPlan, setUserPlan } = useApp();
+  const { notifications, toggleNotification, restaurant, updateRestaurant, userPlan, setUserPlan, role, users, currentTenant, currentUser, inviteTeamMember, updateUserRole, removeUser } = useApp();
+  const [inviteForm, setInviteForm] = useState({ email: "", password: "", name: "", role: "staff" as "staff" | "owner" });
+  const teamMembers = useMemo(() => users.filter(u => u.tenantId === currentTenant?.id), [users, currentTenant]);
+  const handleInvite = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteForm.email || !inviteForm.password || !inviteForm.name) {
+      toast.error("Completa todos los campos"); return;
+    }
+    const ok = inviteTeamMember(inviteForm.email, inviteForm.password, inviteForm.name, inviteForm.role);
+    if (!ok) { toast.error("Email ya registrado"); return; }
+    toast.success("Miembro añadido");
+    setInviteForm({ email: "", password: "", name: "", role: "staff" });
+  };
   const [brandColors, setBrandColors] = useState({
     primary: restaurant.brandColors?.primary || "#c4704e",
     accent: restaurant.brandColors?.accent || "#d4a574",
