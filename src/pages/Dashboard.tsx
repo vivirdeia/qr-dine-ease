@@ -1599,6 +1599,77 @@ const SettingsSection = () => {
               <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-card shadow transition-transform ${restaurant.hideReserveOnQr ? 'left-5' : 'left-0.5'}`} />
             </button>
           </div>
+
+          <div className="py-3 border-t border-border space-y-3">
+            <div>
+              <p className="text-sm font-medium">Zonas para reservas</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Define las zonas que el comensal podrá elegir como preferencia al reservar (ej: Interior, Terraza, Barra). La opción "Sin preferencia" siempre se muestra.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(restaurant.reservationZones ?? []).map(z => (
+                <span key={z} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary text-xs font-medium">
+                  {z}
+                  <button
+                    onClick={() => {
+                      const next = (restaurant.reservationZones ?? []).filter(x => x !== z);
+                      updateRestaurant({ reservationZones: next });
+                      toast.success(`Zona "${z}" eliminada`);
+                    }}
+                    className="text-muted-foreground hover:text-destructive transition-colors"
+                    aria-label={`Eliminar zona ${z}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+              {(restaurant.reservationZones ?? []).length === 0 && (
+                <span className="text-xs text-muted-foreground italic">Sin zonas configuradas — solo se ofrecerá "Sin preferencia".</span>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <input
+                value={newZone}
+                onChange={e => setNewZone(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const v = newZone.trim();
+                    if (!v) return;
+                    const existing = restaurant.reservationZones ?? [];
+                    if (existing.some(x => x.toLowerCase() === v.toLowerCase())) {
+                      toast.error("Esa zona ya existe");
+                      return;
+                    }
+                    updateRestaurant({ reservationZones: [...existing, v] });
+                    setNewZone("");
+                    toast.success(`Zona "${v}" añadida`);
+                  }
+                }}
+                placeholder="Nueva zona (ej: Barra, Privado…)"
+                className="flex-1 px-3 py-2 bg-secondary border border-border rounded-lg text-sm"
+              />
+              <Button
+                variant="outline-primary"
+                size="sm"
+                onClick={() => {
+                  const v = newZone.trim();
+                  if (!v) return;
+                  const existing = restaurant.reservationZones ?? [];
+                  if (existing.some(x => x.toLowerCase() === v.toLowerCase())) {
+                    toast.error("Esa zona ya existe");
+                    return;
+                  }
+                  updateRestaurant({ reservationZones: [...existing, v] });
+                  setNewZone("");
+                  toast.success(`Zona "${v}" añadida`);
+                }}
+              >
+                Añadir
+              </Button>
+            </div>
+          </div>
         </div>
 
 
