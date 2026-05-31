@@ -105,11 +105,6 @@ export default function DishModal({ dish, onClose }: Props) {
               </div>
             </div>
           )}
-
-          <div className="pt-2">
-            <Button variant="outline" className="w-full" onClick={onClose}>Cerrar</Button>
-          </div>
-        </div>
       </DialogContent>
     </Dialog>
   );
