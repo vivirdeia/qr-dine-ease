@@ -517,11 +517,11 @@ const PublicRestaurant = () => {
                 <div><label className="text-xs font-medium text-muted-foreground">{t(lang, "reserve.notes")}</label><textarea className="w-full mt-1 px-3 py-2 bg-secondary border border-border rounded-xl text-sm" rows={2} placeholder={t(lang, "reserve.notesPlaceholder")} value={resData.notes} onChange={e => setResData(d => ({...d, notes: e.target.value}))} /></div>
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">{t(lang, "reserve.zone")}</label>
-                  <div className="flex gap-2">
-                    {[{v: "Interior", l: t(lang, "reserve.interior")}, {v: "Terraza", l: t(lang, "reserve.terrace")}, {v: "Sin preferencia", l: t(lang, "reserve.noPreference")}].map(({v: z, l}) => (
+                  <div className="flex gap-2 flex-wrap">
+                    {[...(restaurant.reservationZones ?? []), "Sin preferencia"].map(z => (
                       <button key={z} onClick={() => setResData(d => ({...d, zone: z}))}
-                        className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors ${resData.zone === z ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
-                        {l}
+                        className={`flex-1 min-w-[80px] py-2 px-3 rounded-xl text-xs font-medium transition-colors ${resData.zone === z ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}>
+                        {z}
                       </button>
                     ))}
                   </div>
