@@ -33,6 +33,7 @@ export interface Restaurant {
   reservationsEnabled?: boolean;
   hideReserveOnQr?: boolean;
   modules?: { reservations?: boolean; tables?: boolean };
+  reservationZones?: string[];
 }
 
 export interface DayHours {
@@ -174,6 +175,7 @@ export const restaurant: Restaurant = {
     takeaway: false, delivery: false,
   },
   plan: "pro",
+  reservationZones: ["Interior", "Terraza"],
 };
 
 export const categories: Category[] = [

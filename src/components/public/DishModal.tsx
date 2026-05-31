@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+
 import type { Dish } from "@/data/mockData";
 import { ALLERGENS } from "@/data/mockData";
 import { dishImages } from "@/data/dishImages";
@@ -105,10 +105,6 @@ export default function DishModal({ dish, onClose }: Props) {
               </div>
             </div>
           )}
-
-          <div className="pt-2">
-            <Button variant="outline" className="w-full" onClick={onClose}>Cerrar</Button>
-          </div>
         </div>
       </DialogContent>
     </Dialog>
