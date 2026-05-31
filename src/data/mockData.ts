@@ -175,6 +175,7 @@ export const restaurant: Restaurant = {
     takeaway: false, delivery: false,
   },
   plan: "pro",
+  reservationZones: ["Interior", "Terraza"],
 };
 
 export const categories: Category[] = [
