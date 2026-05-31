@@ -33,6 +33,7 @@ export interface Restaurant {
   reservationsEnabled?: boolean;
   hideReserveOnQr?: boolean;
   modules?: { reservations?: boolean; tables?: boolean };
+  reservationZones?: string[];
 }
 
 export interface DayHours {
