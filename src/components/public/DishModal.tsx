@@ -105,6 +105,7 @@ export default function DishModal({ dish, onClose }: Props) {
               </div>
             </div>
           )}
+        </div>
       </DialogContent>
     </Dialog>
   );
