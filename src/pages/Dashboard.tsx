@@ -1399,6 +1399,7 @@ const SettingsSection = () => {
     metaPixelId: restaurant.tracking?.metaPixelId || "",
     customHeadScript: restaurant.tracking?.customHeadScript || "",
   });
+  const [newZone, setNewZone] = useState("");
 
   const defaultBrand = { primary: "#c4704e", accent: "#d4a574", background: "#faf6f1" };
   const saveBrandColors = () => {
