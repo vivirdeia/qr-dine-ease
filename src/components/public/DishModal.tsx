@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+
 import type { Dish } from "@/data/mockData";
 import { ALLERGENS } from "@/data/mockData";
 import { dishImages } from "@/data/dishImages";
