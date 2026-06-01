@@ -21,7 +21,7 @@ const Ayuda = () => (
       </div>
     </Section>
     <Section title="¿No encuentras lo que buscas?">
-      <p>Escríbenos a <strong>hola@carta.app</strong> y te responderemos lo antes posible.</p>
+      <p>Escríbenos a <strong>hola@holacarta.com</strong> y te responderemos lo antes posible.</p>
     </Section>
   </PageLayout>
 );

@@ -131,8 +131,8 @@ function buildDefaultDb(): DBState {
   const now = new Date().toISOString();
   return {
     users: [
-      { id: superAdminId, email: "admin@carta.app", password: "admin1234", name: "Super Admin", role: "superadmin", tenantId: null, createdAt: now },
-      { id: demoUserId, email: "demo@carta.app", password: "demo1234", name: "Demo Owner", role: "owner", tenantId: demoTenantId, createdAt: now },
+      { id: superAdminId, email: "admin@holacarta.com", password: "admin1234", name: "Super Admin", role: "superadmin", tenantId: null, createdAt: now },
+      { id: demoUserId, email: "demo@holacarta.com", password: "demo1234", name: "Demo Owner", role: "owner", tenantId: demoTenantId, createdAt: now },
     ],
     tenants: [
       { id: demoTenantId, slug: defaultRestaurant.slug, plan: "pro", createdAt: now, ownerId: demoUserId },
@@ -183,7 +183,7 @@ function tryMigrateLegacy(): DBState | null {
 
     const user: User = {
       id: userId,
-      email: creds?.email || userEmail || "owner@carta.app",
+      email: creds?.email || userEmail || "owner@holacarta.com",
       password: creds?.password || "changeme",
       name: userName || "Propietario",
       role: "owner",

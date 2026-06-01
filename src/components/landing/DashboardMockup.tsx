@@ -24,7 +24,7 @@ export const DashboardMockup = () => (
       <div className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
       <div className="h-2.5 w-2.5 rounded-full bg-warning/60" />
       <div className="h-2.5 w-2.5 rounded-full bg-success/60" />
-      <div className="flex-1 text-center text-[10px] text-muted-foreground font-mono">carta.app/dashboard</div>
+      <div className="flex-1 text-center text-[10px] text-muted-foreground font-mono">holacarta.com/dashboard</div>
     </div>
     <div className="flex h-[calc(100%-1.75rem)]">
       {/* Sidebar */}

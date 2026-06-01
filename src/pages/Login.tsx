@@ -67,7 +67,7 @@ const Login = () => {
           </div>
         </form>
         <p className="text-xs text-muted-foreground text-center">
-          Demo: demo@carta.app / demo1234 · Admin: admin@carta.app / admin1234
+          Demo: demo@holacarta.com / demo1234 · Admin: admin@holacarta.com / admin1234
         </p>
       </div>
     </div>
