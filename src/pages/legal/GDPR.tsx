@@ -9,7 +9,7 @@ const GDPR = () => (
       <p>Licitud, lealtad y transparencia · limitación de la finalidad · minimización de datos · exactitud · limitación del plazo de conservación · integridad y confidencialidad.</p>
     </Section>
     <Section title="Derechos del interesado">
-      <p>Acceso, rectificación, supresión, oposición, limitación del tratamiento, portabilidad y derecho a no ser objeto de decisiones automatizadas. Para ejercerlos: privacidad@carta.app.</p>
+      <p>Acceso, rectificación, supresión, oposición, limitación del tratamiento, portabilidad y derecho a no ser objeto de decisiones automatizadas. Para ejercerlos: privacidad@holacarta.com.</p>
     </Section>
     <Section title="Encargados de tratamiento">
       <p>Trabajamos únicamente con proveedores que ofrecen garantías suficientes en materia de seguridad y protección de datos, mediante contratos de encargo conformes al artículo 28 RGPD.</p>

@@ -7,17 +7,17 @@ const Contacto = () => (
       <div className="border border-border rounded-lg p-6 space-y-2">
         <Mail className="h-5 w-5 text-primary" strokeWidth={1.5} />
         <h3 className="font-semibold">Soporte</h3>
-        <p className="text-sm text-muted-foreground">hola@carta.app</p>
+        <p className="text-sm text-muted-foreground">hola@holacarta.com</p>
       </div>
       <div className="border border-border rounded-lg p-6 space-y-2">
         <Mail className="h-5 w-5 text-primary" strokeWidth={1.5} />
         <h3 className="font-semibold">Comercial</h3>
-        <p className="text-sm text-muted-foreground">ventas@carta.app</p>
+        <p className="text-sm text-muted-foreground">ventas@holacarta.com</p>
       </div>
       <div className="border border-border rounded-lg p-6 space-y-2">
         <Mail className="h-5 w-5 text-primary" strokeWidth={1.5} />
         <h3 className="font-semibold">Privacidad</h3>
-        <p className="text-sm text-muted-foreground">privacidad@carta.app</p>
+        <p className="text-sm text-muted-foreground">privacidad@holacarta.com</p>
       </div>
       <div className="border border-border rounded-lg p-6 space-y-2">
         <Building2 className="h-5 w-5 text-primary" strokeWidth={1.5} />
