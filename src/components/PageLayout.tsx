@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { UtensilsCrossed, ArrowLeft } from "lucide-react";
 import { ReactNode } from "react";
+import { company, credits } from "@/config/company";
 
 interface PageLayoutProps {
   title: string;
@@ -31,9 +32,17 @@ export const PageLayout = ({ title, subtitle, children }: PageLayoutProps) => (
       </div>
     </main>
     <footer className="border-t border-border py-8">
-      <div className="container text-center text-xs text-muted-foreground space-y-1">
-        <p>© {new Date().getFullYear()} [Nombre de la Empresa] · [CIF/NIF]</p>
-        <p>[Dirección postal de la empresa]</p>
+      <div className="container text-center text-xs text-muted-foreground space-y-2">
+        <div className="space-y-1">
+          <p>© {new Date().getFullYear()} {company.legalName} · {company.taxId}</p>
+          <p>{company.address}</p>
+        </div>
+        <p className="text-[11px] opacity-80">
+          Un producto de{" "}
+          <a href={credits.productOfUrl} target="_blank" rel="noopener noreferrer" className="hover:text-foreground underline-offset-2 hover:underline">{credits.productOf}</a>
+          {" · Creado por "}
+          <a href={credits.createdByUrl} target="_blank" rel="noopener noreferrer" className="hover:text-foreground underline-offset-2 hover:underline">{credits.createdBy}</a>
+        </p>
       </div>
     </footer>
   </div>
