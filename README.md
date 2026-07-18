@@ -9,6 +9,8 @@
 
 Micro SaaS para restaurantes que permite publicar cartas digitales personalizables accesibles por QR, gestionar reservas y mesas, y administrar todo desde un panel unificado. Cada restaurante dispone de branding propio (paletas de colores), integración con Google Maps y módulos activables (reservas, mesas, botón de reservar en QR).
 
+![Preview de CARTA](public/hero-restaurant.jpg)
+
 Producción: https://qr-dine-ease.lovable.app
 
 ## Remix este proyecto
@@ -132,11 +134,17 @@ npm run build
 
 Y servir el contenido de `dist/` en cualquier CDN o hosting estático (Vercel, Netlify, Cloudflare Pages, etc.).
 
+## Documentación
+
+Documentación técnica adicional en la carpeta `docs/`:
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): rutas, gestión de estado con AppContext, integración con Supabase y componentes clave.
+- [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md): convenciones de código, tests con Vitest y Playwright, y flujo de ramas y PRs.
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): build de producción, publicación desde Lovable, sincronización con GitHub y despliegue en otros hostings.
+
 ## Créditos
 
 CARTA es un producto de [Vivir de IA](https://vivirdeia.com), creado por [Isaac Wesley](https://www.linkedin.com/in/isaacwesleey/), desarrollado con [Lovable](https://lovable.dev).
-
-Editor del proyecto: https://lovable.dev/projects/5183ac8b-7d53-46ef-bb82-76e434f8da7f
 
 ## Licencia y atribución
 
