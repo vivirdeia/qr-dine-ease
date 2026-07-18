@@ -14,7 +14,7 @@ const Cookies = () => (
       <p>El usuario puede configurar su navegador para aceptar, bloquear o eliminar las cookies. Bloquear las cookies técnicas puede afectar al funcionamiento del servicio.</p>
     </Section>
     <Section title="4. Responsable">
-      <p>RETLAW SLU, CIF L721974L, El Tarter, Canillo (Andorra).</p>
+      <p>[Nombre de la Empresa], [CIF/NIF], [Dirección postal de la empresa].</p>
     </Section>
   </PageLayout>
 );

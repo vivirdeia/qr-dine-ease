@@ -690,8 +690,8 @@ const Footer = () => {
           ))}
         </div>
         <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground space-y-1">
-          <p>© {new Date().getFullYear()} RETLAW SLU · CIF L721974L · Todos los derechos reservados.</p>
-          <p className="text-xs">Camí del Pont del Tarter, s/n, Apartament 108, Edifici Arbres del Tarter, El Tarter, Canillo (Andorra)</p>
+          <p>© {new Date().getFullYear()} [Nombre de la Empresa] · [CIF/NIF] · Todos los derechos reservados.</p>
+          <p className="text-xs">[Dirección postal de la empresa]</p>
         </div>
       </div>
     </footer>
