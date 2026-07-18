@@ -9,7 +9,7 @@
 
 Micro SaaS para restaurantes que permite publicar cartas digitales personalizables accesibles por QR, gestionar reservas y mesas, y administrar todo desde un panel unificado. Cada restaurante dispone de branding propio (paletas de colores), integración con Google Maps y módulos activables (reservas, mesas, botón de reservar en QR).
 
-![Preview de CARTA](public/hero-restaurant.jpg)
+![Preview de CARTA](src/assets/hero-restaurant.jpg)
 
 Producción: https://qr-dine-ease.lovable.app
 
