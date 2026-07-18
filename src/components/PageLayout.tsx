@@ -32,8 +32,8 @@ export const PageLayout = ({ title, subtitle, children }: PageLayoutProps) => (
     </main>
     <footer className="border-t border-border py-8">
       <div className="container text-center text-xs text-muted-foreground space-y-1">
-        <p>© {new Date().getFullYear()} RETLAW SLU · CIF L721974L</p>
-        <p>Camí del Pont del Tarter, s/n, Apartament 108, Edifici Arbres del Tarter, El Tarter, Canillo (Andorra)</p>
+        <p>© {new Date().getFullYear()} [Nombre de la Empresa] · [CIF/NIF]</p>
+        <p>[Dirección postal de la empresa]</p>
       </div>
     </footer>
   </div>

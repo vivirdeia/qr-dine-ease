@@ -1,5 +1,7 @@
 # Guía de contribución
 
+> Este proyecto es público y remixable desde Lovable. Cualquiera puede crear su propia copia con un clic y adaptarla a su restaurante. Las contribuciones al repositorio original se centran en mejoras generales de la plantilla.
+
 Gracias por contribuir a CARTA. Esta guía resume las convenciones y el flujo de trabajo del repositorio.
 
 ## Convenciones de código
