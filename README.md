@@ -24,7 +24,7 @@ Pasos recomendados tras remixear:
 
 1. Pulsa "Remix" en Lovable para crear tu copia y ábrela en el editor.
 2. Opcional: conecta tu propio proyecto Supabase copiando `.env.example` a `.env` y rellenando `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`. Si prefieres seguir en modo demo con `localStorage`, sáltate este paso.
-3. Personaliza el branding del restaurante desde el Dashboard (paleta de colores, logo, datos de contacto, módulos activos y zonas de reserva) y sustituye los datos de la empresa en las páginas legales.
+3. Personaliza el branding del restaurante desde el Dashboard (paleta de colores, logo, datos de contacto, módulos activos y zonas de reserva) y edita `src/config/company.ts` para sustituir los datos legales (razón social, CIF/NIF, dirección, jurisdicción y emails) que aparecen en el footer y en las páginas legales.
 4. Publica desde Lovable pulsando "Publish" y, si quieres, conecta un dominio propio en Project Settings.
 
 ## Características principales
@@ -132,6 +132,12 @@ npm run build
 
 Y servir el contenido de `dist/` en cualquier CDN o hosting estático (Vercel, Netlify, Cloudflare Pages, etc.).
 
+## Créditos
+
+CARTA es un producto de [Vivir de IA](https://vivirdeia.com), creado por [Isaac Wesley](https://www.linkedin.com/in/isaacwesleey/), desarrollado con [Lovable](https://lovable.dev).
+
+Editor del proyecto: https://lovable.dev/projects/5183ac8b-7d53-46ef-bb82-76e434f8da7f
+
 ## Licencia y atribución
 
-CARTA es una plantilla remixable desarrollada con [Lovable](https://lovable.dev). Editor del proyecto: https://lovable.dev/projects/5183ac8b-7d53-46ef-bb82-76e434f8da7f
+CARTA es una plantilla remixable. Los datos legales de la empresa que opera la instancia se definen en `src/config/company.ts`.

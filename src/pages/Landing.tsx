@@ -9,6 +9,7 @@ import { TrustBar } from "@/components/landing/TrustBar";
 import { MigrationHelp } from "@/components/landing/MigrationHelp";
 import { InteractiveDemo } from "@/components/landing/InteractiveDemo";
 import { DashboardMockup } from "@/components/landing/DashboardMockup";
+import { company, credits } from "@/config/company";
 import {
   UtensilsCrossed,
   Store,
@@ -689,9 +690,17 @@ const Footer = () => {
             </div>
           ))}
         </div>
-        <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground space-y-1">
-          <p>© {new Date().getFullYear()} [Nombre de la Empresa] · [CIF/NIF] · Todos los derechos reservados.</p>
-          <p className="text-xs">[Dirección postal de la empresa]</p>
+        <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground space-y-2">
+          <div className="space-y-1">
+            <p>© {new Date().getFullYear()} {company.legalName} · {company.taxId} · Todos los derechos reservados.</p>
+            <p className="text-xs">{company.address}</p>
+          </div>
+          <p className="text-xs opacity-80">
+            Un producto de{" "}
+            <a href={credits.productOfUrl} target="_blank" rel="noopener noreferrer" className="hover:text-foreground underline-offset-2 hover:underline">{credits.productOf}</a>
+            {" · Creado por "}
+            <a href={credits.createdByUrl} target="_blank" rel="noopener noreferrer" className="hover:text-foreground underline-offset-2 hover:underline">{credits.createdBy}</a>
+          </p>
         </div>
       </div>
     </footer>

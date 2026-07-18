@@ -1,4 +1,5 @@
 import { PageLayout, Section } from "@/components/PageLayout";
+import { company } from "@/config/company";
 
 const Cookies = () => (
   <PageLayout title="Política de Cookies" subtitle="Última actualización: 30 de mayo de 2026">
@@ -14,7 +15,7 @@ const Cookies = () => (
       <p>El usuario puede configurar su navegador para aceptar, bloquear o eliminar las cookies. Bloquear las cookies técnicas puede afectar al funcionamiento del servicio.</p>
     </Section>
     <Section title="4. Responsable">
-      <p>[Nombre de la Empresa], [CIF/NIF], [Dirección postal de la empresa].</p>
+      <p>{company.legalName}, {company.taxId}, {company.address}.</p>
     </Section>
   </PageLayout>
 );
